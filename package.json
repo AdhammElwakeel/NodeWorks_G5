@@ -1,12 +1,12 @@
 {
-  "name": "frontend",
+  "name": "graduation_project",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm start",
+    "lint": "cd frontend && npm run lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
