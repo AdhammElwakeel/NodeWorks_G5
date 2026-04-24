@@ -216,6 +216,8 @@ const MOCK_EARNINGS = {
 export default function FreelancerDashboardPage() {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const isDark = colorScheme === "dark";
+  const textPrimary = isDark ? "gray.0" : "black";
+  const textSecondary = isDark ? "gray.5" : "gray.6";
 
   const [activeSection, setActiveSection] = useState<Section>("home");
 
@@ -278,6 +280,7 @@ export default function FreelancerDashboardPage() {
   }
 
   // ─── Sidebar Nav Item ───
+  // ─── Sidebar Nav Item ───
   function SidebarNavItem({
     icon,
     label,
@@ -291,40 +294,114 @@ export default function FreelancerDashboardPage() {
   }) {
     const active = activeSection === section;
     return (
-      <Button
-        variant={active ? "filled" : "subtle"}
-        color="dark"
-        leftSection={icon}
+      <Box
         onClick={() => setActiveSection(section)}
-        justify="flex-start"
-        fullWidth
-        radius="md"
-        size="md"
-        styles={{
-          root: {
-            height: 48,
-            fontWeight: 600,
-            transition: "all 0.15s",
-          },
-          inner: { justifyContent: "flex-start" },
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "12px 14px",
+          borderRadius: 12,
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+          position: "relative",
+          overflow: "hidden",
+          backgroundColor: active
+            ? isDark
+              ? "rgba(6,182,212,0.12)"
+              : "rgba(6,182,212,0.08)"
+            : "transparent",
+          color: active
+            ? isDark
+              ? "#e2e8f0"
+              : "#0f172a"
+            : isDark
+            ? "#94a3b8"
+            : "#64748b",
         }}
-        rightSection={
-          badge ? (
-            <Badge size="sm" variant="light" color={active ? "white" : "cyan"}>
-              {badge}
-            </Badge>
-          ) : undefined
-        }
+        onMouseEnter={(e) => {
+          if (!active) {
+            (e.currentTarget as HTMLElement).style.backgroundColor = isDark
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(2,8,23,0.04)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!active) {
+            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+          }
+        }}
       >
-        {label}
-      </Button>
+        {/* Active accent bar */}
+        {active && (
+          <Box
+            style={{
+              position: "absolute",
+              left: 0,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 3,
+              height: 20,
+              background: "linear-gradient(180deg, #06b6d4, #4f46e5)",
+              borderRadius: "0 4px 4px 0",
+            }}
+          />
+        )}
+
+        {/* Icon */}
+        <Box
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            color: active ? "#06b6d4" : "inherit",
+            transition: "color 0.2s",
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
+
+        {/* Label */}
+        <Text
+          fz="sm"
+          fw={active ? 600 : 500}
+          style={{ flex: 1, letterSpacing: "-0.01em" }}
+        >
+          {label}
+        </Text>
+
+        {/* Badge */}
+        {badge !== undefined && (
+          <Badge
+            size="sm"
+            variant={active ? "filled" : "light"}
+            color="cyan"
+            radius="sm"
+            style={{
+              minWidth: 22,
+              height: 22,
+              padding: "0 8px",
+              fontSize: 12,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {badge}
+          </Badge>
+        )}
+      </Box>
     );
   }
 
   // ─── SIDEBAR ───
   const sidebar = (
     <Box
-      w={280}
+      w={260}
       style={{
         position: "fixed",
         left: 0,
@@ -333,35 +410,57 @@ export default function FreelancerDashboardPage() {
         zIndex: 200,
         display: "flex",
         flexDirection: "column",
-        backgroundColor: isDark ? "#1e293b" : "white",
-        borderRight: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+        backgroundColor: isDark ? "#0f172a" : "#ffffff",
+        borderRight: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}`,
+        boxShadow: isDark
+          ? "0 0 40px rgba(0,0,0,0.3)"
+          : "0 0 40px rgba(0,0,0,0.03)",
       }}
     >
       {/* Logo */}
-      <Box p="lg">
+      <Box p="lg" pb="sm">
         <Group gap="sm">
           <Box
-            p="xs"
             style={{
+              width: 34,
+              height: 34,
               background: "linear-gradient(135deg, #4f46e5, #06b6d4)",
               borderRadius: 10,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              boxShadow: "0 4px 14px rgba(79,70,229,0.25)",
             }}
           >
-            <Zap size={20} color="white" fill="white" />
+            <Zap size={18} color="white" fill="white" />
           </Box>
-          <Text fw={700} fz="xl" c={isDark ? "white" : "black"}>
-            NodeWorks
-          </Text>
+          <Stack gap={0}>
+            <Text fw={700} fz="lg" c={isDark ? "white" : "black"} lh={1.2}>
+              NodeWorks
+            </Text>
+            <Text fz={10} c={isDark ? "#475569" : "#94a3b8"} fw={600} tt="uppercase" lh={1}>
+              Freelancer
+            </Text>
+          </Stack>
         </Group>
       </Box>
 
-      <Divider mx="md" color={isDark ? "gray.7" : "gray.2"} />
+      <Divider mx="lg" color={isDark ? "#1e293b" : "#f1f5f9"} />
 
       {/* Nav */}
-      <Stack gap={6} px="md" pt="md" flex={1}>
+      <Stack gap={4} px="md" pt="lg" flex={1}>
+        <Text
+          fz={11}
+          fw={700}
+          tt="uppercase"
+          c={isDark ? "#475569" : "#94a3b8"}
+          mb={4}
+          ml={14}
+          style={{ letterSpacing: "0.08em" }}
+        >
+          Menu
+        </Text>
+
         <SidebarNavItem
           icon={<Home size={20} />}
           label="Home"
@@ -382,51 +481,138 @@ export default function FreelancerDashboardPage() {
       </Stack>
 
       {/* Bottom: Profile + Theme */}
-      <Stack gap="md" p="md">
-        <Divider color={isDark ? "gray.7" : "gray.2"} />
+      <Stack gap="sm" p="md">
+        <Divider color={isDark ? "#1e293b" : "#f1f5f9"} />
 
-        <Card
-          withBorder
-          radius="md"
-          p="sm"
-          style={{
-            backgroundColor: isDark ? "#0f172a" : "#f8fafc",
-            borderColor: isDark ? "#334155" : "#e2e8f0",
-            cursor: "pointer",
-          }}
+        {/* Profile Card */}
+        <Box
           onClick={() => setActiveSection("home")}
-        >
-          <Group gap="sm">
-            <Avatar size={40} radius="xl" color="cyan">
-              <User size={20} />
-            </Avatar>
-            <Stack gap={2} style={{ flex: 1 }}>
-              <Text fw={600} fz="sm" c={isDark ? "white" : "black"} lineClamp={1}>
-                {MOCK_PROFILE.name}
-              </Text>
-              <Text fz="xs" c={isDark ? "gray.4" : "gray.6"} lineClamp={1}>
-                {MOCK_PROFILE.headline}
-              </Text>
-            </Stack>
-          </Group>
-        </Card>
-
-        <Button
-          variant="light"
-          color="gray"
-          leftSection={isDark ? <Sun size={16} /> : <Moon size={16} />}
-          onClick={() => setColorScheme(isDark ? "light" : "dark")}
-          fullWidth
-          radius="md"
-          styles={{
-            root: {
-              backgroundColor: isDark ? "#334155" : "#f1f5f9",
-              color: isDark ? "white" : "#334155",
-            },
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "10px 12px",
+            borderRadius: 12,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            backgroundColor: "transparent",
+            border: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}`,
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = isDark
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(2,8,23,0.03)";
+            (e.currentTarget as HTMLElement).style.borderColor = isDark
+              ? "#334155"
+              : "#e2e8f0";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+            (e.currentTarget as HTMLElement).style.borderColor = isDark
+              ? "#1e293b"
+              : "#f1f5f9";
           }}
         >
-          {isDark ? "Light Mode" : "Dark Mode"}
-        </Button>
+          <Box style={{ position: "relative" }}>
+            <Avatar size={38} radius="xl" color="cyan" style={{ border: "2px solid rgba(6,182,212,0.2)" }}>
+              <User size={18} />
+            </Avatar>
+            <Box
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: "#22c55e",
+                border: `2px solid ${isDark ? "#0f172a" : "#ffffff"}`,
+              }}
+            />
+          </Box>
+          <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
+            <Text fw={600} fz="sm" c={isDark ? "white" : "black"} lineClamp={1}>
+              {MOCK_PROFILE.name}
+            </Text>
+            <Text fz={11} c={isDark ? "#475569" : "#94a3b8"} lineClamp={1}>
+              {MOCK_PROFILE.headline}
+            </Text>
+          </Stack>
+          <ChevronRight size={14} color={isDark ? "#475569" : "#cbd5e1"} />
+        </Box>
+
+        {/* Theme Toggle */}
+        <Box
+          onClick={() => setColorScheme(isDark ? "light" : "dark")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "10px 14px",
+            borderRadius: 12,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            backgroundColor: "transparent",
+            color: isDark ? "#94a3b8" : "#64748b",
+            border: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}`,
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = isDark
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(2,8,23,0.03)";
+            (e.currentTarget as HTMLElement).style.borderColor = isDark
+              ? "#334155"
+              : "#e2e8f0";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+            (e.currentTarget as HTMLElement).style.borderColor = isDark
+              ? "#1e293b"
+              : "#f1f5f9";
+          }}
+        >
+          <Box
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              background: isDark ? "rgba(245,158,11,0.12)" : "rgba(99,102,241,0.12)",
+              color: isDark ? "#f59e0b" : "#6366f1",
+            }}
+          >
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </Box>
+          <Text fz="sm" fw={500} style={{ flex: 1 }}>
+            {isDark ? "Light mode" : "Dark mode"}
+          </Text>
+          <Box
+            style={{
+              width: 36,
+              height: 20,
+              borderRadius: 10,
+              background: isDark ? "#06b6d4" : "#e2e8f0",
+              position: "relative",
+              transition: "all 0.2s",
+            }}
+          >
+            <Box
+              style={{
+                position: "absolute",
+                top: 2,
+                width: 16,
+                height: 16,
+                borderRadius: "50%",
+                background: "white",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                transition: "all 0.2s",
+                left: isDark ? 18 : 2,
+              }}
+            />
+          </Box>
+        </Box>
       </Stack>
     </Box>
   );
@@ -599,20 +785,20 @@ export default function FreelancerDashboardPage() {
       <Grid>
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Stack gap="md">
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c="black">Profile Completion</Text>
+                  <Text fw={600} c={textPrimary}>Profile Completion</Text>
                   <Text fw={700} c="cyan.8">{profileCompletion}%</Text>
                 </Group>
                 <Progress value={profileCompletion} color={profileCompletion > 80 ? "green" : "cyan"} radius="xl" size="md" />
               </Stack>
             </Card>
 
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c="black">Skills</Text>
+                  <Text fw={600} c={textPrimary}>Skills</Text>
                   <ActionIcon variant="subtle" color="cyan" onClick={openEdit}>
                     <Edit3 size={16} />
                   </ActionIcon>
@@ -627,30 +813,30 @@ export default function FreelancerDashboardPage() {
               </Stack>
             </Card>
 
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="xs">
-                <Text fw={600} c="black">Hourly Rate</Text>
+                <Text fw={600} c={textPrimary}>Hourly Rate</Text>
                 <Group gap="xs">
                   <DollarSign size={18} color="var(--mantine-color-cyan-6)" />
-                  <Text fw={700} fz="xl" c="black">${MOCK_PROFILE.hourlyRate}/hr</Text>
+                  <Text fw={700} fz="xl" c={textPrimary}>${MOCK_PROFILE.hourlyRate}/hr</Text>
                 </Group>
               </Stack>
             </Card>
 
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="xs">
-                <Text fw={600} c="black">Availability</Text>
+                <Text fw={600} c={textPrimary}>Availability</Text>
                 <Group gap="xs">
                   <Box style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e" }} />
-                  <Text c="black">{MOCK_PROFILE.availability}</Text>
+                  <Text c={textPrimary}>{MOCK_PROFILE.availability}</Text>
                 </Group>
               </Stack>
             </Card>
 
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="xs">
-                <Text fw={600} c="black">Member Since</Text>
-                <Text c="black">{MOCK_PROFILE.memberSince}</Text>
+                <Text fw={600} c={textPrimary}>Member Since</Text>
+                <Text c={textPrimary}>{MOCK_PROFILE.memberSince}</Text>
               </Stack>
             </Card>
           </Stack>
@@ -658,41 +844,41 @@ export default function FreelancerDashboardPage() {
 
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Stack gap="md">
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="blue" variant="light" radius="md"><FileText size={16} /></ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">About</Text>
+                    <Text fw={700} c={textPrimary} fz="lg">About</Text>
                   </Group>
                   <ActionIcon variant="subtle" color="cyan" onClick={openEdit}><Edit3 size={16} /></ActionIcon>
                 </Group>
-                <Text c="black" style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}>
+                <Text c={textPrimary} style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}>
                   {MOCK_PROFILE.about}
                 </Text>
               </Stack>
             </Card>
 
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="indigo" variant="light" radius="md"><Award size={16} /></ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">Experience</Text>
+                    <Text fw={700} c={textPrimary} fz="lg">Experience</Text>
                   </Group>
                   <ActionIcon variant="subtle" color="cyan" onClick={openEdit}><Edit3 size={16} /></ActionIcon>
                 </Group>
                 <Badge size="lg" variant="light" color="indigo">{MOCK_PROFILE.experienceLevel} Level</Badge>
-                <Text fz="sm" c="black">7+ years in full-stack development across multiple industries</Text>
+                <Text fz="sm" c={textPrimary}>7+ years in full-stack development across multiple industries</Text>
               </Stack>
             </Card>
 
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="green" variant="light" radius="md"><Globe size={16} /></ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">Portfolio Links</Text>
+                    <Text fw={700} c={textPrimary} fz="lg">Portfolio Links</Text>
                   </Group>
                   <ActionIcon variant="subtle" color="cyan" onClick={openEdit}><Edit3 size={16} /></ActionIcon>
                 </Group>
@@ -711,12 +897,12 @@ export default function FreelancerDashboardPage() {
             </Card>
 
             {/* Recent Proposals on Home */}
-            <Card withBorder radius="md" shadow="sm">
+            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="orange" variant="light" radius="md"><FileText size={16} /></ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">Recent Proposals</Text>
+                    <Text fw={700} c={textPrimary} fz="lg">Recent Proposals</Text>
                   </Group>
                   <Button variant="subtle" size="xs" onClick={() => {}}>View All</Button>
                 </Group>
@@ -726,12 +912,12 @@ export default function FreelancerDashboardPage() {
                       <Group justify="space-between" align="flex-start">
                         <Stack gap={4} style={{ flex: 1 }}>
                           <Group gap="sm">
-                            <Text fw={600} c="black" fz="sm">{proposal.projectTitle}</Text>
+                            <Text fw={600} c={textPrimary} fz="sm">{proposal.projectTitle}</Text>
                             <Badge size="sm" variant="light" color={proposal.status === "accepted" ? "green" : proposal.status === "rejected" ? "red" : "orange"}>
                               {proposal.status}
                             </Badge>
                           </Group>
-                          <Text fz="xs" c="black" lineClamp={2}>{proposal.coverLetter}</Text>
+                          <Text fz="xs" c={textPrimary} lineClamp={2}>{proposal.coverLetter}</Text>
                         </Stack>
                         <Text fz="sm" fw={500} c="cyan.7">${proposal.proposedRate.toLocaleString()}</Text>
                       </Group>
@@ -749,7 +935,7 @@ export default function FreelancerDashboardPage() {
   // ─── JOBS SECTION ───
   const jobsSection = (
     <Stack gap="xl">
-      <Card withBorder radius="md" shadow="sm">
+      <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
         <Group gap="md" wrap="wrap">
           <TextInput
             placeholder="Search jobs by title or keyword..."
@@ -778,7 +964,7 @@ export default function FreelancerDashboardPage() {
       </Card>
 
       <Group justify="space-between">
-        <Text fw={600} c="black">{filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found</Text>
+        <Text fw={600} c={textPrimary}>{filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found</Text>
         <Button variant="subtle" size="sm" color="gray" onClick={() => { setSearch(""); setSkillFilter(null); }}>
           Clear filters
         </Button>
@@ -789,8 +975,8 @@ export default function FreelancerDashboardPage() {
           <Center>
             <Stack align="center" gap="sm">
               <Briefcase size={48} color="#94a3b8" />
-              <Text fw={600} c="black">No jobs found</Text>
-              <Text fz="sm" c="black" ta="center">Try adjusting your search or check back later for new opportunities.</Text>
+              <Text fw={600} c={textPrimary}>No jobs found</Text>
+              <Text fz="sm" c={textPrimary} ta="center">Try adjusting your search or check back later for new opportunities.</Text>
             </Stack>
           </Center>
         </Card>
@@ -803,7 +989,7 @@ export default function FreelancerDashboardPage() {
                 key={job.id}
                 withBorder
                 radius="md"
-                shadow="sm"
+                shadow={isDark ? undefined : "sm"}
                 style={{ transition: "all 0.2s ease", position: "relative", overflow: "visible" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.1)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
@@ -823,13 +1009,13 @@ export default function FreelancerDashboardPage() {
                     {job.budget && (
                       <Group gap={4}>
                         <DollarSign size={14} color="var(--mantine-color-cyan-6)" />
-                        <Text fw={700} fz="sm" c="black">{job.budgetType === "hourly" ? `$${job.budget}/hr` : `$${job.budget.toLocaleString()}`}</Text>
+                        <Text fw={700} fz="sm" c={textPrimary}>{job.budgetType === "hourly" ? `$${job.budget}/hr` : `$${job.budget.toLocaleString()}`}</Text>
                       </Group>
                     )}
                   </Group>
 
-                  <Text fw={700} c="black" lineClamp={2} fz="lg">{job.title}</Text>
-                  <Text fz="sm" c="black" lineClamp={3}>{job.description}</Text>
+                  <Text fw={700} c={textPrimary} lineClamp={2} fz="lg">{job.title}</Text>
+                  <Text fz="sm" c={textPrimary} lineClamp={3}>{job.description}</Text>
 
                   <Group gap="xs" wrap="wrap">
                     {job.skills.slice(0, 4).map((s: string) => (
@@ -844,8 +1030,8 @@ export default function FreelancerDashboardPage() {
                     <Group gap="xs">
                       <Avatar size={28} radius="xl" color="indigo" fz="xs">{job.clientAvatar}</Avatar>
                       <Stack gap={0}>
-                        <Text fz="sm" fw={500} c="black">{job.clientName}</Text>
-                        <Text fz="xs" c="black">{job.postedAt} · {job.proposals} proposals</Text>
+                        <Text fz="sm" fw={500} c={textPrimary}>{job.clientName}</Text>
+                        <Text fz="xs" c={textPrimary}>{job.postedAt} · {job.proposals} proposals</Text>
                       </Stack>
                     </Group>
                   </Group>
@@ -873,7 +1059,7 @@ export default function FreelancerDashboardPage() {
           { label: "Pending", value: `$${MOCK_EARNINGS.pending.toLocaleString()}`, icon: <Clock4 size={20} />, color: "orange", change: "2 jobs" },
           { label: "Available", value: `$${MOCK_EARNINGS.available.toLocaleString()}`, icon: <DollarSign size={20} />, color: "blue", change: "Ready" },
         ].map((stat) => (
-          <Card key={stat.label} withBorder radius="md" shadow="sm">
+          <Card key={stat.label} withBorder radius="md" shadow={isDark ? undefined : "sm"}>
             <Stack gap="sm">
               <Group justify="space-between">
                 <ThemeIcon color={stat.color} variant="light" size={40} radius="md">{stat.icon}</ThemeIcon>
@@ -881,26 +1067,26 @@ export default function FreelancerDashboardPage() {
                   {stat.change}
                 </Badge>
               </Group>
-              <Text fw={700} fz="xl" c="black">{stat.value}</Text>
-              <Text fz="sm" c="black">{stat.label}</Text>
+              <Text fw={700} fz="xl" c={textPrimary}>{stat.value}</Text>
+              <Text fz="sm" c={textPrimary}>{stat.label}</Text>
             </Stack>
           </Card>
         ))}
       </SimpleGrid>
 
       {/* Monthly Overview */}
-      <Card withBorder radius="md" shadow="sm">
+      <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
         <Stack gap="md">
           <Group justify="space-between">
-            <Text fw={700} c="black" fz="lg">Earnings Overview</Text>
+            <Text fw={700} c={textPrimary} fz="lg">Earnings Overview</Text>
             <Button variant="subtle" size="sm" color="gray">View Report</Button>
           </Group>
           <SimpleGrid cols={{ base: 3, sm: 6 }} spacing="md">
             {MOCK_EARNINGS.monthlyStats.map((m) => (
               <Card key={m.month} withBorder radius="md" p="sm" style={{ textAlign: "center" }}>
-                <Text fw={700} fz="lg" c="black">${(m.earnings / 1000).toFixed(1)}k</Text>
-                <Text fz="xs" c="black" mt={4}>{m.month}</Text>
-                <Box mt={8} style={{ height: 4, background: "#e2e8f0", borderRadius: 2, overflow: "hidden" }}>
+                <Text fw={700} fz="lg" c={textPrimary}>${(m.earnings / 1000).toFixed(1)}k</Text>
+                <Text fz="xs" c={textPrimary} mt={4}>{m.month}</Text>
+                <Box mt={8} style={{ height: 4, background: isDark ? "#334155" : "#e2e8f0", borderRadius: 2, overflow: "hidden" }}>
                   <Box style={{ width: `${(m.earnings / 15000) * 100}%`, height: "100%", background: "linear-gradient(90deg, #06b6d4, #4f46e5)", borderRadius: 2 }} />
                 </Box>
               </Card>
@@ -910,10 +1096,10 @@ export default function FreelancerDashboardPage() {
       </Card>
 
       {/* Transactions */}
-      <Card withBorder radius="md" shadow="sm">
+      <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
         <Stack gap="md">
           <Group justify="space-between">
-            <Text fw={700} c="black" fz="lg">Recent Transactions</Text>
+            <Text fw={700} c={textPrimary} fz="lg">Recent Transactions</Text>
             <Button variant="subtle" size="sm" color="gray">View All</Button>
           </Group>
           <Stack gap="xs">
@@ -930,12 +1116,12 @@ export default function FreelancerDashboardPage() {
                       {tx.status === "completed" ? <CheckCircle2 size={20} /> : <Clock4 size={20} />}
                     </ThemeIcon>
                     <Stack gap={2}>
-                      <Text fw={600} c="black" fz="sm">{tx.project}</Text>
-                      <Text fz="xs" c="black">{tx.client} · {tx.date}</Text>
+                      <Text fw={600} c={textPrimary} fz="sm">{tx.project}</Text>
+                      <Text fz="xs" c={textPrimary}>{tx.client} · {tx.date}</Text>
                     </Stack>
                   </Group>
                   <Stack gap={2} align="flex-end">
-                    <Text fw={700} c="black" fz="md">${tx.amount.toLocaleString()}</Text>
+                    <Text fw={700} c={textPrimary} fz="md">${tx.amount.toLocaleString()}</Text>
                     <Badge size="sm" variant="light" color={tx.status === "completed" ? "green" : "orange"}>
                       {tx.status}
                     </Badge>
@@ -954,7 +1140,7 @@ export default function FreelancerDashboardPage() {
       {sidebar}
 
       {/* Main Content */}
-      <Box style={{ flex: 1, marginLeft: 280, backgroundColor: isDark ? "#0f172a" : "#f8fafc", minHeight: "100vh" }}>
+      <Box style={{ flex: 1, marginLeft: 260, backgroundColor: isDark ? "#0f172a" : "#f8fafc", minHeight: "100vh" }}>
         {headerBanner}
 
         <Container size="xl" py="xl">
@@ -965,21 +1151,21 @@ export default function FreelancerDashboardPage() {
       </Box>
 
       {/* ═══ EDIT PROFILE MODAL ═══ */}
-      <Modal opened={editOpened} onClose={closeEdit} title={<Text c="black" fw={700}>Edit Your Profile</Text>} size="xl" scrollAreaComponent={ScrollArea.Autosize} radius="md">
+      <Modal opened={editOpened} onClose={closeEdit} title={<Text c={textPrimary} fw={700}>Edit Your Profile</Text>} size="xl" scrollAreaComponent={ScrollArea.Autosize} radius="md">
         <Stack gap="md">
-          <TextInput label="Full Name" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} radius="md" styles={{ label: { color: "black" } }} />
-          <TextInput label="Professional Headline" value={editForm.headline} onChange={(e) => setEditForm((f) => ({ ...f, headline: e.target.value }))} radius="md" styles={{ label: { color: "black" } }} />
-          <Textarea label="About You" minRows={5} value={editForm.about} onChange={(e) => setEditForm((f) => ({ ...f, about: e.target.value }))} radius="md" styles={{ label: { color: "black" } }} />
+          <TextInput label="Full Name" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
+          <TextInput label="Professional Headline" value={editForm.headline} onChange={(e) => setEditForm((f) => ({ ...f, headline: e.target.value }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
+          <Textarea label="About You" minRows={5} value={editForm.about} onChange={(e) => setEditForm((f) => ({ ...f, about: e.target.value }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
           <Group grow>
-            <Select label="Experience Level" data={["Junior", "Mid-level", "Senior", "Lead"]} value={editForm.experienceLevel} onChange={(v) => setEditForm((f) => ({ ...f, experienceLevel: v || "" }))} radius="md" styles={{ label: { color: "black" } }} />
-            <TextInput label="Country" value={editForm.country} onChange={(e) => setEditForm((f) => ({ ...f, country: e.target.value }))} radius="md" styles={{ label: { color: "black" } }} />
+            <Select label="Experience Level" data={["Junior", "Mid-level", "Senior", "Lead"]} value={editForm.experienceLevel} onChange={(v) => setEditForm((f) => ({ ...f, experienceLevel: v || "" }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
+            <TextInput label="Country" value={editForm.country} onChange={(e) => setEditForm((f) => ({ ...f, country: e.target.value }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
           </Group>
           <Group grow>
-            <NumberInput label="Hourly Rate ($)" value={editForm.hourlyRate} onChange={(v) => setEditForm((f) => ({ ...f, hourlyRate: typeof v === "number" ? v : 0 }))} radius="md" styles={{ label: { color: "black" } }} />
-            <Select label="Availability" data={["Full-time", "Part-time", "As needed", "Not available"]} value={editForm.availability} onChange={(v) => setEditForm((f) => ({ ...f, availability: v || "" }))} radius="md" styles={{ label: { color: "black" } }} />
+            <NumberInput label="Hourly Rate ($)" value={editForm.hourlyRate} onChange={(v) => setEditForm((f) => ({ ...f, hourlyRate: typeof v === "number" ? v : 0 }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
+            <Select label="Availability" data={["Full-time", "Part-time", "As needed", "Not available"]} value={editForm.availability} onChange={(v) => setEditForm((f) => ({ ...f, availability: v || "" }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
           </Group>
-          <TagsInput label="Skills" placeholder="Add skills and press Enter" data={["React", "Next.js", "Node.js", "TypeScript", "Python", "UI Design", "Project Management", "Data Analysis", "Content Writing", "Mobile Development"]} value={editForm.skills} onChange={(v) => setEditForm((f) => ({ ...f, skills: v }))} radius="md" styles={{ label: { color: "black" } }} />
-          <TagsInput label="Portfolio Links" placeholder="Add URLs and press Enter" value={editForm.portfolioLinks} onChange={(v) => setEditForm((f) => ({ ...f, portfolioLinks: v }))} radius="md" styles={{ label: { color: "black" } }} />
+          <TagsInput label="Skills" placeholder="Add skills and press Enter" data={["React", "Next.js", "Node.js", "TypeScript", "Python", "UI Design", "Project Management", "Data Analysis", "Content Writing", "Mobile Development"]} value={editForm.skills} onChange={(v) => setEditForm((f) => ({ ...f, skills: v }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
+          <TagsInput label="Portfolio Links" placeholder="Add URLs and press Enter" value={editForm.portfolioLinks} onChange={(v) => setEditForm((f) => ({ ...f, portfolioLinks: v }))} radius="md" styles={{ label: { color: isDark ? "#e2e8f0" : "black" } }} />
           <Group justify="flex-end" mt="md">
             <Button variant="default" radius="md" onClick={closeEdit}>Cancel</Button>
             <Button color="cyan" radius="md" onClick={closeEdit}>Save Changes</Button>
@@ -991,10 +1177,10 @@ export default function FreelancerDashboardPage() {
       <Modal opened={applyOpened} onClose={closeApply} title={`Apply: ${applyJob?.title || ""}`} size="lg" scrollAreaComponent={ScrollArea.Autosize} radius="md">
         <Stack gap="md">
           {applyJob && (
-            <Card withBorder radius="md" bg="gray.0">
+            <Card withBorder radius="md" >
               <Stack gap={4}>
-                <Text fw={600} c="black">{applyJob.title}</Text>
-                <Text fz="sm" c="black" lineClamp={3}>{applyJob.description}</Text>
+                <Text fw={600} c={textPrimary}>{applyJob.title}</Text>
+                <Text fz="sm" c={textPrimary} lineClamp={3}>{applyJob.description}</Text>
                 {applyJob.budget && (
                   <Group gap={4}>
                     <DollarSign size={14} color="var(--mantine-color-cyan-6)" />
