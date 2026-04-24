@@ -410,7 +410,7 @@ export default function FreelancerDashboardPage() {
         zIndex: 200,
         display: "flex",
         flexDirection: "column",
-        backgroundColor: isDark ? "#0f172a" : "#ffffff",
+        backgroundColor: isDark ? "#2d3250" : "#ffffff",
         borderRight: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}`,
         boxShadow: isDark
           ? "0 0 40px rgba(0,0,0,0.3)"
@@ -1140,7 +1140,7 @@ export default function FreelancerDashboardPage() {
       {sidebar}
 
       {/* Main Content */}
-      <Box style={{ flex: 1, marginLeft: 260, backgroundColor: isDark ? "#0f172a" : "#f8fafc", minHeight: "100vh" }}>
+      <Box style={{ flex: 1, marginLeft: 260, backgroundColor: isDark ? "#2d3250" : "#f8fafc", minHeight: "100vh" }}>
         {headerBanner}
 
         <Container size="xl" py="xl">
