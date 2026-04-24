@@ -17,9 +17,15 @@ import {
 import { Zap, Mail, Lock, User, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [accountType, setAccountType] = useState("freelancer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   return (
     <Box
@@ -254,7 +260,7 @@ export default function RegisterPage() {
             <Divider label="or continue with email" labelPosition="center" />
 
             {/* Form */}
-            <form>
+            <form onSubmit={(e) => { e.preventDefault(); router.push("/freelancer/dashboard"); }}>
               <Stack gap="md">
                 <Group grow>
                   <TextInput
@@ -262,6 +268,8 @@ export default function RegisterPage() {
                     placeholder="John"
                     required
                     size="md"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
                   />
                   <TextInput
@@ -269,6 +277,8 @@ export default function RegisterPage() {
                     placeholder="Doe"
                     required
                     size="md"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
                   />
                 </Group>
@@ -278,6 +288,8 @@ export default function RegisterPage() {
                   required
                   size="md"
                   leftSection={<Mail size={18} />}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
                 />
                 <PasswordInput
@@ -286,6 +298,8 @@ export default function RegisterPage() {
                   required
                   size="md"
                   leftSection={<Lock size={18} />}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
                 />
                 <Text fz="xs" c="dimmed">
@@ -303,6 +317,7 @@ export default function RegisterPage() {
                   size="md"
                   variant="gradient"
                   gradient={{ from: "indigo", to: "blue", deg: 135 }}
+                  type="submit"
                 >
                   Create account
                 </Button>

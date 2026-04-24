@@ -16,8 +16,13 @@ import {
 } from "@mantine/core";
 import { Zap, Mail, Lock } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   return (
     <Box
       style={{
@@ -217,7 +222,7 @@ export default function LoginPage() {
             <Divider label="or continue with email" labelPosition="center" />
 
             {/* Form */}
-            <form>
+            <form onSubmit={(e) => { e.preventDefault(); router.push("/freelancer/dashboard"); }}>
               <Stack gap="md">
                 <TextInput
                   label="Email"
@@ -225,6 +230,8 @@ export default function LoginPage() {
                   required
                   size="md"
                   leftSection={<Mail size={18} />}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
                 />
                 <PasswordInput
@@ -233,6 +240,8 @@ export default function LoginPage() {
                   required
                   size="md"
                   leftSection={<Lock size={18} />}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
                 />
                 <Group justify="space-between">
@@ -252,6 +261,7 @@ export default function LoginPage() {
                   variant="gradient"
                   gradient={{ from: "indigo", to: "blue", deg: 135 }}
                   mt="sm"
+                  type="submit"
                 >
                   Sign in
                 </Button>
