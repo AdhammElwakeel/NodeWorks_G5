@@ -17,22 +17,9 @@ import {
 import { Zap, Mail, Lock, User, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState("freelancer");
-  const router = useRouter();
-
-  const handleRegisterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (accountType === "freelancer") {
-      router.push("/freelancer/onboarding");
-      return;
-    }
-
-    router.push("/login");
-  };
 
   return (
     <Box
@@ -267,7 +254,7 @@ export default function RegisterPage() {
             <Divider label="or continue with email" labelPosition="center" />
 
             {/* Form */}
-            <form onSubmit={handleRegisterSubmit}>
+            <form>
               <Stack gap="md">
                 <Group grow>
                   <TextInput
@@ -316,7 +303,6 @@ export default function RegisterPage() {
                   size="md"
                   variant="gradient"
                   gradient={{ from: "indigo", to: "blue", deg: 135 }}
-                  type="submit"
                 >
                   Create account
                 </Button>
