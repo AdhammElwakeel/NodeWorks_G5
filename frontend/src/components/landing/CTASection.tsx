@@ -1,9 +1,11 @@
 "use client";
 
-import { Container, Box, Stack, Title, Text, Button, Group, Card } from "@mantine/core";
+import { Container, Box, Stack, Title, Text, Button, Group, Card, useMantineColorScheme } from "@mantine/core";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 export function CTASection() {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === "dark";
   return (
     <Box
       component="section"
@@ -14,9 +16,9 @@ export function CTASection() {
           radius="xl"
           p={{ base: "xl", md: 48 }}
           shadow="xl"
+          bg={isDark ? "dark.7" : "white"}
           style={{
-            border: "1px solid var(--mantine-color-gray-2)",
-            background: "white",
+            border: isDark ? "1px solid var(--mantine-color-dark-4)" : "1px solid var(--mantine-color-gray-2)",
             boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 20px 25px -5px rgba(0, 0, 0, 0.08)",
           }}
         >

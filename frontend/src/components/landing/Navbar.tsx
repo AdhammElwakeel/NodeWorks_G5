@@ -1,17 +1,19 @@
 "use client";
 
-import { Group, Button, Container, Text, Box } from "@mantine/core";
+import { Group, Button, Container, Text, Box, useMantineColorScheme } from "@mantine/core";
 import { Zap } from "lucide-react";
 import Link from "next/link";
 
 export function Navbar() {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === "dark";
   return (
     <Box
       component="header"
       py="md"
       style={{
-        borderBottom: "1px solid var(--mantine-color-gray-2)",
-        backgroundColor: "rgba(255, 255, 255, 0.9)",
+        borderBottom: isDark ? "1px solid var(--mantine-color-dark-4)" : "1px solid var(--mantine-color-gray-2)",
+        backgroundColor: isDark ? "rgba(15, 23, 42, 0.95)" : "rgba(255, 255, 255, 0.9)",
         backdropFilter: "blur(8px)",
         position: "sticky",
         top: 0,
