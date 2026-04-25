@@ -11,7 +11,7 @@ import {
 
 export default function HomePage() {
   return (
-    <Box component="main" mih="100vh" bg="white">
+    <Box component="main" mih="100vh">
       <Navbar />
       <HeroSection />
       <FeaturesSection />
