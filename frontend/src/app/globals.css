@@ -17,23 +17,3 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
-[data-mantine-color-scheme="dark"] .mantine-Card-root[data-with-border] {
-  background-color: #424769;
-}
-
-/* Dark mode button accent */
-[data-mantine-color-scheme="dark"] .mantine-Button-root {
-  background-color: #f6b17a !important;
-  color: #2d3250 !important;
-  border-color: transparent !important;
-}
-
-[data-mantine-color-scheme="dark"] .mantine-Button-root:hover:not(:disabled) {
-  background-color: #e8945c !important;
-}
-
-[data-mantine-color-scheme="dark"] .mantine-Button-root:disabled {
-  background-color: rgba(246, 177, 122, 0.4) !important;
-  color: rgba(45, 50, 80, 0.5) !important;
-}
