@@ -260,7 +260,7 @@ export default function RegisterPage() {
             <Divider label="or continue with email" labelPosition="center" />
 
             {/* Form */}
-            <form onSubmit={(e) => { e.preventDefault(); router.push("/freelancer/dashboard"); }}>
+            <form onSubmit={(e) => { e.preventDefault(); router.push("/freelancer/onboarding"); }}>
               <Stack gap="md">
                 <Group grow>
                   <TextInput
