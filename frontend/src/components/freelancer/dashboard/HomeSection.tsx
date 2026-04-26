@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Card, Text, Badge, Button, Group, Stack, Grid, ThemeIcon, ActionIcon, Progress, useMantineColorScheme } from "@mantine/core";
+import { Box, Card, Text, Badge, Button, Group, Stack, Grid, ThemeIcon, ActionIcon, Progress } from "@mantine/core";
 import { DollarSign, FileText, Award, Globe, Link as LinkIcon, ChevronRight, Edit3 } from "lucide-react";
 import type { Profile, Proposal } from "./types";
 
@@ -12,9 +12,6 @@ interface HomeSectionProps {
 }
 
 export function HomeSection({ profile, proposals, profileCompletion, onEditClick }: HomeSectionProps) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === "dark";
-  const textPrimary = isDark ? "gray.0" : "black";
 
   return (
     <Stack gap="xl">
@@ -22,10 +19,10 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Stack gap="md">
             {/* Profile Completion */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c={textPrimary}>Profile Completion</Text>
+                  <Text fw={600} c="black">Profile Completion</Text>
                   <Text fw={700} c="cyan.8">{profileCompletion}%</Text>
                 </Group>
                 <Progress
@@ -38,10 +35,10 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             </Card>
 
             {/* Skills */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c={textPrimary}>Skills</Text>
+                  <Text fw={600} c="black">Skills</Text>
                   <ActionIcon variant="subtle" color="cyan" onClick={onEditClick}>
                     <Edit3 size={16} />
                   </ActionIcon>
@@ -67,12 +64,12 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             </Card>
 
             {/* Hourly Rate */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c={textPrimary}>Hourly Rate</Text>
+                <Text fw={600} c="black">Hourly Rate</Text>
                 <Group gap="xs">
                   <DollarSign size={18} color="var(--mantine-color-cyan-6)" />
-                  <Text fw={700} fz="xl" c={textPrimary}>
+                  <Text fw={700} fz="xl" c="black">
                     ${profile.hourlyRate}/hr
                   </Text>
                 </Group>
@@ -80,9 +77,9 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             </Card>
 
             {/* Availability */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c={textPrimary}>Availability</Text>
+                <Text fw={600} c="black">Availability</Text>
                 <Group gap="xs">
                   <Box
                     style={{
@@ -92,16 +89,16 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                       background: "#22c55e",
                     }}
                   />
-                  <Text c={textPrimary}>{profile.availability}</Text>
+                  <Text c="black">{profile.availability}</Text>
                 </Group>
               </Stack>
             </Card>
 
             {/* Member Since */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c={textPrimary}>Member Since</Text>
-                <Text c={textPrimary}>{profile.memberSince}</Text>
+                <Text fw={600} c="black">Member Since</Text>
+                <Text c="black">{profile.memberSince}</Text>
               </Stack>
             </Card>
           </Stack>
@@ -110,14 +107,14 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Stack gap="md">
             {/* About */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="blue" variant="light" radius="md">
                       <FileText size={16} />
                     </ThemeIcon>
-                    <Text fw={700} c={textPrimary} fz="lg">
+                    <Text fw={700} c="black" fz="lg">
                       About
                     </Text>
                   </Group>
@@ -125,21 +122,21 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                     <Edit3 size={16} />
                   </ActionIcon>
                 </Group>
-                <Text c={textPrimary} style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}>
+                <Text c="black" style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}>
                   {profile.about}
                 </Text>
               </Stack>
             </Card>
 
             {/* Experience */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="indigo" variant="light" radius="md">
                       <Award size={16} />
                     </ThemeIcon>
-                    <Text fw={700} c={textPrimary} fz="lg">
+                    <Text fw={700} c="black" fz="lg">
                       Experience
                     </Text>
                   </Group>
@@ -150,21 +147,21 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                 <Badge size="lg" variant="light" color="indigo">
                   {profile.experienceLevel} Level
                 </Badge>
-                <Text fz="sm" c={textPrimary}>
+                <Text fz="sm" c="black">
                   7+ years in full-stack development across multiple industries
                 </Text>
               </Stack>
             </Card>
 
             {/* Portfolio Links */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="green" variant="light" radius="md">
                       <Globe size={16} />
                     </ThemeIcon>
-                    <Text fw={700} c={textPrimary} fz="lg">
+                    <Text fw={700} c="black" fz="lg">
                       Portfolio Links
                     </Text>
                   </Group>
@@ -200,14 +197,14 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             </Card>
 
             {/* Recent Proposals */}
-            <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+            <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
                   <Group gap="sm">
                     <ThemeIcon color="orange" variant="light" radius="md">
                       <FileText size={16} />
                     </ThemeIcon>
-                    <Text fw={700} c={textPrimary} fz="lg">
+                    <Text fw={700} c="black" fz="lg">
                       Recent Proposals
                     </Text>
                   </Group>
@@ -221,7 +218,7 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                       <Group justify="space-between" align="flex-start">
                         <Stack gap={4} style={{ flex: 1 }}>
                           <Group gap="sm">
-                            <Text fw={600} c={textPrimary} fz="sm">
+                            <Text fw={600} c="black" fz="sm">
                               {proposal.projectTitle}
                             </Text>
                             <Badge
@@ -238,7 +235,7 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                               {proposal.status}
                             </Badge>
                           </Group>
-                          <Text fz="xs" c={textPrimary} lineClamp={2}>
+                          <Text fz="xs" c="black" lineClamp={2}>
                             {proposal.coverLetter}
                           </Text>
                         </Stack>

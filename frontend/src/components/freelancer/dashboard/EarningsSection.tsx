@@ -10,7 +10,6 @@ import {
   Stack,
   SimpleGrid,
   ThemeIcon,
-  useMantineColorScheme,
 } from "@mantine/core";
 import {
   Wallet,
@@ -27,9 +26,6 @@ interface EarningsSectionProps {
 }
 
 export function EarningsSection({ earnings }: EarningsSectionProps) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === "dark";
-  const textPrimary = isDark ? "gray.0" : "black";
 
   const stats = [
     {
@@ -67,7 +63,7 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
       {/* Stats Row */}
       <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
         {stats.map((stat) => (
-          <Card key={stat.label} withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+          <Card key={stat.label} withBorder radius="md" shadow="sm">
             <Stack gap="sm">
               <Group justify="space-between">
                 <ThemeIcon color={stat.color} variant="light" size={40} radius="md">
@@ -82,10 +78,10 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
                   {stat.change}
                 </Badge>
               </Group>
-              <Text fw={700} fz="xl" c={textPrimary}>
+              <Text fw={700} fz="xl" c="black">
                 {stat.value}
               </Text>
-              <Text fz="sm" c={textPrimary}>
+              <Text fz="sm" c="black">
                 {stat.label}
               </Text>
             </Stack>
@@ -94,10 +90,10 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
       </SimpleGrid>
 
       {/* Monthly Overview */}
-      <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+      <Card withBorder radius="md" shadow="sm">
         <Stack gap="md">
           <Group justify="space-between">
-            <Text fw={700} c={textPrimary} fz="lg">
+            <Text fw={700} c="black" fz="lg">
               Earnings Overview
             </Text>
             <Button variant="subtle" size="sm" color="gray">
@@ -107,17 +103,17 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
           <SimpleGrid cols={{ base: 3, sm: 6 }} spacing="md">
             {earnings.monthlyStats.map((m) => (
               <Card key={m.month} withBorder radius="md" p="sm" style={{ textAlign: "center" }}>
-                <Text fw={700} fz="lg" c={textPrimary}>
+                <Text fw={700} fz="lg" c="black">
                   ${(m.earnings / 1000).toFixed(1)}k
                 </Text>
-                <Text fz="xs" c={textPrimary} mt={4}>
+                <Text fz="xs" c="black" mt={4}>
                   {m.month}
                 </Text>
                 <Box
                   mt={8}
                   style={{
                     height: 4,
-                    background: isDark ? "#334155" : "#e2e8f0",
+                    background: "#e2e8f0",
                     borderRadius: 2,
                     overflow: "hidden",
                   }}
@@ -138,10 +134,10 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
       </Card>
 
       {/* Transactions */}
-      <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+      <Card withBorder radius="md" shadow="sm">
         <Stack gap="md">
           <Group justify="space-between">
-            <Text fw={700} c={textPrimary} fz="lg">
+            <Text fw={700} c="black" fz="lg">
               Recent Transactions
             </Text>
             <Button variant="subtle" size="sm" color="gray">
@@ -166,16 +162,16 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
                       )}
                     </ThemeIcon>
                     <Stack gap={2}>
-                      <Text fw={600} c={textPrimary} fz="sm">
+                      <Text fw={600} c="black" fz="sm">
                         {tx.project}
                       </Text>
-                      <Text fz="xs" c={textPrimary}>
+                      <Text fz="xs" c="black">
                         {tx.client} · {tx.date}
                       </Text>
                     </Stack>
                   </Group>
                   <Stack gap={2} align="flex-end">
-                    <Text fw={700} c={textPrimary} fz="md">
+                    <Text fw={700} c="black" fz="md">
                       ${tx.amount.toLocaleString()}
                     </Text>
                     <Badge

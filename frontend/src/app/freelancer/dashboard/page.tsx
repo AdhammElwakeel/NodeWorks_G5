@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Container, useMantineColorScheme } from "@mantine/core";
+import { Box, Container, Burger, Title, Group, Drawer } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   Sidebar,
@@ -21,10 +21,8 @@ import {
 import type { Section, Job, EditFormState } from "@/components/freelancer/dashboard/types";
 
 export default function FreelancerDashboardPage() {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === "dark";
-
   const [activeSection, setActiveSection] = useState<Section>("home");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Edit modal
   const [editOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false);
@@ -53,23 +51,44 @@ export default function FreelancerDashboardPage() {
     openApply();
   }
 
+  const sidebar = (
+    <Sidebar
+      activeSection={activeSection}
+      onSectionChange={(section) => {
+        setActiveSection(section);
+        setMobileOpen(false);
+      }}
+      pendingCount={pendingCount}
+      onEditClick={() => {
+        openEdit();
+        setMobileOpen(false);
+      }}
+    />
+  );
+
   return (
     <Box style={{ display: "flex", minHeight: "100vh" }}>
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        pendingCount={pendingCount}
-        onEditClick={openEdit}
-      />
+      {/* Desktop sidebar placeholder — reserves 260px in flex layout */}
+      <Box visibleFrom="md" w={260} style={{ flexShrink: 0 }} />
 
-      <Box
-        style={{
-          flex: 1,
-          marginLeft: 260,
-          minHeight: "100vh",
-          backgroundColor: isDark ? "#2d3250" : "#f8fafc",
-        }}
-      >
+      {/* Main content */}
+      <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+        {/* Mobile header */}
+        <Group
+          hiddenFrom="md"
+          p="md"
+          style={{ borderBottom: "1px solid #e2e8f0", background: "white" }}
+        >
+          <Burger
+            opened={mobileOpen}
+            onClick={() => setMobileOpen((o) => !o)}
+            size="sm"
+          />
+          <Title order={5} c="dark.9">
+            NodeWorks
+          </Title>
+        </Group>
+
         <HeaderBanner
           profile={MOCK_PROFILE}
           profileCompletion={profileCompletion}
@@ -96,14 +115,32 @@ export default function FreelancerDashboardPage() {
         </Container>
       </Box>
 
-      <EditProfileModal
-        opened={editOpened}
-        onClose={closeEdit}
-        form={editForm}
-        setForm={setEditForm}
-        onSave={closeEdit}
-      />
-      <ApplyModal opened={applyOpened} onClose={closeApply} job={applyJob} />
+      {/* Desktop sidebar — fixed over the placeholder */}
+      <Box
+        visibleFrom="md"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 260,
+          height: "100vh",
+          zIndex: 200,
+        }}
+      >
+        {sidebar}
+      </Box>
+
+      {/* Mobile drawer */}
+      <Drawer
+        opened={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        size="xs"
+        withCloseButton={false}
+        padding={0}
+        hiddenFrom="md"
+      >
+        {sidebar}
+      </Drawer>
     </Box>
   );
 }
