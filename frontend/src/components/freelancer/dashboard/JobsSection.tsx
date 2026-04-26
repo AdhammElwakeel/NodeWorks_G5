@@ -16,7 +16,6 @@ import {
   Avatar,
   Divider,
   Center,
-  useMantineColorScheme,
 } from "@mantine/core";
 import { Search, Filter, Send, Bookmark, Briefcase, DollarSign } from "lucide-react";
 import type { Job } from "./types";
@@ -27,9 +26,6 @@ interface JobsSectionProps {
 }
 
 export function JobsSection({ jobs, onApply }: JobsSectionProps) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === "dark";
-  const textPrimary = isDark ? "gray.0" : "black";
 
   const [search, setSearch] = useState("");
   const [skillFilter, setSkillFilter] = useState<string | null>(null);
@@ -60,7 +56,7 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
   return (
     <Stack gap="xl">
       {/* Search & Filter */}
-      <Card withBorder radius="md" shadow={isDark ? undefined : "sm"}>
+      <Card withBorder radius="md" shadow="sm">
         <Group gap="md" wrap="wrap">
           <TextInput
             placeholder="Search jobs by title or keyword..."
@@ -89,7 +85,7 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
       </Card>
 
       <Group justify="space-between">
-        <Text fw={600} c={textPrimary}>
+        <Text fw={600} c="black">
           {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
         </Text>
         <Button
@@ -111,10 +107,10 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
           <Center>
             <Stack align="center" gap="sm">
               <Briefcase size={48} color="#94a3b8" />
-              <Text fw={600} c={textPrimary}>
+              <Text fw={600} c="black">
                 No jobs found
               </Text>
-              <Text fz="sm" c={textPrimary} ta="center">
+              <Text fz="sm" c="black" ta="center">
                 Try adjusting your search or check back later for new
                 opportunities.
               </Text>
@@ -130,7 +126,7 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
                 key={job.id}
                 withBorder
                 radius="md"
-                shadow={isDark ? undefined : "sm"}
+                shadow="sm"
                 style={{
                   transition: "all 0.2s ease",
                   position: "relative",
@@ -179,7 +175,7 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
                           size={14}
                           color="var(--mantine-color-cyan-6)"
                         />
-                        <Text fw={700} fz="sm" c={textPrimary}>
+                        <Text fw={700} fz="sm" c="black">
                           {job.budgetType === "hourly"
                             ? `$${job.budget}/hr`
                             : `$${job.budget.toLocaleString()}`}
@@ -188,10 +184,10 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
                     )}
                   </Group>
 
-                  <Text fw={700} c={textPrimary} lineClamp={2} fz="lg">
+                  <Text fw={700} c="black" lineClamp={2} fz="lg">
                     {job.title}
                   </Text>
-                  <Text fz="sm" c={textPrimary} lineClamp={3}>
+                  <Text fz="sm" c="black" lineClamp={3}>
                     {job.description}
                   </Text>
 
@@ -236,10 +232,10 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
                         {job.clientAvatar}
                       </Avatar>
                       <Stack gap={0}>
-                        <Text fz="sm" fw={500} c={textPrimary}>
+                        <Text fz="sm" fw={500} c="black">
                           {job.clientName}
                         </Text>
-                        <Text fz="xs" c={textPrimary}>
+                        <Text fz="xs" c="black">
                           {job.postedAt} · {job.proposals} proposals
                         </Text>
                       </Stack>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, SimpleGrid, Stack, Title, Text, Box, useMantineColorScheme } from "@mantine/core";
+import { Container, SimpleGrid, Stack, Title, Text, Box } from "@mantine/core";
 import {
   Brain,
   ShieldCheck,
@@ -51,10 +51,8 @@ const features = [
 ];
 
 export function FeaturesSection() {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === "dark";
   return (
-    <Box component="section" py={{ base: 60, md: 80, lg: 100 }} bg={isDark ? "dark.8" : "white"}>
+    <Box component="section" py={{ base: 60, md: 80, lg: 100 }} bg="white">
       <Container size="xl">
         <Stack gap="xl">
           {/* Section Header */}

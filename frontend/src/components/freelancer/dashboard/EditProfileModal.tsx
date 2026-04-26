@@ -12,7 +12,6 @@ import {
   Select,
   TagsInput,
   ScrollArea,
-  useMantineColorScheme,
 } from "@mantine/core";
 import type { EditFormState } from "./types";
 
@@ -25,18 +24,14 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ opened, onClose, form, setForm, onSave }: EditProfileModalProps) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === "dark";
-  const textPrimary = isDark ? "gray.0" : "black";
-  const labelColor = isDark ? "#e2e8f0" : "black";
 
-  const labelStyles = { label: { color: labelColor } };
+  const labelStyles = { label: { color: "black" } };
 
   return (
     <Modal
       opened={opened}
       onClose={onClose}
-      title={<Text c={textPrimary} fw={700}>Edit Your Profile</Text>}
+      title={<Text c="black" fw={700}>Edit Your Profile</Text>}
       size="xl"
       scrollAreaComponent={ScrollArea.Autosize}
       radius="md"

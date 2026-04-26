@@ -11,7 +11,6 @@ import {
   Textarea,
   NumberInput,
   ScrollArea,
-  useMantineColorScheme,
 } from "@mantine/core";
 import { DollarSign } from "lucide-react";
 import type { Job } from "./types";
@@ -23,9 +22,6 @@ interface ApplyModalProps {
 }
 
 export function ApplyModal({ opened, onClose, job }: ApplyModalProps) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === "dark";
-  const textPrimary = isDark ? "gray.0" : "black";
 
   const [coverLetter, setCoverLetter] = useState("");
   const [proposedRate, setProposedRate] = useState<string | number>("");
@@ -55,10 +51,10 @@ export function ApplyModal({ opened, onClose, job }: ApplyModalProps) {
         {job && (
           <Card withBorder radius="md">
             <Stack gap={4}>
-              <Text fw={600} c={textPrimary}>
+              <Text fw={600} c="black">
                 {job.title}
               </Text>
-              <Text fz="sm" c={textPrimary} lineClamp={3}>
+              <Text fz="sm" c="black" lineClamp={3}>
                 {job.description}
               </Text>
               {job.budget && (
