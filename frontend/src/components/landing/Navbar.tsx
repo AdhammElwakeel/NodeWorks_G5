@@ -43,21 +43,29 @@ export function Navbar() {
           <Group gap="sm">
             <Button
               component={Link}
+              href="/register?role=client"
+              variant="subtle"
+              color="gray"
+              size="md"
+            >
+              Hire Talent
+            </Button>
+            <Button
+              component={Link}
+              href="/register"
+              variant="default"
+              size="md"
+            >
+              Find Work
+            </Button>
+            <Button
+              component={Link}
               href="/login"
               variant="subtle"
               color="gray"
               size="md"
             >
               Sign In
-            </Button>
-            <Button
-              component={Link}
-              href="/register"
-              variant="gradient"
-              gradient={{ from: "indigo", to: "blue", deg: 135 }}
-              size="md"
-            >
-              Get Started
             </Button>
           </Group>
         </Group>

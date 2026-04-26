@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { MantineProvider, mantineHtmlProps } from "@mantine/core";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { Notifications } from "@mantine/notifications";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,6 +26,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable} {...mantineHtmlProps}>
       <body>
         <MantineProvider defaultColorScheme="light">
+          <Notifications position="top-right" />
           <AuthProvider>{children}</AuthProvider>
         </MantineProvider>
       </body>
