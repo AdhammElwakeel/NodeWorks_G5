@@ -105,7 +105,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditClick }: SidebarProps) {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const displayName = user?.name || "Freelancer";
+  const displayRole = user?.freelancerProfile?.headline || "Freelancer Account";
 
   return (
     <Box
@@ -234,10 +236,10 @@ export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditCl
           </Box>
           <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
             <Text fw={600} fz="sm" c="black" lineClamp={1}>
-              Ahmed Hassan
+              {displayName}
             </Text>
             <Text fz={11} c="#94a3b8" lineClamp={1}>
-              Senior Full-Stack Developer
+              {displayRole}
             </Text>
           </Stack>
           <ChevronRight size={14} color="#cbd5e1" />

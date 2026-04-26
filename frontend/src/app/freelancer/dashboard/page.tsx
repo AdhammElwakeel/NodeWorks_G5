@@ -19,6 +19,7 @@ import {
   MOCK_EARNINGS,
 } from "@/components/freelancer/dashboard/data";
 import type { Section, Job, EditFormState } from "@/components/freelancer/dashboard/types";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function FreelancerDashboardPage() {
   const [activeSection, setActiveSection] = useState<Section>("home");
@@ -67,29 +68,30 @@ export default function FreelancerDashboardPage() {
   );
 
   return (
-    <Box style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Desktop sidebar placeholder — reserves 260px in flex layout */}
-      <Box visibleFrom="md" w={260} style={{ flexShrink: 0 }} />
+    <ProtectedRoute requiredRole="freelancer">
+      <Box style={{ display: "flex", minHeight: "100vh" }}>
+        {/* Desktop sidebar placeholder — reserves 260px in flex layout */}
+        <Box visibleFrom="md" w={260} style={{ flexShrink: 0 }} />
 
-      {/* Main content */}
-      <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "#f8fafc" }}>
-        {/* Mobile header */}
-        <Group
-          hiddenFrom="md"
-          p="md"
-          style={{ borderBottom: "1px solid #e2e8f0", background: "white" }}
-        >
-          <Burger
-            opened={mobileOpen}
-            onClick={() => setMobileOpen((o) => !o)}
-            size="sm"
-          />
-          <Title order={5} c="dark.9">
-            NodeWorks
-          </Title>
-        </Group>
+        {/* Main content */}
+        <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+          {/* Mobile header */}
+          <Group
+            hiddenFrom="md"
+            p="md"
+            style={{ borderBottom: "1px solid #e2e8f0", background: "white" }}
+          >
+            <Burger
+              opened={mobileOpen}
+              onClick={() => setMobileOpen((o) => !o)}
+              size="sm"
+            />
+            <Title order={5} c="dark.9">
+              NodeWorks
+            </Title>
+          </Group>
 
-        <HeaderBanner
+          <HeaderBanner
           profile={MOCK_PROFILE}
           profileCompletion={profileCompletion}
           acceptedCount={acceptedCount}
@@ -113,34 +115,35 @@ export default function FreelancerDashboardPage() {
             <EarningsSection earnings={MOCK_EARNINGS} />
           )}
         </Container>
-      </Box>
+        </Box>
 
-      {/* Desktop sidebar — fixed over the placeholder */}
-      <Box
-        visibleFrom="md"
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: 260,
-          height: "100vh",
-          zIndex: 200,
-        }}
-      >
-        {sidebar}
-      </Box>
+        {/* Desktop sidebar — fixed over the placeholder */}
+        <Box
+          visibleFrom="md"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 260,
+            height: "100vh",
+            zIndex: 200,
+          }}
+        >
+          {sidebar}
+        </Box>
 
-      {/* Mobile drawer */}
-      <Drawer
-        opened={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        size="xs"
-        withCloseButton={false}
-        padding={0}
-        hiddenFrom="md"
-      >
-        {sidebar}
-      </Drawer>
-    </Box>
+        {/* Mobile drawer */}
+        <Drawer
+          opened={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          size="xs"
+          withCloseButton={false}
+          padding={0}
+          hiddenFrom="md"
+        >
+          {sidebar}
+        </Drawer>
+      </Box>
+    </ProtectedRoute>
   );
 }
