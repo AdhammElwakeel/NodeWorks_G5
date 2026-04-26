@@ -6,6 +6,7 @@ import { OnboardingLayout } from "./components/OnboardingLayout";
 import { CVUploadStep } from "./components/CVUploadStep";
 import { ProfileStep } from "./components/ProfileStep";
 import { AIInterviewStep } from "./components/AIInterviewStep";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 type OnboardingStep = 0 | 1 | 2;
 
@@ -55,6 +56,7 @@ export default function FreelancerOnboardingPage() {
   const canContinue = step !== 0 || cvExtracted;
 
   return (
+    <ProtectedRoute requiredRole="freelancer">
     <OnboardingLayout
       steps={steps}
       step={step}
@@ -74,5 +76,6 @@ export default function FreelancerOnboardingPage() {
       {step === 1 && <ProfileStep skills={skills} onSkillsChange={setSkills} />}
       {step === 2 && <AIInterviewStep />}
     </OnboardingLayout>
+    </ProtectedRoute>
   );
 }

@@ -16,12 +16,13 @@ import {
 } from "@mantine/core";
 import { Zap, Mail, Lock } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,8 +34,15 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
-      router.push("/freelancer/dashboard");
+      const user = await login(email, password);
+      const redirect = searchParams.get("redirect");
+      if (redirect) {
+        router.push(decodeURIComponent(redirect));
+      } else if (user.role === "client") {
+        router.push("/client/dashboard");
+      } else {
+        router.push("/freelancer/dashboard");
+      }
     } catch (err: any) {
       setError(err?.message || "Login failed. Please try again.");
     } finally {
