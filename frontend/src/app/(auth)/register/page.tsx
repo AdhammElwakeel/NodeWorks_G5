@@ -18,14 +18,41 @@ import { Zap, Mail, Lock, User, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [accountType, setAccountType] = useState("freelancer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await register({
+        email,
+        password,
+        name: `${firstName} ${lastName}`.trim(),
+        role: accountType as "freelancer" | "client",
+      });
+      if (accountType === "freelancer") {
+        router.push("/freelancer/onboarding");
+      } else {
+        router.push("/client/dashboard");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box
@@ -260,7 +287,7 @@ export default function RegisterPage() {
             <Divider label="or continue with email" labelPosition="center" />
 
             {/* Form */}
-            <form onSubmit={(e) => { e.preventDefault(); router.push("/freelancer/onboarding"); }}>
+            <form onSubmit={handleSubmit}>
               <Stack gap="md">
                 <Group grow>
                   <TextInput
@@ -312,12 +339,18 @@ export default function RegisterPage() {
                     Privacy Policy
                   </Anchor>
                 </Text>
+                {error && (
+                  <Text c="red" fz="sm" ta="center">
+                    {error}
+                  </Text>
+                )}
                 <Button
                   fullWidth
                   size="md"
                   variant="gradient"
                   gradient={{ from: "indigo", to: "blue", deg: 135 }}
                   type="submit"
+                  loading={loading}
                 >
                   Create account
                 </Button>
