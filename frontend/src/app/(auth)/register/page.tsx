@@ -12,18 +12,21 @@ import {
   Stack,
   Divider,
   Anchor,
-  SegmentedControl,
+  Badge,
 } from "@mantine/core";
-import { Zap, Mail, Lock, User, Briefcase } from "lucide-react";
+import { Zap, Mail, Lock } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register } = useAuth();
-  const [accountType, setAccountType] = useState("freelancer");
+  const [accountType, setAccountType] = useState(
+    searchParams.get("role") === "client" ? "client" : "freelancer"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -45,7 +48,7 @@ export default function RegisterPage() {
       if (accountType === "freelancer") {
         router.push("/freelancer/onboarding");
       } else {
-        router.push("/client/dashboard");
+        router.push("/client/onboarding");
       }
     } catch (err: any) {
       setError(err?.message || "Registration failed. Please try again.");
@@ -222,38 +225,16 @@ export default function RegisterPage() {
               </Text>
             </Stack>
 
-            {/* Account Type Selector */}
-            <SegmentedControl
-              fullWidth
-              size="md"
-              value={accountType}
-              onChange={setAccountType}
-              data={[
-                {
-                  label: (
-                    <Group gap="xs" justify="center">
-                      <User size={16} />
-                      <span>Freelancer</span>
-                    </Group>
-                  ),
-                  value: "freelancer",
-                },
-                {
-                  label: (
-                    <Group gap="xs" justify="center">
-                      <Briefcase size={16} />
-                      <span>Client</span>
-                    </Group>
-                  ),
-                  value: "client",
-                },
-              ]}
-              styles={{
-                root: {
-                  backgroundColor: "var(--mantine-color-gray-1)",
-                },
-              }}
-            />
+            <Group justify="center">
+              <Badge
+                size="lg"
+                variant="light"
+                color={accountType === "client" ? "indigo" : "cyan"}
+                radius="sm"
+              >
+                {accountType === "client" ? "Client" : "Freelancer"}
+              </Badge>
+            </Group>
 
             {/* Social Login */}
             <Button
