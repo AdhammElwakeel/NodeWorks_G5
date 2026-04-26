@@ -1,7 +1,8 @@
 "use client";
 
 import { Box, Text, Badge, Stack, Group, Avatar, Divider, useMantineColorScheme } from "@mantine/core";
-import { Home, Briefcase, Wallet, User, Sun, Moon, ChevronRight, Zap } from "lucide-react";
+import { Home, Briefcase, Wallet, User, Sun, Moon, ChevronRight, Zap, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 import type { Section } from "./types";
 
 interface SidebarNavItemProps {
@@ -119,6 +120,7 @@ interface SidebarProps {
 export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditClick }: SidebarProps) {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const isDark = colorScheme === "dark";
+  const { logout } = useAuth();
 
   return (
     <Box
@@ -269,6 +271,59 @@ export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditCl
             </Text>
           </Stack>
           <ChevronRight size={14} color={isDark ? "#475569" : "#cbd5e1"} />
+        </Box>
+
+        {/* Sign Out */}
+        <Box
+          onClick={logout}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "10px 14px",
+            borderRadius: 12,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            backgroundColor: "transparent",
+            color: isDark ? "#94a3b8" : "#64748b",
+            border: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}`,
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = isDark
+              ? "rgba(239,68,68,0.08)"
+              : "rgba(239,68,68,0.06)";
+            (e.currentTarget as HTMLElement).style.borderColor = isDark
+              ? "#ef4444"
+              : "#fca5a5";
+            (e.currentTarget as HTMLElement).style.color = "#ef4444";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+            (e.currentTarget as HTMLElement).style.borderColor = isDark
+              ? "#1e293b"
+              : "#f1f5f9";
+            (e.currentTarget as HTMLElement).style.color = isDark
+              ? "#94a3b8"
+              : "#64748b";
+          }}
+        >
+          <Box
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              background: "rgba(239,68,68,0.1)",
+              color: "#ef4444",
+            }}
+          >
+            <LogOut size={16} />
+          </Box>
+          <Text fz="sm" fw={500} style={{ flex: 1 }}>
+            Sign out
+          </Text>
         </Box>
 
         {/* Theme Toggle */}

@@ -18,11 +18,29 @@ import { Zap, Mail, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await login(email, password);
+      router.push("/freelancer/dashboard");
+    } catch (err: any) {
+      setError(err?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <Box
       style={{
@@ -222,7 +240,7 @@ export default function LoginPage() {
             <Divider label="or continue with email" labelPosition="center" />
 
             {/* Form */}
-            <form onSubmit={(e) => { e.preventDefault(); router.push("/freelancer/dashboard"); }}>
+            <form onSubmit={handleSubmit}>
               <Stack gap="md">
                 <TextInput
                   label="Email"
@@ -255,6 +273,11 @@ export default function LoginPage() {
                     Forgot password?
                   </Anchor>
                 </Group>
+                {error && (
+                  <Text c="red" fz="sm" ta="center">
+                    {error}
+                  </Text>
+                )}
                 <Button
                   fullWidth
                   size="md"
@@ -262,6 +285,7 @@ export default function LoginPage() {
                   gradient={{ from: "indigo", to: "blue", deg: 135 }}
                   mt="sm"
                   type="submit"
+                  loading={loading}
                 >
                   Sign in
                 </Button>
