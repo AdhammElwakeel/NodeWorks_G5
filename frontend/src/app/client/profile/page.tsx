@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -15,6 +15,8 @@ import {
   Avatar,
   Divider,
   Badge,
+  Loader,
+  Center,
 } from "@mantine/core";
 import {
   Building2,
@@ -26,7 +28,9 @@ import {
   Edit3,
 } from "lucide-react";
 import { PageHeader } from "@/components/client/PageHeader";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/auth-context";
+import { profileApi } from "@/lib/api";
 import { notifications } from "@mantine/notifications";
 
 const INDUSTRIES = [
@@ -50,37 +54,79 @@ const COMPANY_SIZES = [
   "500+ employees",
 ];
 
+interface ClientProfileData {
+  companyName: string;
+  industry: string;
+  companySize: string;
+  description: string;
+  website: string;
+  location: string;
+}
+
 export default function ClientProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Mock profile data (would come from API in real app)
-  const [profile, setProfile] = useState({
-    companyName: "Acme Technologies",
-    industry: "Technology",
-    companySize: "11-50 employees",
-    description:
-      "We build innovative software solutions for businesses worldwide. Our team is always looking for talented freelancers to help us deliver exceptional projects.",
-    website: "https://acmetech.com",
-    location: "San Francisco, CA",
-    email: user?.email || "contact@acmetech.com",
+  const [profile, setProfile] = useState<ClientProfileData>({
+    companyName: "",
+    industry: "",
+    companySize: "",
+    description: "",
+    website: "",
+    location: "",
   });
 
-  const [form, setForm] = useState({ ...profile });
+  const [form, setForm] = useState<ClientProfileData>({ ...profile });
+
+  useEffect(() => {
+    if (!user) return;
+    const cp = (user as any).clientProfile || {};
+    const p = {
+      companyName: cp.companyName || user.name || "",
+      industry: cp.industry || "",
+      companySize: cp.companySize || "",
+      description: cp.description || "",
+      website: cp.website || "",
+      location: cp.location || "",
+    };
+    setProfile(p);
+    setForm(p);
+    setLoading(false);
+  }, [user]);
 
   const handleSave = async () => {
     setSaving(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 800));
-    setProfile({ ...form });
-    setEditing(false);
-    setSaving(false);
-    notifications.show({
-      title: "Profile updated",
-      message: "Your company profile has been saved successfully.",
-      color: "green",
-    });
+    try {
+      await profileApi.update({
+        name: form.companyName,
+        profile: {
+          companyName: form.companyName,
+          industry: form.industry,
+          companySize: form.companySize,
+          description: form.description,
+          website: form.website,
+          location: form.location,
+        },
+      });
+      await refreshUser();
+      setProfile({ ...form });
+      setEditing(false);
+      notifications.show({
+        title: "Profile updated",
+        message: "Your company profile has been saved.",
+        color: "green",
+      });
+    } catch {
+      notifications.show({
+        title: "Error",
+        message: "Failed to save profile.",
+        color: "red",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -88,8 +134,18 @@ export default function ClientProfilePage() {
     setEditing(false);
   };
 
+  if (loading) {
+    return (
+      <ProtectedRoute requiredRole="client">
+        <Center style={{ minHeight: "80vh" }}>
+          <Loader size="lg" color="indigo" />
+        </Center>
+      </ProtectedRoute>
+    );
+  }
+
   return (
-    <Box>
+    <ProtectedRoute requiredRole="client">
       <PageHeader
         title="Company Profile"
         subtitle="Manage your company information"
@@ -124,24 +180,30 @@ export default function ClientProfilePage() {
             <Stack gap={4} style={{ flex: 1 }}>
               <Group gap="xs" align="center">
                 <Title order={3} c="dark.9">
-                  {profile.companyName}
+                  {profile.companyName || "Your Company"}
                 </Title>
-                <Badge color="indigo" variant="light" size="sm">
-                  {profile.industry}
-                </Badge>
+                {profile.industry && (
+                  <Badge color="indigo" variant="light" size="sm">
+                    {profile.industry}
+                  </Badge>
+                )}
               </Group>
-              <Group gap="xs">
-                <Users size={14} color="#94a3b8" />
-                <Text fz="sm" c="dimmed">
-                  {profile.companySize}
-                </Text>
-              </Group>
-              <Group gap="xs">
-                <MapPin size={14} color="#94a3b8" />
-                <Text fz="sm" c="dimmed">
-                  {profile.location}
-                </Text>
-              </Group>
+              {profile.companySize && (
+                <Group gap="xs">
+                  <Users size={14} color="#94a3b8" />
+                  <Text fz="sm" c="dimmed">
+                    {profile.companySize}
+                  </Text>
+                </Group>
+              )}
+              {profile.location && (
+                <Group gap="xs">
+                  <MapPin size={14} color="#94a3b8" />
+                  <Text fz="sm" c="dimmed">
+                    {profile.location}
+                  </Text>
+                </Group>
+              )}
             </Stack>
           </Group>
 
@@ -158,10 +220,7 @@ export default function ClientProfilePage() {
                   }
                   leftSection={<Building2 size={16} color="#94a3b8" />}
                   styles={{
-                    label: {
-                      color: "var(--mantine-color-dark-9)",
-                      fontWeight: 600,
-                    },
+                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
                   }}
                 />
                 <TextInput
@@ -172,10 +231,7 @@ export default function ClientProfilePage() {
                   }
                   leftSection={<Globe size={16} color="#94a3b8" />}
                   styles={{
-                    label: {
-                      color: "var(--mantine-color-dark-9)",
-                      fontWeight: 600,
-                    },
+                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
                   }}
                 />
               </Group>
@@ -188,10 +244,7 @@ export default function ClientProfilePage() {
                     setForm({ ...form, industry: val || "" })
                   }
                   styles={{
-                    label: {
-                      color: "var(--mantine-color-dark-9)",
-                      fontWeight: 600,
-                    },
+                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
                   }}
                 />
                 <Select
@@ -202,10 +255,7 @@ export default function ClientProfilePage() {
                     setForm({ ...form, companySize: val || "" })
                   }
                   styles={{
-                    label: {
-                      color: "var(--mantine-color-dark-9)",
-                      fontWeight: 600,
-                    },
+                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
                   }}
                 />
               </Group>
@@ -217,24 +267,7 @@ export default function ClientProfilePage() {
                 }
                 leftSection={<MapPin size={16} color="#94a3b8" />}
                 styles={{
-                  label: {
-                    color: "var(--mantine-color-dark-9)",
-                    fontWeight: 600,
-                  },
-                }}
-              />
-              <TextInput
-                label="Contact Email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
-                leftSection={<Mail size={16} color="#94a3b8" />}
-                styles={{
-                  label: {
-                    color: "var(--mantine-color-dark-9)",
-                    fontWeight: 600,
-                  },
+                  label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
                 }}
               />
               <Textarea
@@ -245,10 +278,7 @@ export default function ClientProfilePage() {
                 }
                 minRows={4}
                 styles={{
-                  label: {
-                    color: "var(--mantine-color-dark-9)",
-                    fontWeight: 600,
-                  },
+                  label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
                 }}
               />
               <Group justify="flex-end" gap="sm">
@@ -268,44 +298,58 @@ export default function ClientProfilePage() {
             </Stack>
           ) : (
             <Stack gap="lg">
-              <Group>
-                <Globe size={18} color="#4f46e5" />
-                <Text c="dark.9" fz="sm">
-                  {profile.website}
-                </Text>
-              </Group>
-              <Group>
-                <Mail size={18} color="#4f46e5" />
-                <Text c="dark.9" fz="sm">
-                  {profile.email}
-                </Text>
-              </Group>
+              {profile.website && (
+                <Group>
+                  <Globe size={18} color="#4f46e5" />
+                  <Text c="dark.9" fz="sm">
+                    {profile.website}
+                  </Text>
+                </Group>
+              )}
+              {user?.email && (
+                <Group>
+                  <Mail size={18} color="#4f46e5" />
+                  <Text c="dark.9" fz="sm">
+                    {user.email}
+                  </Text>
+                </Group>
+              )}
 
-              <Divider />
+              {profile.description && (
+                <>
+                  <Divider />
+                  <Box>
+                    <Text fw={600} c="dark.9" mb="xs">
+                      About
+                    </Text>
+                    <Text c="dimmed" fz="sm" style={{ lineHeight: 1.7 }}>
+                      {profile.description}
+                    </Text>
+                  </Box>
+                </>
+              )}
 
-              <Box>
-                <Text fw={600} c="dark.9" mb="xs">
-                  About
-                </Text>
-                <Text c="dimmed" fz="sm" style={{ lineHeight: 1.7 }}>
-                  {profile.description}
-                </Text>
-              </Box>
-
-              <Divider />
-
-              <Group gap="sm">
-                <Badge size="lg" variant="light" color="indigo">
-                  {profile.industry}
-                </Badge>
-                <Badge size="lg" variant="light" color="cyan">
-                  {profile.companySize}
-                </Badge>
-              </Group>
+              {(profile.industry || profile.companySize) && (
+                <>
+                  <Divider />
+                  <Group gap="sm">
+                    {profile.industry && (
+                      <Badge size="lg" variant="light" color="indigo">
+                        {profile.industry}
+                      </Badge>
+                    )}
+                    {profile.companySize && (
+                      <Badge size="lg" variant="light" color="cyan">
+                        {profile.companySize}
+                      </Badge>
+                    )}
+                  </Group>
+                </>
+              )}
             </Stack>
           )}
         </Stack>
       </Card>
-    </Box>
+    </ProtectedRoute>
   );
 }

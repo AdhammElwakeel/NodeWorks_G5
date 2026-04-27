@@ -36,9 +36,28 @@ const fieldLabelStyles = {
 interface ProfileStepProps {
   skills: string[];
   onSkillsChange: (skills: string[]) => void;
+  headline: string;
+  onHeadlineChange: (val: string) => void;
+  experienceLevel: string | null;
+  onExperienceLevelChange: (val: string | null) => void;
+  country: string;
+  onCountryChange: (val: string) => void;
+  about: string;
+  onAboutChange: (val: string) => void;
 }
 
-export function ProfileStep({ skills, onSkillsChange }: ProfileStepProps) {
+export function ProfileStep({
+  skills,
+  onSkillsChange,
+  headline,
+  onHeadlineChange,
+  experienceLevel,
+  onExperienceLevelChange,
+  country,
+  onCountryChange,
+  about,
+  onAboutChange,
+}: ProfileStepProps) {
   return (
     <Paper withBorder radius="md" p="lg" bg="white">
       <Stack gap="lg">
@@ -61,6 +80,8 @@ export function ProfileStep({ skills, onSkillsChange }: ProfileStepProps) {
             label="Professional headline"
             placeholder="Full-stack developer for SaaS apps"
             required
+            value={headline}
+            onChange={(e) => onHeadlineChange(e.target.value)}
             styles={fieldLabelStyles}
           />
           <Select
@@ -68,6 +89,8 @@ export function ProfileStep({ skills, onSkillsChange }: ProfileStepProps) {
             placeholder="Pick one"
             data={["Junior", "Mid-level", "Senior", "Lead"]}
             required
+            value={experienceLevel}
+            onChange={onExperienceLevelChange}
             styles={{
               ...fieldLabelStyles,
               option: { color: "var(--mantine-color-dark-9)" },
@@ -80,6 +103,8 @@ export function ProfileStep({ skills, onSkillsChange }: ProfileStepProps) {
             label="Country"
             placeholder="Egypt"
             required
+            value={country}
+            onChange={(e) => onCountryChange(e.target.value)}
             styles={fieldLabelStyles}
           />
         </SimpleGrid>
@@ -107,6 +132,8 @@ export function ProfileStep({ skills, onSkillsChange }: ProfileStepProps) {
           placeholder="Tell clients what you are great at and what outcomes you deliver"
           minRows={4}
           required
+          value={about}
+          onChange={(e) => onAboutChange(e.target.value)}
           styles={fieldLabelStyles}
         />
       </Stack>

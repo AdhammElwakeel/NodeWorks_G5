@@ -28,6 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { notifications } from "@mantine/notifications";
+import { profileApi } from "@/lib/api";
 
 const INDUSTRIES = [
   "Technology",
@@ -55,32 +56,47 @@ export default function ClientOnboardingPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Step 0: Company Info
   const [companyName, setCompanyName] = useState("");
   const [industry, setIndustry] = useState<string | null>(null);
   const [companySize, setCompanySize] = useState<string | null>(null);
-
-  // Step 1: Company Details
   const [description, setDescription] = useState("");
   const [website, setWebsite] = useState("");
 
   const canProceedStep0 = companyName.trim() && industry && companySize;
   const canProceedStep1 = description.trim().length >= 20;
 
+  const handleFinish = async () => {
+    setLoading(true);
+    try {
+      await profileApi.update({
+        profile: {
+          companyName: companyName.trim(),
+          industry,
+          description: description.trim(),
+          website: website.trim() || undefined,
+        },
+      });
+      notifications.show({
+        title: "Profile complete!",
+        message: "Welcome to NodeWorks Client. Let's find you some talent.",
+        color: "green",
+        icon: <CheckCircle2 size={16} />,
+      });
+      router.push("/client/dashboard");
+    } catch {
+      notifications.show({
+        title: "Error",
+        message: "Failed to save your profile. Please try again.",
+        color: "red",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNext = () => {
     if (activeStep === 2) {
-      // Finish
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        notifications.show({
-          title: "Profile complete!",
-          message: "Welcome to NodeWorks Client. Let's find you some talent.",
-          color: "green",
-          icon: <CheckCircle2 size={16} />,
-        });
-        router.push("/client/dashboard");
-      }, 1200);
+      handleFinish();
       return;
     }
     setActiveStep((s) => s + 1);
@@ -115,7 +131,6 @@ export default function ClientOnboardingPage() {
           background: "white",
         }}
       >
-        {/* Header */}
         <Stack gap="xs" ta="center" mb="xl">
           <Group justify="center" gap="sm">
             <Box
@@ -140,7 +155,6 @@ export default function ClientOnboardingPage() {
           </Text>
         </Stack>
 
-        {/* Progress */}
         <Progress
           value={((activeStep + 1) / steps.length) * 100}
           size="sm"
@@ -149,7 +163,6 @@ export default function ClientOnboardingPage() {
           mb="lg"
         />
 
-        {/* Stepper (visual only) */}
         <Stepper
           active={activeStep}
           onStepClick={setActiveStep}
@@ -163,7 +176,6 @@ export default function ClientOnboardingPage() {
           <Stepper.Step icon={<CheckCircle2 size={16} />} label={steps[2].label} description={steps[2].description} />
         </Stepper>
 
-        {/* Step Content */}
         <Box mb="xl">
           {activeStep === 0 && (
             <Stack gap="lg">
@@ -268,7 +280,6 @@ export default function ClientOnboardingPage() {
           )}
         </Box>
 
-        {/* Navigation */}
         <Group justify="space-between">
           <Button
             variant="default"

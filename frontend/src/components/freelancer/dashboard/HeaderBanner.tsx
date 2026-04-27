@@ -2,6 +2,7 @@
 
 import { Box, Container, Group, Stack, Title, Text, Badge, Button, Avatar, SimpleGrid, Card, ThemeIcon } from "@mantine/core";
 import { User, MapPin, DollarSign, Clock, Briefcase, CheckCircle2, Clock4, Star, TrendingUp, Edit3 } from "lucide-react";
+import Link from "next/link";
 import type { Profile } from "./types";
 
 interface HeaderBannerProps {
@@ -9,10 +10,9 @@ interface HeaderBannerProps {
   profileCompletion: number;
   acceptedCount: number;
   pendingCount: number;
-  onEditClick: () => void;
 }
 
-export function HeaderBanner({ profile, profileCompletion, acceptedCount, pendingCount, onEditClick }: HeaderBannerProps) {
+export function HeaderBanner({ profile, profileCompletion, acceptedCount, pendingCount }: HeaderBannerProps) {
   const stats = [
     { icon: <Briefcase size={20} />, label: "Proposals", value: 3, color: "blue" },
     { icon: <CheckCircle2 size={20} />, label: "Accepted", value: acceptedCount, color: "green" },
@@ -117,10 +117,11 @@ export function HeaderBanner({ profile, profileCompletion, acceptedCount, pendin
 
           <Stack gap="sm" align="flex-end">
             <Button
+              component={Link}
+              href="/freelancer/profile"
               color="cyan"
               variant="light"
               leftSection={<Edit3 size={16} />}
-              onClick={onEditClick}
             >
               Edit Profile
             </Button>
