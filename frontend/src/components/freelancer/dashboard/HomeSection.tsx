@@ -1,18 +1,41 @@
 "use client";
 
-import { Box, Card, Text, Badge, Button, Group, Stack, Grid, ThemeIcon, ActionIcon, Progress } from "@mantine/core";
-import { DollarSign, FileText, Award, Globe, Link as LinkIcon, ChevronRight, Edit3 } from "lucide-react";
+import {
+  Box,
+  Card,
+  Text,
+  Badge,
+  Button,
+  Group,
+  Stack,
+  Grid,
+  ThemeIcon,
+  ActionIcon,
+  Progress,
+} from "@mantine/core";
+import {
+  DollarSign,
+  FileText,
+  Award,
+  Globe,
+  Link as LinkIcon,
+  ChevronRight,
+  Edit3,
+} from "lucide-react";
+import Link from "next/link";
 import type { Profile, Proposal } from "./types";
 
 interface HomeSectionProps {
   profile: Profile;
   proposals: Proposal[];
   profileCompletion: number;
-  onEditClick: () => void;
 }
 
-export function HomeSection({ profile, proposals, profileCompletion, onEditClick }: HomeSectionProps) {
-
+export function HomeSection({
+  profile,
+  proposals,
+  profileCompletion,
+}: HomeSectionProps) {
   return (
     <Stack gap="xl">
       <Grid>
@@ -22,8 +45,12 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c="black">Profile Completion</Text>
-                  <Text fw={700} c="cyan.8">{profileCompletion}%</Text>
+                  <Text fw={600} c="black">
+                    Profile Completion
+                  </Text>
+                  <Text fw={700} c="cyan.8">
+                    {profileCompletion}%
+                  </Text>
                 </Group>
                 <Progress
                   value={profileCompletion}
@@ -38,8 +65,15 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c="black">Skills</Text>
-                  <ActionIcon variant="subtle" color="cyan" onClick={onEditClick}>
+                  <Text fw={600} c="black">
+                    Skills
+                  </Text>
+                  <ActionIcon
+                    variant="subtle"
+                    color="cyan"
+                    component={Link}
+                    href="/freelancer/profile"
+                  >
                     <Edit3 size={16} />
                   </ActionIcon>
                 </Group>
@@ -66,7 +100,9 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             {/* Hourly Rate */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c="black">Hourly Rate</Text>
+                <Text fw={600} c="black">
+                  Hourly Rate
+                </Text>
                 <Group gap="xs">
                   <DollarSign size={18} color="var(--mantine-color-cyan-6)" />
                   <Text fw={700} fz="xl" c="black">
@@ -79,7 +115,9 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             {/* Availability */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c="black">Availability</Text>
+                <Text fw={600} c="black">
+                  Availability
+                </Text>
                 <Group gap="xs">
                   <Box
                     style={{
@@ -97,7 +135,9 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
             {/* Member Since */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c="black">Member Since</Text>
+                <Text fw={600} c="black">
+                  Member Since
+                </Text>
                 <Text c="black">{profile.memberSince}</Text>
               </Stack>
             </Card>
@@ -118,11 +158,19 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                       About
                     </Text>
                   </Group>
-                  <ActionIcon variant="subtle" color="cyan" onClick={onEditClick}>
+                  <ActionIcon
+                    variant="subtle"
+                    color="cyan"
+                    component={Link}
+                    href="/freelancer/profile"
+                  >
                     <Edit3 size={16} />
                   </ActionIcon>
                 </Group>
-                <Text c="black" style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}>
+                <Text
+                  c="black"
+                  style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}
+                >
                   {profile.about}
                 </Text>
               </Stack>
@@ -140,20 +188,21 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                       Experience
                     </Text>
                   </Group>
-                  <ActionIcon variant="subtle" color="cyan" onClick={onEditClick}>
+                  <ActionIcon
+                    variant="subtle"
+                    color="cyan"
+                    component={Link}
+                    href="/freelancer/profile"
+                  >
                     <Edit3 size={16} />
                   </ActionIcon>
                 </Group>
                 <Badge size="lg" variant="light" color="indigo">
                   {profile.experienceLevel} Level
                 </Badge>
-                <Text fz="sm" c="black">
-                  7+ years in full-stack development across multiple industries
-                </Text>
               </Stack>
             </Card>
 
-            {/* Portfolio Links */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
@@ -165,7 +214,12 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                       Portfolio Links
                     </Text>
                   </Group>
-                  <ActionIcon variant="subtle" color="cyan" onClick={onEditClick}>
+                  <ActionIcon
+                    variant="subtle"
+                    color="cyan"
+                    component={Link}
+                    href="/freelancer/profile"
+                  >
                     <Edit3 size={16} />
                   </ActionIcon>
                 </Group>
@@ -180,7 +234,10 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                       onClick={() => window.open(link, "_blank")}
                     >
                       <Group gap="xs">
-                        <LinkIcon size={14} color="var(--mantine-color-cyan-6)" />
+                        <LinkIcon
+                          size={14}
+                          color="var(--mantine-color-cyan-6)"
+                        />
                         <Text c="cyan.7" fz="sm" fw={500}>
                           {link.replace(/^https?:\/\//, "")}
                         </Text>
@@ -228,8 +285,8 @@ export function HomeSection({ profile, proposals, profileCompletion, onEditClick
                                 proposal.status === "accepted"
                                   ? "green"
                                   : proposal.status === "rejected"
-                                  ? "red"
-                                  : "orange"
+                                    ? "red"
+                                    : "orange"
                               }
                             >
                               {proposal.status}
