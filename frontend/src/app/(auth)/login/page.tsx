@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import {
   Button,
   Title,
@@ -21,6 +22,14 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();

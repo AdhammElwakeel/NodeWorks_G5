@@ -18,7 +18,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
-import { clientApi } from "@/lib/mock/clientApi";
+import { projectApi } from "@/lib/api";
 
 const SKILL_OPTIONS = [
   "React",
@@ -51,20 +51,21 @@ export default function CreateProjectPage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [timeline, setTimeline] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !budget || skills.length === 0) return;
 
     setSubmitting(true);
+    setError(null);
     try {
-      await clientApi.createProject({
+      await projectApi.create({
         title,
         description,
         budget: Number(budget),
         skills,
         timeline: timeline || undefined,
-        status: "open",
       });
       notifications.show({
         title: "Project created",
@@ -72,12 +73,8 @@ export default function CreateProjectPage() {
         color: "green",
       });
       router.push("/client/projects");
-    } catch {
-      notifications.show({
-        title: "Error",
-        message: "Failed to create project. Please try again.",
-        color: "red",
-      });
+    } catch (err: any) {
+      setError(err?.message || "Failed to create project. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -175,6 +172,12 @@ export default function CreateProjectPage() {
                 },
               }}
             />
+
+            {error && (
+              <Text c="red" fz="sm" ta="center">
+                {error}
+              </Text>
+            )}
 
             <Group justify="flex-end" mt="md">
               <Button
