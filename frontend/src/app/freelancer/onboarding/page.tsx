@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OnboardingLayout } from "./components/OnboardingLayout";
-import { CVUploadStep } from "./components/CVUploadStep";
-import { ProfileStep } from "./components/ProfileStep";
+import { CVUploadStep, type CvData } from "./components/CVUploadStep";
+import { ProfileStep, type ProfileData } from "./components/ProfileStep";
 import { AIInterviewStep } from "./components/AIInterviewStep";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { profileApi, cvApi } from "@/lib/api";
@@ -18,19 +18,29 @@ const steps = [
   { key: "ai", title: "AI Interview", description: "Readiness and voice interview" },
 ] as const;
 
+const CV_ANALYSIS_URL =
+  process.env.NEXT_PUBLIC_CV_ANALYSIS_API_URL ?? "http://localhost:8000/api/analyze-cv";
+
 export default function FreelancerOnboardingPage() {
   const [step, setStep] = useState<OnboardingStep>(0);
+
+  // --- CV upload & analysis state ---
   const [cvExtracted, setCvExtracted] = useState(false);
   const [cvFileName, setCvFileName] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [cvData, setCvData] = useState<CvData | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
-
-  // Profile step state
-  const [skills, setSkills] = useState<string[]>([]);
-  const [headline, setHeadline] = useState("");
-  const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
-  const [country, setCountry] = useState("");
-  const [about, setAbout] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // --- Profile form state (lifted here so it survives step transitions) ---
+  const [profileData, setProfileData] = useState<ProfileData>({
+    headline: "",
+    experienceLevel: null,
+    country: "",
+    skills: [],
+    bio: "",
+  });
 
   const router = useRouter();
 
@@ -39,10 +49,47 @@ export default function FreelancerOnboardingPage() {
     [step],
   );
 
-  const handleCVUpload = (file: File | null) => {
+  // -------------------------------------------------------------------------
+  // Step 0: user selects a file → immediately POST it to the CV analyzer API
+  // -------------------------------------------------------------------------
+  const handleCVUpload = async (file: File | null) => {
+    // Reset state whenever the user picks a new file (or clears)
+    setCvExtracted(false);
+    setCvFileName(null);
+    setCvData(null);
+    setAnalysisError(null);
+    setCvFile(null);
+
+    if (!file) return;
+
+    setCvFileName(file.name);
     setCvFile(file);
-    setCvExtracted(Boolean(file));
-    setCvFileName(file ? file.name : null);
+    setIsAnalyzing(true);
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+
+      const res = await fetch(CV_ANALYSIS_URL, {
+        method: "POST",
+        body: form,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err?.detail ?? "CV analysis failed");
+      }
+
+      const data: CvData = await res.json();
+      setCvData(data);
+      setCvExtracted(true);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
+      setAnalysisError(message);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleStepBack = () =>
@@ -67,11 +114,11 @@ export default function FreelancerOnboardingPage() {
       // Save profile
       await profileApi.update({
         profile: {
-          headline: headline.trim() || undefined,
-          experienceLevel: experienceLevel || undefined,
-          country: country.trim() || undefined,
-          skills,
-          about: about.trim() || undefined,
+          headline: profileData.headline.trim() || undefined,
+          experienceLevel: profileData.experienceLevel || undefined,
+          country: profileData.country.trim() || undefined,
+          skills: profileData.skills,
+          about: profileData.bio.trim() || undefined,
         },
       });
 
@@ -92,7 +139,8 @@ export default function FreelancerOnboardingPage() {
     }
   };
 
-  const canContinue = step !== 0 || cvExtracted;
+  // Can only proceed from step 0 if analysis completed successfully
+  const canContinue = step !== 0 || (cvExtracted && !isAnalyzing);
 
   return (
     <ProtectedRoute requiredRole="freelancer">
@@ -110,21 +158,17 @@ export default function FreelancerOnboardingPage() {
           <CVUploadStep
             cvExtracted={cvExtracted}
             cvFileName={cvFileName}
+            isAnalyzing={isAnalyzing}
+            analysisError={analysisError}
+            cvData={cvData}
             onUpload={handleCVUpload}
           />
         )}
         {step === 1 && (
           <ProfileStep
-            skills={skills}
-            onSkillsChange={setSkills}
-            headline={headline}
-            onHeadlineChange={setHeadline}
-            experienceLevel={experienceLevel}
-            onExperienceLevelChange={setExperienceLevel}
-            country={country}
-            onCountryChange={setCountry}
-            about={about}
-            onAboutChange={setAbout}
+            cvData={cvData}
+            profileData={profileData}
+            onProfileChange={setProfileData}
           />
         )}
         {step === 2 && <AIInterviewStep />}
