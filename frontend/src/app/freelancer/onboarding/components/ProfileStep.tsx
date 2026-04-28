@@ -14,18 +14,8 @@ import {
   Title,
 } from "@mantine/core";
 import { UserCircle } from "lucide-react";
-
-const skillOptions = [
-  "React",
-  "Next.js",
-  "Node.js",
-  "TypeScript",
-  "UI Design",
-  "Project Management",
-  "Python",
-  "Data Analysis",
-  "Content Writing",
-];
+import { useEffect, useState } from "react";
+import { type CvData } from "./CVUploadStep";
 
 const fieldLabelStyles = {
   label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
@@ -33,31 +23,97 @@ const fieldLabelStyles = {
   input: { color: "var(--mantine-color-dark-9)" },
 };
 
-interface ProfileStepProps {
-  skills: string[];
-  onSkillsChange: (skills: string[]) => void;
-  headline: string;
-  onHeadlineChange: (val: string) => void;
-  experienceLevel: string | null;
-  onExperienceLevelChange: (val: string | null) => void;
-  country: string;
-  onCountryChange: (val: string) => void;
-  about: string;
-  onAboutChange: (val: string) => void;
+/**
+ * Derive an experience level label from the raw "years of experience" string
+ * returned by the CV analyzer (e.g. "36 months", "5 years").
+ */
+function deriveExperienceLevel(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const nums = raw.match(/\d+/g);
+  if (!nums) return null;
+
+  let months = parseInt(nums[0], 10);
+  // If the string says "years", convert to months for uniform comparison
+  if (/year/i.test(raw)) months = months * 12;
+
+  if (months < 24) return "Junior";
+  if (months < 60) return "Mid-level";
+  if (months < 120) return "Senior";
+  return "Lead";
 }
 
-export function ProfileStep({
-  skills,
-  onSkillsChange,
-  headline,
-  onHeadlineChange,
-  experienceLevel,
-  onExperienceLevelChange,
-  country,
-  onCountryChange,
-  about,
-  onAboutChange,
-}: ProfileStepProps) {
+/**
+ * Build a short "About you" bio from extracted CV data.
+ */
+function buildBio(cvData: CvData): string {
+  const parts: string[] = [];
+
+  if (cvData.best_role) {
+    parts.push(`Experienced ${cvData.best_role}`);
+  }
+
+  const expLevel = deriveExperienceLevel(cvData["years of experience"]);
+  if (expLevel && cvData["years of experience"]) {
+    parts.push(`with ${cvData["years of experience"]} of hands-on experience`);
+  }
+
+  const topSkills = (cvData.all_skills ?? []).slice(0, 5);
+  if (topSkills.length > 0) {
+    parts.push(`specialising in ${topSkills.join(", ")}`);
+  }
+
+  if (parts.length === 0) return "";
+  return parts.join(" ") + ".";
+}
+
+export interface ProfileData {
+  headline: string;
+  experienceLevel: string | null;
+  country: string;
+  skills: string[];
+  bio: string;
+}
+
+interface ProfileStepProps {
+  cvData: CvData | null;
+  profileData: ProfileData;
+  onProfileChange: (data: ProfileData) => void;
+}
+
+export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileStepProps) {
+  // Local controlled state — mirrors profileData prop
+  const [headline, setHeadline] = useState(profileData.headline);
+  const [experienceLevel, setExperienceLevel] = useState<string | null>(
+    profileData.experienceLevel
+  );
+  const [country, setCountry] = useState(profileData.country);
+  const [skills, setSkills] = useState<string[]>(profileData.skills);
+  const [bio, setBio] = useState(profileData.bio);
+
+  // Auto-fill whenever cvData arrives (step 0 → step 1 transition)
+  useEffect(() => {
+    if (!cvData) return;
+
+    const newHeadline = cvData.best_role ?? headline;
+    const newLevel = deriveExperienceLevel(cvData["years of experience"]) ?? experienceLevel;
+    const newSkills = cvData.all_skills && cvData.all_skills.length > 0
+      ? cvData.all_skills
+      : skills;
+    const newBio = buildBio(cvData);
+
+    setHeadline(newHeadline);
+    setExperienceLevel(newLevel);
+    setSkills(newSkills);
+    if (newBio) setBio(newBio);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cvData]);
+
+  // Propagate changes to parent whenever any field changes
+  useEffect(() => {
+    onProfileChange({ headline, experienceLevel, country, skills, bio });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headline, experienceLevel, country, skills, bio]);
+
   return (
     <Paper withBorder radius="md" p="lg" bg="white">
       <Stack gap="lg">
@@ -70,7 +126,9 @@ export function ProfileStep({
               Required freelancer information
             </Title>
             <Text c="dark.9" fz="sm">
-              Add key profile details before entering the platform.
+              {cvData
+                ? "Fields have been pre-filled from your CV — review and adjust as needed."
+                : "Add key profile details before entering the platform."}
             </Text>
           </Stack>
         </Group>
@@ -81,7 +139,7 @@ export function ProfileStep({
             placeholder="Full-stack developer for SaaS apps"
             required
             value={headline}
-            onChange={(e) => onHeadlineChange(e.target.value)}
+            onChange={(e) => setHeadline(e.currentTarget.value)}
             styles={fieldLabelStyles}
           />
           <Select
@@ -90,7 +148,7 @@ export function ProfileStep({
             data={["Junior", "Mid-level", "Senior", "Lead"]}
             required
             value={experienceLevel}
-            onChange={onExperienceLevelChange}
+            onChange={setExperienceLevel}
             styles={{
               ...fieldLabelStyles,
               option: { color: "var(--mantine-color-dark-9)" },
@@ -104,7 +162,7 @@ export function ProfileStep({
             placeholder="Egypt"
             required
             value={country}
-            onChange={(e) => onCountryChange(e.target.value)}
+            onChange={(e) => setCountry(e.currentTarget.value)}
             styles={fieldLabelStyles}
           />
         </SimpleGrid>
@@ -112,9 +170,8 @@ export function ProfileStep({
         <TagsInput
           label="Skills"
           placeholder="Add and press Enter"
-          data={skillOptions}
           value={skills}
-          onChange={onSkillsChange}
+          onChange={setSkills}
           clearable
           required
           styles={{
@@ -132,8 +189,8 @@ export function ProfileStep({
           placeholder="Tell clients what you are great at and what outcomes you deliver"
           minRows={4}
           required
-          value={about}
-          onChange={(e) => onAboutChange(e.target.value)}
+          value={bio}
+          onChange={(e) => setBio(e.currentTarget.value)}
           styles={fieldLabelStyles}
         />
       </Stack>
