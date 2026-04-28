@@ -1,8 +1,10 @@
 "use client";
 
 import { Box, Text, Badge, Stack, Group, Avatar, Divider } from "@mantine/core";
-import { Home, Briefcase, Wallet, User, ChevronRight, Zap, LogOut } from "lucide-react";
+import { Home, Briefcase, Wallet, User, ChevronRight, Zap, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { Section } from "./types";
 
 interface SidebarNavItemProps {
@@ -97,17 +99,67 @@ function SidebarNavItem({ icon, label, active, badge, onClick }: SidebarNavItemP
   );
 }
 
+interface SidebarLinkItemProps {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  active: boolean;
+}
+
+function SidebarLinkItem({ icon, label, href, active }: SidebarLinkItemProps) {
+  return (
+    <Box
+      component={Link}
+      href={href}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "12px 14px",
+        borderRadius: 12,
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        textDecoration: "none",
+        backgroundColor: active ? "rgba(6,182,212,0.08)" : "transparent",
+        color: active ? "#0f172a" : "#64748b",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(2,8,23,0.04)";
+      }}
+      onMouseLeave={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+      }}
+    >
+      <Box
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 28,
+          height: 28,
+          color: active ? "#06b6d4" : "inherit",
+        }}
+      >
+        {icon}
+      </Box>
+      <Text fz="sm" fw={active ? 600 : 500}>
+        {label}
+      </Text>
+    </Box>
+  );
+}
+
 interface SidebarProps {
   activeSection: Section;
   onSectionChange: (section: Section) => void;
   pendingCount: number;
-  onEditClick: () => void;
 }
 
-export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditClick }: SidebarProps) {
+export function Sidebar({ activeSection, onSectionChange, pendingCount }: SidebarProps) {
   const { user, logout } = useAuth();
+  const pathname = usePathname();
   const displayName = user?.name || "Freelancer";
-  const displayRole = user?.freelancerProfile?.headline || "Freelancer Account";
+  const displayRole = (user as any)?.freelancerProfile?.headline || "Freelancer Account";
 
   return (
     <Box
@@ -178,7 +230,6 @@ export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditCl
           label="Browse Jobs"
           section="jobs"
           active={activeSection === "jobs"}
-          badge={6}
           onClick={() => onSectionChange("jobs")}
         />
         <SidebarNavItem
@@ -188,15 +239,37 @@ export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditCl
           active={activeSection === "earnings"}
           onClick={() => onSectionChange("earnings")}
         />
+
+        <Divider mx="sm" my="sm" color="#f1f5f9" />
+
+        <Text
+          fz={11}
+          fw={700}
+          tt="uppercase"
+          c="#94a3b8"
+          mb={4}
+          ml={14}
+          style={{ letterSpacing: "0.08em" }}
+        >
+          Account
+        </Text>
+
+        <SidebarLinkItem
+          icon={<Settings size={20} />}
+          label="Edit Profile"
+          href="/freelancer/profile"
+          active={pathname === "/freelancer/profile"}
+        />
       </Stack>
 
       {/* Bottom: Profile + Sign Out */}
       <Stack gap="sm" p="md">
         <Divider color="#f1f5f9" />
 
-        {/* Profile Card */}
+        {/* Profile Card — links to profile page */}
         <Box
-          onClick={onEditClick}
+          component={Link}
+          href="/freelancer/profile"
           style={{
             display: "flex",
             alignItems: "center",
@@ -205,16 +278,21 @@ export function Sidebar({ activeSection, onSectionChange, pendingCount, onEditCl
             borderRadius: 12,
             cursor: "pointer",
             transition: "all 0.2s ease",
-            backgroundColor: "transparent",
-            border: "1px solid #f1f5f9",
+            backgroundColor: pathname === "/freelancer/profile" ? "rgba(6,182,212,0.08)" : "transparent",
+            border: pathname === "/freelancer/profile" ? "1px solid rgba(6,182,212,0.2)" : "1px solid #f1f5f9",
+            textDecoration: "none",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(2,8,23,0.03)";
-            (e.currentTarget as HTMLElement).style.borderColor = "#e2e8f0";
+            if (pathname !== "/freelancer/profile") {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(2,8,23,0.03)";
+              (e.currentTarget as HTMLElement).style.borderColor = "#e2e8f0";
+            }
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-            (e.currentTarget as HTMLElement).style.borderColor = "#f1f5f9";
+            if (pathname !== "/freelancer/profile") {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+              (e.currentTarget as HTMLElement).style.borderColor = "#f1f5f9";
+            }
           }}
         >
           <Box style={{ position: "relative" }}>

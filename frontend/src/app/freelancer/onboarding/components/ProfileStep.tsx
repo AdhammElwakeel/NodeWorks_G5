@@ -138,21 +138,21 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
             label="Professional headline"
             placeholder="Full-stack developer for SaaS apps"
             required
-            styles={fieldLabelStyles}
             value={headline}
             onChange={(e) => setHeadline(e.currentTarget.value)}
+            styles={fieldLabelStyles}
           />
           <Select
             label="Experience level"
             placeholder="Pick one"
             data={["Junior", "Mid-level", "Senior", "Lead"]}
             required
+            value={experienceLevel}
+            onChange={setExperienceLevel}
             styles={{
               ...fieldLabelStyles,
               option: { color: "var(--mantine-color-dark-9)" },
             }}
-            value={experienceLevel}
-            onChange={setExperienceLevel}
           />
         </SimpleGrid>
 
@@ -161,9 +161,9 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
             label="Country"
             placeholder="Egypt"
             required
-            styles={fieldLabelStyles}
             value={country}
             onChange={(e) => setCountry(e.currentTarget.value)}
+            styles={fieldLabelStyles}
           />
         </SimpleGrid>
 
@@ -189,9 +189,9 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
           placeholder="Tell clients what you are great at and what outcomes you deliver"
           minRows={4}
           required
-          styles={fieldLabelStyles}
           value={bio}
           onChange={(e) => setBio(e.currentTarget.value)}
+          styles={fieldLabelStyles}
         />
       </Stack>
     </Paper>

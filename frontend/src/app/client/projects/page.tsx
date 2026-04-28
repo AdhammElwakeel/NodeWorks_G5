@@ -17,19 +17,21 @@ import Link from "next/link";
 import { PageHeader } from "@/components/client/PageHeader";
 import { StatusBadge } from "@/components/client/StatusBadge";
 import { ConfirmModal } from "@/components/client/ConfirmModal";
-import { clientApi, type ClientProject } from "@/lib/mock/clientApi";
+import { projectApi, type ProjectData } from "@/lib/api";
+import { notifications } from "@mantine/notifications";
 
 export default function ClientProjectsPage() {
-  const [projects, setProjects] = useState<ClientProject[]>([]);
+  const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
   const [closeTarget, setCloseTarget] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
 
   const fetchProjects = () => {
     setLoading(true);
-    clientApi
-      .listMyProjects()
-      .then(setProjects)
+    projectApi
+      .list({ mine: true })
+      .then((data) => setProjects(data.projects))
+      .catch(() => setProjects([]))
       .finally(() => setLoading(false));
   };
 
@@ -40,10 +42,24 @@ export default function ClientProjectsPage() {
   const handleClose = async () => {
     if (!closeTarget) return;
     setClosing(true);
-    await clientApi.closeProject(closeTarget);
-    setCloseTarget(null);
-    setClosing(false);
-    fetchProjects();
+    try {
+      await projectApi.update(closeTarget, { status: "closed" });
+      notifications.show({
+        title: "Project closed",
+        message: "No new proposals will be accepted.",
+        color: "green",
+      });
+      fetchProjects();
+    } catch {
+      notifications.show({
+        title: "Error",
+        message: "Failed to close project.",
+        color: "red",
+      });
+    } finally {
+      setCloseTarget(null);
+      setClosing(false);
+    }
   };
 
   return (

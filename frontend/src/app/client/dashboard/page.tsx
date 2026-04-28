@@ -17,16 +17,17 @@ import Link from "next/link";
 import { PageHeader } from "@/components/client/PageHeader";
 import { StatusBadge } from "@/components/client/StatusBadge";
 import { SkillsTags } from "@/components/client/SkillsTags";
-import { clientApi, type ClientProject } from "@/lib/mock/clientApi";
+import { projectApi, type ProjectData } from "@/lib/api";
 
 export default function ClientDashboardPage() {
-  const [projects, setProjects] = useState<ClientProject[]>([]);
+  const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    clientApi
-      .listMyProjects()
-      .then(setProjects)
+    projectApi
+      .list({ mine: true })
+      .then((data) => setProjects(data.projects))
+      .catch(() => setProjects([]))
       .finally(() => setLoading(false));
   }, []);
 
