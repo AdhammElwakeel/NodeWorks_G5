@@ -5,8 +5,10 @@ export interface IClientProfile {
   userId: mongoose.Types.ObjectId;
   companyName?: string;
   industry?: string;
+  companySize?: string;
   description?: string;
   website?: string;
+  location?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,8 +23,10 @@ const ClientProfileSchema = new mongoose.Schema<IClientProfile>(
     },
     companyName: { type: String, trim: true },
     industry: { type: String, trim: true },
+    companySize: { type: String, trim: true },
     description: { type: String },
     website: { type: String, trim: true },
+    location: { type: String, trim: true },
   },
   {
     timestamps: true,
