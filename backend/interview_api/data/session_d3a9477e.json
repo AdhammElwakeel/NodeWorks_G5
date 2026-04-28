@@ -1,0 +1,576 @@
+{
+  "session_id": "d3a9477e",
+  "candidate_id": "Hamed Emad Hamed Farrag",
+  "status": "in_progress",
+  "started_at": "2026-04-29T00:49:17.511912",
+  "completed_at": null,
+  "skills_to_test": [
+    "REST API",
+    "React",
+    "Python",
+    "NLP",
+    "Computer Vision"
+  ],
+  "current_skill_index": 0,
+  "questions": [
+    {
+      "skill_name": "REST API",
+      "question_text": "Tell me about a challenging project where you used REST API.",
+      "focus_concept": "REST API",
+      "is_followup": false,
+      "followup_number": 0,
+      "user_answer": null,
+      "score": null,
+      "feedback": null,
+      "cheating_flag": false
+    }
+  ],
+  "violations": 0,
+  "cv_data": {
+    "name": "Hamed Emad Hamed Farrag",
+    "email": "hamedemad417@gmail.com",
+    "phone": "01287859786",
+    "years of experience": "0 months",
+    "experience": [
+      {
+        "role": "Head of HR",
+        "company": "Google Developer Groups (GDG)",
+        "years": "Unknown"
+      },
+      {
+        "role": "Treasurer",
+        "company": "IEEE GUSB",
+        "years": "Unknown"
+      },
+      {
+        "role": "Web Developer",
+        "company": "Freelance",
+        "years": "Unknown"
+      }
+    ],
+    "education": [
+      {
+        "degree": "Bachelor of Science in Computer Science",
+        "institution": "Galala University",
+        "technologies": [
+          "Computer Vision"
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "name": "Landing Page",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript"
+        ]
+      },
+      {
+        "name": "Article Evaluation App",
+        "technologies": [
+          "JavaScript",
+          "NLP"
+        ]
+      }
+    ],
+    "certifications": [
+      {
+        "name": "Udacity Front end nano degree",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "React"
+        ]
+      }
+    ],
+    "Publications": [],
+    "all_skills": [
+      "Python",
+      "JavaScript",
+      "HTML",
+      "CSS",
+      "React",
+      "REST API",
+      "NLP",
+      "Computer Vision"
+    ],
+    "best_role": "React Frontend Developer",
+    "best_score": 0,
+    "role_rankings": [
+      {
+        "role": "React Frontend Developer",
+        "score": 0,
+        "matched_skills": [
+          "React",
+          "JavaScript",
+          "HTML",
+          "CSS",
+          "REST API"
+        ],
+        "missing_skills": [
+          "TypeScript",
+          "Redux",
+          "Tailwind"
+        ]
+      },
+      {
+        "role": "Vue Frontend Developer",
+        "score": 0,
+        "matched_skills": [
+          "JavaScript",
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "Vue",
+          "TypeScript",
+          "Vuex",
+          "Pinia",
+          "Tailwind"
+        ]
+      },
+      {
+        "role": "Angular Frontend Developer",
+        "score": 0,
+        "matched_skills": [
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "Angular",
+          "TypeScript",
+          "RxJS",
+          "Jasmine",
+          "Karma"
+        ]
+      },
+      {
+        "role": "Django Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "REST API"
+        ],
+        "missing_skills": [
+          "Django",
+          "SQL",
+          "PostgreSQL",
+          "Docker",
+          "Redis",
+          "Celery"
+        ]
+      },
+      {
+        "role": "FastAPI Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "REST API"
+        ],
+        "missing_skills": [
+          "FastAPI",
+          "SQL",
+          "PostgreSQL",
+          "Docker",
+          "Pydantic"
+        ]
+      },
+      {
+        "role": "Node.js Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "JavaScript",
+          "REST API"
+        ],
+        "missing_skills": [
+          "Node.js",
+          "Express",
+          "MongoDB",
+          "SQL",
+          "Docker"
+        ]
+      },
+      {
+        "role": "Spring Boot Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "REST API"
+        ],
+        "missing_skills": [
+          "Java",
+          "Spring Boot",
+          "Hibernate",
+          "SQL",
+          "PostgreSQL",
+          "Maven",
+          "Docker"
+        ]
+      },
+      {
+        "role": "Go Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "REST API"
+        ],
+        "missing_skills": [
+          "Go",
+          "gRPC",
+          "SQL",
+          "PostgreSQL",
+          "Docker",
+          "Kubernetes",
+          "Microservices"
+        ]
+      },
+      {
+        "role": "MERN Stack Developer",
+        "score": 0,
+        "matched_skills": [
+          "React",
+          "JavaScript",
+          "REST API",
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "MongoDB",
+          "Express",
+          "Node.js"
+        ]
+      },
+      {
+        "role": "Python Full-Stack Developer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "React",
+          "JavaScript",
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "Django",
+          "PostgreSQL",
+          "Docker"
+        ]
+      },
+      {
+        "role": "Data Scientist",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "Pandas",
+          "NumPy",
+          "SQL",
+          "Statistics",
+          "Scikit-learn",
+          "Jupyter",
+          "Data Visualization"
+        ]
+      },
+      {
+        "role": "Data Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "SQL",
+          "Apache Spark",
+          "Airflow",
+          "Hadoop",
+          "Kafka",
+          "AWS",
+          "Data Warehousing"
+        ]
+      },
+      {
+        "role": "Computer Vision Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "OpenCV",
+          "PyTorch",
+          "TensorFlow",
+          "Deep Learning",
+          "Object Detection",
+          "YOLO",
+          "Image Processing"
+        ]
+      },
+      {
+        "role": "NLP Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "NLP"
+        ],
+        "missing_skills": [
+          "Hugging Face",
+          "Transformers",
+          "NLTK",
+          "spaCy",
+          "PyTorch",
+          "Deep Learning"
+        ]
+      },
+      {
+        "role": "MLOps Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "MLOps",
+          "Docker",
+          "Kubernetes",
+          "MLflow",
+          "CI/CD",
+          "AWS",
+          "GitHub Actions"
+        ]
+      },
+      {
+        "role": "Generative AI Engineer (Text/LLM)",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "LLM",
+          "Prompt Engineering",
+          "Fine-tuning",
+          "LoRA",
+          "RAG",
+          "Vector Databases",
+          "LangChain",
+          "PyTorch"
+        ]
+      },
+      {
+        "role": "Generative AI Engineer (Vision)",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "Computer Vision"
+        ],
+        "missing_skills": [
+          "Stable Diffusion",
+          "Diffusion Models",
+          "ControlNet",
+          "ComfyUI",
+          "PyTorch",
+          "Generative Adversarial Networks (GANs)"
+        ]
+      },
+      {
+        "role": "Generative AI Engineer (Audio/Speech)",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "Text-to-Speech (TTS)",
+          "Speech-to-Text (STT)",
+          "Whisper",
+          "Audio Processing",
+          "PyTorch",
+          "Deep Learning"
+        ]
+      },
+      {
+        "role": "AI Agent Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "LangChain",
+          "LangGraph",
+          "AutoGen",
+          "Tool Calling",
+          "RAG",
+          "LLM",
+          "API Integration"
+        ]
+      },
+      {
+        "role": "Multi-Agent Systems Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "CrewAI",
+          "AutoGen",
+          "Multi-Agent Collaboration",
+          "System Design",
+          "LLM",
+          "Semantic Routing"
+        ]
+      },
+      {
+        "role": "AI/ML Researcher",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Machine Learning",
+          "Deep Learning",
+          "PyTorch",
+          "Publications",
+          "Research",
+          "Mathematics",
+          "Statistics",
+          "Algorithm Design"
+        ]
+      },
+      {
+        "role": "Computer Vision Researcher",
+        "score": 0,
+        "matched_skills": [
+          "Computer Vision"
+        ],
+        "missing_skills": [
+          "PyTorch",
+          "Image Processing",
+          "Object Detection",
+          "Publications",
+          "Research",
+          "Mathematical Modeling"
+        ]
+      },
+      {
+        "role": "NLP Researcher",
+        "score": 0,
+        "matched_skills": [
+          "NLP"
+        ],
+        "missing_skills": [
+          "Transformers",
+          "Large Language Models",
+          "PyTorch",
+          "Linguistics",
+          "Publications",
+          "Research",
+          "Text Analysis"
+        ]
+      },
+      {
+        "role": "iOS Developer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Swift",
+          "iOS",
+          "Xcode",
+          "UIKit",
+          "SwiftUI",
+          "Core Data"
+        ]
+      },
+      {
+        "role": "Android Developer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Kotlin",
+          "Android",
+          "Android Studio",
+          "Java",
+          "Jetpack Compose",
+          "Room"
+        ]
+      },
+      {
+        "role": "React Native Developer",
+        "score": 0,
+        "matched_skills": [
+          "JavaScript",
+          "React"
+        ],
+        "missing_skills": [
+          "React Native",
+          "TypeScript",
+          "iOS",
+          "Android"
+        ]
+      },
+      {
+        "role": "Flutter Developer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Flutter",
+          "Dart",
+          "iOS",
+          "Android",
+          "Firebase"
+        ]
+      },
+      {
+        "role": "Cloud Architect (AWS)",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "AWS",
+          "EC2",
+          "S3",
+          "IAM",
+          "Terraform",
+          "Docker",
+          "Linux",
+          "Serverless"
+        ]
+      },
+      {
+        "role": "DevOps Engineer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Docker",
+          "Kubernetes",
+          "CI/CD",
+          "Linux",
+          "Terraform",
+          "Jenkins",
+          "Ansible",
+          "Bash"
+        ]
+      },
+      {
+        "role": "Cybersecurity Engineer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Security",
+          "Penetration Testing",
+          "Cryptography",
+          "Linux",
+          "Networking",
+          "Bash",
+          "Wireshark"
+        ]
+      },
+      {
+        "role": "UI/UX Designer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Figma",
+          "Adobe XD",
+          "Wireframing",
+          "Prototyping",
+          "User Research",
+          "UI Design",
+          "UX Design"
+        ]
+      }
+    ]
+  }
+}

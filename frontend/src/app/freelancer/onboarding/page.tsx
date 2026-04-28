@@ -171,7 +171,7 @@ export default function FreelancerOnboardingPage() {
             onProfileChange={setProfileData}
           />
         )}
-        {step === 2 && <AIInterviewStep />}
+        {step === 2 && <AIInterviewStep cvData={cvData} />}
       </OnboardingLayout>
     </ProtectedRoute>
   );

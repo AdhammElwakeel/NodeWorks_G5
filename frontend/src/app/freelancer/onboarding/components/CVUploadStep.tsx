@@ -22,6 +22,7 @@ const fieldLabelStyles = {
 };
 
 export interface CvData {
+  [key: string]: unknown;
   name?: string;
   email?: string;
   phone?: string;

@@ -1,0 +1,619 @@
+{
+  "session_id": "4dbc8b2c",
+  "candidate_id": ": Hamed Emad Hamed Farrag",
+  "status": "in_progress",
+  "started_at": "2026-04-29T00:54:09.637373",
+  "completed_at": null,
+  "skills_to_test": [
+    "REST API",
+    "React",
+    "Python",
+    "HTML",
+    "NLP"
+  ],
+  "current_skill_index": 0,
+  "questions": [
+    {
+      "skill_name": "REST API",
+      "question_text": ": You are a freelance web developer hired by a local Google Developer Groups (GDG) chapter to build the backend for their event management system. The chapter needs a RESTful API that allows organizers to create, read, update, and delete events, and lets attendees register for events, view their registrations, and cancel them. Describe how you would design the API endpoints, including resource naming, HTTP methods, status codes, and any authentication or versioning strategy you would apply. Also explain how you would handle idempotent operations and error responses to ensure a reliable developer experience.",
+      "focus_concept": "Designing RESTful resources and handling idempotency, status codes, and error management",
+      "is_followup": false,
+      "followup_number": 0,
+      "user_answer": "ask each question alone please",
+      "score": 1,
+      "feedback": "The response does not address the API design question; it merely asks to split questions, showing no technical content or personal insight.",
+      "cheating_flag": true
+    },
+    {
+      "skill_name": "REST API",
+      "question_text": ": You mentioned considering versioning for the API; could you explain which versioning strategy you would choose (e.g., URL path, header, query parameter) and why it suits the GDG event management use case?",
+      "focus_concept": "REST API follow-up",
+      "is_followup": true,
+      "followup_number": 1,
+      "user_answer": "no",
+      "score": 0,
+      "feedback": "The answer 'no' does not address the question at all. It lacks any technical content, personal insight, or explanation of a versioning strategy for the GDG event management API. To improve, describe a specific versioning approach (e.g., URL path versioning) and justify why it fits the use case, referencing considerations like client compatibility, caching, and documentation.",
+      "cheating_flag": false
+    },
+    {
+      "skill_name": "REST API",
+      "question_text": ": You mentioned \"no\" as your answer. To ensure we cover the basics, could you please outline the primary resources (e.g., events, attendees, registrations) you would expose, the corresponding endpoint URLs, and the HTTP methods you would map to CRUD operations for each resource?",
+      "focus_concept": "REST API follow-up",
+      "is_followup": true,
+      "followup_number": 2,
+      "user_answer": "nope",
+      "score": 0,
+      "feedback": "The answer 'nope' does not address the question about REST API resources, endpoints, or HTTP methods. It lacks any technical content, depth, or practical insight, and is unclear.",
+      "cheating_flag": true
+    },
+    {
+      "skill_name": "REST API",
+      "question_text": ": In the attendee registration flow, a client might retry a POST to /events/{eventId}/registrations after a timeout. How would you design this endpoint to be idempotent (or safely handle retries), what identifier or mechanism would you use to detect duplicate registrations, and what HTTP status codes and response bodies would you return for a successful first registration versus a subsequent duplicate attempt?",
+      "focus_concept": "REST API follow-up",
+      "is_followup": true,
+      "followup_number": 3,
+      "user_answer": "i would solev it",
+      "score": 0,
+      "feedback": "The answer is unintelligible and provides no relevant information about making the registration endpoint idempotent, discussing identifiers, mechanisms, or appropriate HTTP responses. It fails to address any part of the question.",
+      "cheating_flag": true
+    },
+    {
+      "skill_name": "React",
+      "question_text": ":\nYou have been asked to enhance the existing Landing Page project (built with HTML, CSS, JavaScript, and React) by adding a testimonials section that fetches a list of testimonials from a REST API endpoint (/api/testimonials) and displays them in a carousel. The carousel should show one testimonial at a time, allow manual navigation via next/previous buttons, and automatically advance every 5 seconds. While the data is loading, a skeleton loader should be shown, and if the request fails, an error message with a retry button must appear. Additionally, the carousel must be keyboard\u2011accessible and announce slide changes to screen readers.\n\nDescribe how you would implement this feature in React. In your answer, cover:\n1. The component hierarchy you would create (e.g., a parent TestimonialsCarousel component and child Slide, Navigation, Loader, ErrorMessage components).\n2. Which React hooks you would use to manage the fetched data, loading/error states, the current slide index, and the auto\u2011advance timer (including cleanup).\n3. How you would handle the API call with useEffect, implement retry logic, and prevent race conditions.\n4. Strategies for making the carousel accessible (keyboard navigation, ARIA roles/labels, live region for announcements).\n\nProvide enough detail to demonstrate your understanding of React state management, side effects, component composition, and accessibility best practices.",
+      "focus_concept": "React state management, side effects (useEffect/useState), component composition, and accessibility in a dynamic UI feature",
+      "is_followup": false,
+      "followup_number": 0,
+      "user_answer": null,
+      "score": null,
+      "feedback": null,
+      "cheating_flag": false
+    }
+  ],
+  "violations": 0,
+  "cv_data": {
+    "name": ": Hamed Emad Hamed Farrag",
+    "email": "hamedemad417@gmail.com",
+    "phone": "01287859786",
+    "years of experience": "0 months",
+    "all_skills": [
+      "Python",
+      "JavaScript",
+      "HTML",
+      "CSS",
+      "React",
+      "REST API",
+      "NLP"
+    ],
+    "experience": [
+      {
+        "role": "Head of HR",
+        "company": "Google Developer Groups (GDG)",
+        "years": "0 months"
+      },
+      {
+        "role": "Treasurer",
+        "company": "IEEE GUSB",
+        "years": "0 months"
+      },
+      {
+        "role": "Web Developer",
+        "company": "Freelance",
+        "years": "0 months"
+      }
+    ],
+    "education": [
+      {
+        "degree": "Bachelor of Science in Computer Science",
+        "institution": "Galala University",
+        "technologies": [
+          "Computer Vision"
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "name": "Landing Page",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "React"
+        ]
+      },
+      {
+        "name": "Article Evaluation App",
+        "technologies": [
+          "JavaScript",
+          "NLP"
+        ]
+      }
+    ],
+    "certifications": [
+      {
+        "name": "Udacity Front end nano degree",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "React"
+        ]
+      }
+    ],
+    "Publications": [],
+    "best_role": "React Frontend Developer",
+    "best_score": 0,
+    "role_rankings": [
+      {
+        "role": "React Frontend Developer",
+        "score": 0,
+        "matched_skills": [
+          "React",
+          "JavaScript",
+          "HTML",
+          "CSS",
+          "REST API"
+        ],
+        "missing_skills": [
+          "TypeScript",
+          "Redux",
+          "Tailwind"
+        ]
+      },
+      {
+        "role": "Vue Frontend Developer",
+        "score": 0,
+        "matched_skills": [
+          "JavaScript",
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "Vue",
+          "TypeScript",
+          "Vuex",
+          "Pinia",
+          "Tailwind"
+        ]
+      },
+      {
+        "role": "Angular Frontend Developer",
+        "score": 0,
+        "matched_skills": [
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "Angular",
+          "TypeScript",
+          "RxJS",
+          "Jasmine",
+          "Karma"
+        ]
+      },
+      {
+        "role": "Django Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "REST API"
+        ],
+        "missing_skills": [
+          "Django",
+          "SQL",
+          "PostgreSQL",
+          "Docker",
+          "Redis",
+          "Celery"
+        ]
+      },
+      {
+        "role": "FastAPI Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "REST API"
+        ],
+        "missing_skills": [
+          "FastAPI",
+          "SQL",
+          "PostgreSQL",
+          "Docker",
+          "Pydantic"
+        ]
+      },
+      {
+        "role": "Node.js Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "JavaScript",
+          "REST API"
+        ],
+        "missing_skills": [
+          "Node.js",
+          "Express",
+          "MongoDB",
+          "SQL",
+          "Docker"
+        ]
+      },
+      {
+        "role": "Spring Boot Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "REST API"
+        ],
+        "missing_skills": [
+          "Java",
+          "Spring Boot",
+          "Hibernate",
+          "SQL",
+          "PostgreSQL",
+          "Maven",
+          "Docker"
+        ]
+      },
+      {
+        "role": "Go Backend Engineer",
+        "score": 0,
+        "matched_skills": [
+          "REST API"
+        ],
+        "missing_skills": [
+          "Go",
+          "gRPC",
+          "SQL",
+          "PostgreSQL",
+          "Docker",
+          "Kubernetes",
+          "Microservices"
+        ]
+      },
+      {
+        "role": "MERN Stack Developer",
+        "score": 0,
+        "matched_skills": [
+          "React",
+          "JavaScript",
+          "REST API",
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "MongoDB",
+          "Express",
+          "Node.js"
+        ]
+      },
+      {
+        "role": "Python Full-Stack Developer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "React",
+          "JavaScript",
+          "HTML",
+          "CSS"
+        ],
+        "missing_skills": [
+          "Django",
+          "PostgreSQL",
+          "Docker"
+        ]
+      },
+      {
+        "role": "Data Scientist",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "Pandas",
+          "NumPy",
+          "SQL",
+          "Statistics",
+          "Scikit-learn",
+          "Jupyter",
+          "Data Visualization"
+        ]
+      },
+      {
+        "role": "Data Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "SQL",
+          "Apache Spark",
+          "Airflow",
+          "Hadoop",
+          "Kafka",
+          "AWS",
+          "Data Warehousing"
+        ]
+      },
+      {
+        "role": "Computer Vision Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "OpenCV",
+          "PyTorch",
+          "TensorFlow",
+          "Deep Learning",
+          "Object Detection",
+          "YOLO",
+          "Image Processing"
+        ]
+      },
+      {
+        "role": "NLP Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python",
+          "NLP"
+        ],
+        "missing_skills": [
+          "Hugging Face",
+          "Transformers",
+          "NLTK",
+          "spaCy",
+          "PyTorch",
+          "Deep Learning"
+        ]
+      },
+      {
+        "role": "MLOps Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "MLOps",
+          "Docker",
+          "Kubernetes",
+          "MLflow",
+          "CI/CD",
+          "AWS",
+          "GitHub Actions"
+        ]
+      },
+      {
+        "role": "Generative AI Engineer (Text/LLM)",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "LLM",
+          "Prompt Engineering",
+          "Fine-tuning",
+          "LoRA",
+          "RAG",
+          "Vector Databases",
+          "LangChain",
+          "PyTorch"
+        ]
+      },
+      {
+        "role": "Generative AI Engineer (Vision)",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "Stable Diffusion",
+          "Diffusion Models",
+          "ControlNet",
+          "ComfyUI",
+          "PyTorch",
+          "Generative Adversarial Networks (GANs)",
+          "Computer Vision"
+        ]
+      },
+      {
+        "role": "Generative AI Engineer (Audio/Speech)",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "Text-to-Speech (TTS)",
+          "Speech-to-Text (STT)",
+          "Whisper",
+          "Audio Processing",
+          "PyTorch",
+          "Deep Learning"
+        ]
+      },
+      {
+        "role": "AI Agent Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "LangChain",
+          "LangGraph",
+          "AutoGen",
+          "Tool Calling",
+          "RAG",
+          "LLM",
+          "API Integration"
+        ]
+      },
+      {
+        "role": "Multi-Agent Systems Engineer",
+        "score": 0,
+        "matched_skills": [
+          "Python"
+        ],
+        "missing_skills": [
+          "CrewAI",
+          "AutoGen",
+          "Multi-Agent Collaboration",
+          "System Design",
+          "LLM",
+          "Semantic Routing"
+        ]
+      },
+      {
+        "role": "AI/ML Researcher",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Machine Learning",
+          "Deep Learning",
+          "PyTorch",
+          "Publications",
+          "Research",
+          "Mathematics",
+          "Statistics",
+          "Algorithm Design"
+        ]
+      },
+      {
+        "role": "Computer Vision Researcher",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Computer Vision",
+          "PyTorch",
+          "Image Processing",
+          "Object Detection",
+          "Publications",
+          "Research",
+          "Mathematical Modeling"
+        ]
+      },
+      {
+        "role": "NLP Researcher",
+        "score": 0,
+        "matched_skills": [
+          "NLP"
+        ],
+        "missing_skills": [
+          "Transformers",
+          "Large Language Models",
+          "PyTorch",
+          "Linguistics",
+          "Publications",
+          "Research",
+          "Text Analysis"
+        ]
+      },
+      {
+        "role": "iOS Developer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Swift",
+          "iOS",
+          "Xcode",
+          "UIKit",
+          "SwiftUI",
+          "Core Data"
+        ]
+      },
+      {
+        "role": "Android Developer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Kotlin",
+          "Android",
+          "Android Studio",
+          "Java",
+          "Jetpack Compose",
+          "Room"
+        ]
+      },
+      {
+        "role": "React Native Developer",
+        "score": 0,
+        "matched_skills": [
+          "JavaScript",
+          "React"
+        ],
+        "missing_skills": [
+          "React Native",
+          "TypeScript",
+          "iOS",
+          "Android"
+        ]
+      },
+      {
+        "role": "Flutter Developer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Flutter",
+          "Dart",
+          "iOS",
+          "Android",
+          "Firebase"
+        ]
+      },
+      {
+        "role": "Cloud Architect (AWS)",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "AWS",
+          "EC2",
+          "S3",
+          "IAM",
+          "Terraform",
+          "Docker",
+          "Linux",
+          "Serverless"
+        ]
+      },
+      {
+        "role": "DevOps Engineer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Docker",
+          "Kubernetes",
+          "CI/CD",
+          "Linux",
+          "Terraform",
+          "Jenkins",
+          "Ansible",
+          "Bash"
+        ]
+      },
+      {
+        "role": "Cybersecurity Engineer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Security",
+          "Penetration Testing",
+          "Cryptography",
+          "Linux",
+          "Networking",
+          "Bash",
+          "Wireshark"
+        ]
+      },
+      {
+        "role": "UI/UX Designer",
+        "score": 0,
+        "matched_skills": [],
+        "missing_skills": [
+          "Figma",
+          "Adobe XD",
+          "Wireframing",
+          "Prototyping",
+          "User Research",
+          "UI Design",
+          "UX Design"
+        ]
+      }
+    ]
+  }
+}

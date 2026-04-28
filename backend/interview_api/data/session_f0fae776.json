@@ -1,0 +1,30 @@
+{
+  "session_id": "f0fae776",
+  "candidate_id": "Candidate",
+  "status": "in_progress",
+  "started_at": "2026-04-29T00:47:32.964772",
+  "completed_at": null,
+  "skills_to_test": [
+    "Technical Knowledge",
+    "Code Quality",
+    "Problem Solving",
+    "Communication",
+    "System Design"
+  ],
+  "current_skill_index": 0,
+  "questions": [
+    {
+      "skill_name": "Technical Knowledge",
+      "question_text": ": Imagine you are tasked with improving the performance of a customer\u2011facing web application that has started experiencing slow page loads during peak traffic. The application uses a relational database with several tables, and recent profiling shows that a particular report query joins three large tables and performs a costly aggregation. Describe the steps you would take to diagnose the bottleneck, the specific changes you would consider (e.g., indexing, query rewriting, caching, or denormalization), and how you would validate that the changes actually improve performance without breaking existing functionality.",
+      "focus_concept": "Technical Knowledge",
+      "is_followup": false,
+      "followup_number": 0,
+      "user_answer": null,
+      "score": null,
+      "feedback": null,
+      "cheating_flag": false
+    }
+  ],
+  "violations": 0,
+  "cv_data": {}
+}
