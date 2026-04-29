@@ -1,13 +1,18 @@
 import json
 import os
 import threading
+import weakref
 from datetime import datetime
 import uuid
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
-# Per-session locks to prevent concurrent write corruption
-_session_locks: dict[str, threading.Lock] = {}
+# Per-session locks to prevent concurrent write corruption.
+# WeakValueDictionary automatically removes entries when the lock is no longer
+# referenced anywhere else, preventing unbounded memory growth.
+_session_locks: weakref.WeakValueDictionary[str, threading.Lock] = (
+    weakref.WeakValueDictionary()
+)
 _locks_lock = threading.Lock()
 
 
