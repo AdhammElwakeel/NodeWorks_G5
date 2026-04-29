@@ -159,7 +159,7 @@ export default function FreelancerProfilePage() {
           ? data.certifications.map((c: { name: string }) => ({ name: c.name }))
           : prev.certifications,
         bestRole: data.best_role || prev.bestRole,
-        bestScore: data.best_score || prev.bestScore,
+        bestScore: data.best_score ?? prev.bestScore,
         about: prev.about ||
           (data.best_role
             ? `Experienced ${data.best_role}${data["years of experience"] ? ` with ${data["years of experience"]} of experience` : ""}${data.all_skills?.length ? `, specialising in ${data.all_skills.slice(0, 5).join(", ")}` : ""}.`

@@ -119,7 +119,7 @@ function WebcamMonitor({
   );
   const [lookAways, setLookAways] = useState(0);
   const [debugInfo, setDebugInfo] = useState("Initialising…");
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consecutiveNoFaceRef = useRef(0);
   const consecutiveLookAwayRef = useRef(0);
   const faceApiRef = useRef<typeof import("face-api.js") | null>(null);
@@ -136,6 +136,7 @@ function WebcamMonitor({
         const faceapi = await import("face-api.js");
         faceApiRef.current = faceapi;
         const MODEL_URL =
+          process.env.NEXT_PUBLIC_FACE_API_MODEL_URL ??
           "https://justadudewhohacks.github.io/face-api.js/models";
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
@@ -413,7 +414,7 @@ function ViolationToast({
         alignItems: "center",
         gap: 8,
         fontSize: 14,
-        animation: "slideIn 0.3s ease",
+        animation: "none",
       }}
     >
       <AlertTriangle size={16} />
@@ -585,6 +586,17 @@ export function AIInterviewStep({ cvData }: AIInterviewStepProps) {
   // Track if paste was used in this answer
   const pastedRef = useRef(false);
 
+  // Track last reported gaze state to avoid spamming the API
+  const lastGazeReportRef = useRef<{
+    sessionId: string | null;
+    lastStatus: WebcamStatus["status"] | null;
+    lastReportedLookAways: number;
+  }>({
+    sessionId: null,
+    lastStatus: null,
+    lastReportedLookAways: 0,
+  });
+
   // ── Tab switch detection ────────────────────────────────────────────────────
   useEffect(() => {
     if (phase !== "active" || !sessionId) return;
@@ -619,9 +631,30 @@ export function AIInterviewStep({ cvData }: AIInterviewStepProps) {
     (s: WebcamStatus) => {
       setGazeStatus(s.status);
       setLookAways(s.lookAways);
-      if (s.status === "cheating" && sessionId) {
-        interviewApi.reportViolation(sessionId, "iris_look_away");
+
+      const tracker = lastGazeReportRef.current;
+      const sessionChanged = tracker.sessionId !== sessionId;
+
+      if (sessionChanged) {
+        tracker.sessionId = sessionId;
+        tracker.lastStatus = null;
+        tracker.lastReportedLookAways = 0;
       }
+
+      const enteredCheating =
+        tracker.lastStatus !== "cheating" && s.status === "cheating";
+      const lookAwaysIncreased = s.lookAways > tracker.lastReportedLookAways;
+
+      if (
+        s.status === "cheating" &&
+        sessionId &&
+        (enteredCheating || lookAwaysIncreased)
+      ) {
+        interviewApi.reportViolation(sessionId, "iris_look_away");
+        tracker.lastReportedLookAways = s.lookAways;
+      }
+
+      tracker.lastStatus = s.status;
     },
     [sessionId],
   );

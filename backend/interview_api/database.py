@@ -1,9 +1,21 @@
 import json
 import os
+import threading
 from datetime import datetime
 import uuid
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+
+# Per-session locks to prevent concurrent write corruption
+_session_locks: dict[str, threading.Lock] = {}
+_locks_lock = threading.Lock()
+
+
+def _get_lock(session_id: str) -> threading.Lock:
+    with _locks_lock:
+        if session_id not in _session_locks:
+            _session_locks[session_id] = threading.Lock()
+        return _session_locks[session_id]
 
 
 def ensure_data_dir():
@@ -37,37 +49,69 @@ def create_session(candidate_id: str, skills_to_test: list, cv_data: dict) -> di
 
 def save_session(session: dict):
     ensure_data_dir()
-    with open(get_session_path(session["session_id"]), "w") as f:
-        json.dump(session, f, indent=2)
+    session_id = session["session_id"]
+    path = get_session_path(session_id)
+    tmp_path = path + ".tmp"
+    lock = _get_lock(session_id)
+    with lock:
+        with open(tmp_path, "w") as f:
+            json.dump(session, f, indent=2)
+        os.replace(tmp_path, path)
 
 
 def load_session(session_id: str) -> dict | None:
     path = get_session_path(session_id)
-    if not os.path.exists(path):
-        return None
-    with open(path) as f:
-        return json.load(f)
+    lock = _get_lock(session_id)
+    with lock:
+        if not os.path.exists(path):
+            return None
+        with open(path) as f:
+            return json.load(f)
 
 
 def add_question_to_session(session_id: str, question_data: dict):
-    session = load_session(session_id)
-    if session:
+    lock = _get_lock(session_id)
+    with lock:
+        path = get_session_path(session_id)
+        if not os.path.exists(path):
+            return
+        with open(path) as f:
+            session = json.load(f)
         session["questions"].append(question_data)
-        save_session(session)
+        tmp_path = path + ".tmp"
+        with open(tmp_path, "w") as f:
+            json.dump(session, f, indent=2)
+        os.replace(tmp_path, path)
 
 
 def update_session(session_id: str, updates: dict):
-    session = load_session(session_id)
-    if session:
+    lock = _get_lock(session_id)
+    with lock:
+        path = get_session_path(session_id)
+        if not os.path.exists(path):
+            return None
+        with open(path) as f:
+            session = json.load(f)
         session.update(updates)
-        save_session(session)
+        tmp_path = path + ".tmp"
+        with open(tmp_path, "w") as f:
+            json.dump(session, f, indent=2)
+        os.replace(tmp_path, path)
     return session
 
 
 def complete_session(session_id: str) -> dict | None:
-    session = load_session(session_id)
-    if session:
+    lock = _get_lock(session_id)
+    with lock:
+        path = get_session_path(session_id)
+        if not os.path.exists(path):
+            return None
+        with open(path) as f:
+            session = json.load(f)
         session["status"] = "completed"
         session["completed_at"] = datetime.now().isoformat()
-        save_session(session)
+        tmp_path = path + ".tmp"
+        with open(tmp_path, "w") as f:
+            json.dump(session, f, indent=2)
+        os.replace(tmp_path, path)
     return session

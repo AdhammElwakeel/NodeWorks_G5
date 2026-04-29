@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const AI_INTERVIEW_URL = "http://localhost:8001";
+const AI_INTERVIEW_URL =
+  process.env.AI_INTERVIEW_URL ?? "http://localhost:8001";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: { path: string[] } }
 ) {
-  const { path } = await params;
+  const { path } = params;
   const endpoint = path.join("/");
   const body = await req.text();
 
@@ -33,9 +34,9 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: { path: string[] } }
 ) {
-  const { path } = await params;
+  const { path } = params;
   const endpoint = path.join("/");
 
   try {

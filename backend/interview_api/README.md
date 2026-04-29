@@ -5,7 +5,7 @@ A FastAPI-based AI technical interview microservice.
 ## Features
 - **5 skills** tested per interview (from the candidate's CV)  
 - **1 main question** + **3 follow-up questions** per skill = **20 total questions**  
-- **Medium difficulty** by default (configurable in `config.py`)  
+- **Easy difficulty** by default (configurable in `config.py`)  
 - Powered by **OpenRouter** (Nvidia Nemotron 120B free tier)  
 - Anti-cheat detection via answer grading
 

@@ -3,12 +3,12 @@ from pydantic import BaseModel
 from typing import Optional
 import random
 
-from database import (
+from ..database import (
     create_session, load_session, update_session,
     complete_session, add_question_to_session,
 )
-from openrouter_client import generate_question, generate_followup, grade_answer
-from config import NUM_SKILLS, FOLLOW_UPS_PER_SKILL, DIFFICULTY, VERIFICATION_THRESHOLD
+from ..openrouter_client import generate_question, generate_followup, grade_answer
+from ..config import NUM_SKILLS, FOLLOW_UPS_PER_SKILL, DIFFICULTY, VERIFICATION_THRESHOLD
 
 router = APIRouter(prefix="/api/interview", tags=["interview"])
 

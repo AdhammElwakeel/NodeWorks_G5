@@ -321,8 +321,7 @@ function LoginForm() {
                   type="submit"
                   loading={loading}
                 >
-                  Sign in as{" "}
-                  {signingInAs === "client" ? "Client" : "Freelancer"}
+                  Sign in
                 </Button>
               </Stack>
             </form>

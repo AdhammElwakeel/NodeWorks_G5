@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import interview
+from .routers import interview
+import os
 
 app = FastAPI(
     title="AI Interviewer API",
@@ -8,10 +9,12 @@ app = FastAPI(
     version="2.0.0"
 )
 
+_allow_origins = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_allow_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
