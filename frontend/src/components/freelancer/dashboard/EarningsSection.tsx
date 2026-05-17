@@ -78,10 +78,10 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
                   {stat.change}
                 </Badge>
               </Group>
-              <Text fw={700} fz="xl" c="black">
+              <Text fw={700} fz="xl" c="var(--app-text)">
                 {stat.value}
               </Text>
-              <Text fz="sm" c="black">
+              <Text fz="sm" c="var(--app-text)">
                 {stat.label}
               </Text>
             </Stack>
@@ -93,7 +93,7 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
       <Card withBorder radius="md" shadow="sm">
         <Stack gap="md">
           <Group justify="space-between">
-            <Text fw={700} c="black" fz="lg">
+            <Text fw={700} c="var(--app-text)" fz="lg">
               Earnings Overview
             </Text>
             <Button variant="subtle" size="sm" color="gray">
@@ -103,17 +103,17 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
           <SimpleGrid cols={{ base: 3, sm: 6 }} spacing="md">
             {earnings.monthlyStats.map((m) => (
               <Card key={m.month} withBorder radius="md" p="sm" style={{ textAlign: "center" }}>
-                <Text fw={700} fz="lg" c="black">
+                <Text fw={700} fz="lg" c="var(--app-text)">
                   ${(m.earnings / 1000).toFixed(1)}k
                 </Text>
-                <Text fz="xs" c="black" mt={4}>
+                <Text fz="xs" c="var(--app-text)" mt={4}>
                   {m.month}
                 </Text>
                 <Box
                   mt={8}
                   style={{
                     height: 4,
-                    background: "#e2e8f0",
+                    background: "var(--app-border)",
                     borderRadius: 2,
                     overflow: "hidden",
                   }}
@@ -137,7 +137,7 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
       <Card withBorder radius="md" shadow="sm">
         <Stack gap="md">
           <Group justify="space-between">
-            <Text fw={700} c="black" fz="lg">
+            <Text fw={700} c="var(--app-text)" fz="lg">
               Recent Transactions
             </Text>
             <Button variant="subtle" size="sm" color="gray">
@@ -162,16 +162,16 @@ export function EarningsSection({ earnings }: EarningsSectionProps) {
                       )}
                     </ThemeIcon>
                     <Stack gap={2}>
-                      <Text fw={600} c="black" fz="sm">
+                      <Text fw={600} c="var(--app-text)" fz="sm">
                         {tx.project}
                       </Text>
-                      <Text fz="xs" c="black">
+                      <Text fz="xs" c="var(--app-muted)">
                         {tx.client} · {tx.date}
                       </Text>
                     </Stack>
                   </Group>
                   <Stack gap={2} align="flex-end">
-                    <Text fw={700} c="black" fz="md">
+                    <Text fw={700} c="var(--app-text)" fz="md">
                       ${tx.amount.toLocaleString()}
                     </Text>
                     <Badge

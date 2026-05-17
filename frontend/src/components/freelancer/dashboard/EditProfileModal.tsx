@@ -31,7 +31,7 @@ export function EditProfileModal({ opened, onClose, form, setForm, onSave }: Edi
     <Modal
       opened={opened}
       onClose={onClose}
-      title={<Text c="black" fw={700}>Edit Your Profile</Text>}
+      title={<Text c="var(--app-text)" fw={700}>Edit Your Profile</Text>}
       size="xl"
       scrollAreaComponent={ScrollArea.Autosize}
       radius="md"

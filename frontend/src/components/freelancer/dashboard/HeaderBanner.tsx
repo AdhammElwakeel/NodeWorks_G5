@@ -10,14 +10,15 @@ interface HeaderBannerProps {
   profileCompletion: number;
   acceptedCount: number;
   pendingCount: number;
+  proposalsCount: number;
 }
 
-export function HeaderBanner({ profile, profileCompletion, acceptedCount, pendingCount }: HeaderBannerProps) {
+export function HeaderBanner({ profile, profileCompletion, acceptedCount, pendingCount, proposalsCount }: HeaderBannerProps) {
   const stats = [
-    { icon: <Briefcase size={20} />, label: "Proposals", value: 3, color: "blue" },
+    { icon: <Briefcase size={20} />, label: "Proposals", value: proposalsCount, color: "blue" },
     { icon: <CheckCircle2 size={20} />, label: "Accepted", value: acceptedCount, color: "green" },
     { icon: <Star size={20} />, label: "Profile Score", value: `${profileCompletion}%`, color: "yellow" },
-    { icon: <TrendingUp size={20} />, label: "Active Jobs", value: 2, color: "cyan" },
+    { icon: <TrendingUp size={20} />, label: "Active Jobs", value: acceptedCount, color: "cyan" },
   ];
 
   return (
@@ -94,19 +95,19 @@ export function HeaderBanner({ profile, profileCompletion, acceptedCount, pendin
               </Text>
               <Group gap="lg" mt={4}>
                 <Group gap={4}>
-                  <MapPin size={14} color="#94a3b8" />
+                  <MapPin size={14} color="var(--app-muted-soft)" />
                   <Text c="gray.4" fz="sm">
                     {profile.country}
                   </Text>
                 </Group>
                 <Group gap={4}>
-                  <DollarSign size={14} color="#94a3b8" />
+                  <DollarSign size={14} color="var(--app-muted-soft)" />
                   <Text c="gray.4" fz="sm">
                     ${profile.hourlyRate}/hr
                   </Text>
                 </Group>
                 <Group gap={4}>
-                  <Clock size={14} color="#94a3b8" />
+                  <Clock size={14} color="var(--app-muted-soft)" />
                   <Text c="gray.4" fz="sm">
                     {profile.availability}
                   </Text>
@@ -118,7 +119,7 @@ export function HeaderBanner({ profile, profileCompletion, acceptedCount, pendin
           <Stack gap="sm" align="flex-end">
             <Button
               component={Link}
-              href="/freelancer/profile"
+              href="/freelancer/profile/edit"
               color="cyan"
               variant="light"
               leftSection={<Edit3 size={16} />}

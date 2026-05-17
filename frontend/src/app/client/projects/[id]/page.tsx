@@ -141,7 +141,7 @@ export default function ProjectDetailPage() {
         >
           Back to projects
         </Button>
-        <Card withBorder radius="md" bg="white" py="xl">
+        <Card withBorder radius="md" bg="var(--app-surface)" py="xl">
           <Text ta="center" c="dimmed">
             Project not found.
           </Text>
@@ -186,7 +186,7 @@ export default function ProjectDetailPage() {
       />
 
       {/* Project Details Card */}
-      <Card withBorder radius="md" bg="white" mb="xl">
+      <Card withBorder radius="md" bg="var(--app-surface)" mb="xl">
         <Stack gap="md">
           <Group justify="space-between" align="flex-start">
             <Group gap="xs">
@@ -211,12 +211,12 @@ export default function ProjectDetailPage() {
             </Text>
           </Group>
 
-          <Text c="dark.9" fz="sm" style={{ lineHeight: 1.7 }}>
+          <Text c="var(--app-text)" fz="sm" style={{ lineHeight: 1.7 }}>
             {project.description}
           </Text>
 
           <Box>
-            <Text fw={600} fz="sm" c="dark.9" mb="xs">
+            <Text fw={600} fz="sm" c="var(--app-text)" mb="xs">
               Required Skills
             </Text>
             <SkillsTags skills={project.skills} />
@@ -229,7 +229,7 @@ export default function ProjectDetailPage() {
         <Group mb="md">
           <Group gap="xs">
             <Users size={18} color="#4f46e5" />
-            <Text fw={700} fz="lg" c="dark.9">
+            <Text fw={700} fz="lg" c="var(--app-text)">
               Proposals
             </Text>
           </Group>
@@ -239,7 +239,7 @@ export default function ProjectDetailPage() {
         </Group>
 
         {proposals.length === 0 ? (
-          <Card withBorder radius="md" bg="white" py="xl">
+          <Card withBorder radius="md" bg="var(--app-surface)" py="xl">
             <Text ta="center" c="dimmed">
               No proposals yet for this project.
             </Text>
@@ -248,7 +248,7 @@ export default function ProjectDetailPage() {
           <Stack gap="xl">
             {pendingProposals.length > 0 && (
               <Box>
-                <Text fw={600} c="dark.9" mb="md">
+                <Text fw={600} c="var(--app-text)" mb="md">
                   Pending ({pendingProposals.length})
                 </Text>
                 <SimpleGrid cols={{ base: 1, lg: 2 }}>
@@ -271,7 +271,7 @@ export default function ProjectDetailPage() {
             {acceptedProposals.length > 0 && (
               <Box>
                 <Divider mb="md" />
-                <Text fw={600} c="dark.9" mb="md">
+                <Text fw={600} c="var(--app-text)" mb="md">
                   Accepted ({acceptedProposals.length})
                 </Text>
                 <SimpleGrid cols={{ base: 1, lg: 2 }}>
@@ -285,7 +285,7 @@ export default function ProjectDetailPage() {
             {rejectedProposals.length > 0 && (
               <Box>
                 <Divider mb="md" />
-                <Text fw={600} c="dark.9" mb="md">
+                <Text fw={600} c="var(--app-text)" mb="md">
                   Rejected ({rejectedProposals.length})
                 </Text>
                 <SimpleGrid cols={{ base: 1, lg: 2 }}>
@@ -344,7 +344,7 @@ function ProposalCard({
   readonly?: boolean;
 }) {
   return (
-    <Card withBorder radius="md" bg="white">
+    <Card withBorder radius="md" bg="var(--app-surface)">
       <Stack gap="md">
         <Group align="flex-start">
           <Avatar size={48} radius="xl" color="cyan">
@@ -352,7 +352,7 @@ function ProposalCard({
           </Avatar>
           <Stack gap={2} style={{ flex: 1 }}>
             <Group gap="xs">
-              <Text fw={600} c="dark.9">
+              <Text fw={600} c="var(--app-text)">
                 {proposal.freelancerName || "Freelancer"}
               </Text>
               {proposal.status !== "pending" && (
@@ -364,7 +364,7 @@ function ProposalCard({
           </Stack>
         </Group>
 
-        <Text c="dark.9" fz="sm" style={{ lineHeight: 1.6 }}>
+        <Text c="var(--app-text)" fz="sm" style={{ lineHeight: 1.6 }}>
           {proposal.coverLetter}
         </Text>
 

@@ -23,14 +23,11 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   Sidebar,
   EarningsSection,
-  HeaderBanner,
-  HomeSection,
 } from "@/components/freelancer/dashboard";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { projectApi, proposalApi } from "@/lib/api";
 import {
-  MOCK_PROFILE,
   MOCK_EARNINGS,
 } from "@/components/freelancer/dashboard/data";
 import type { Section } from "@/components/freelancer/dashboard/types";
@@ -66,7 +63,6 @@ function FreelancerDashboardContent() {
   const sectionParam = searchParams.get("section");
   let initialSection: Section = "home";
   if (sectionParam === "earnings") initialSection = "earnings";
-  else if (sectionParam === "profile") initialSection = "profile";
 
   const [activeSection, setActiveSection] =
     useState<Section>(initialSection);
@@ -98,7 +94,6 @@ function FreelancerDashboardContent() {
     [proposals]
   );
 
-  const profileCompletion = 85;
   const acceptedCount = proposals.filter(
     (p) => p.status === "accepted"
   ).length;
@@ -154,40 +149,17 @@ function FreelancerDashboardContent() {
         </Box>
 
         {/* Main content */}
-        <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+        <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "var(--app-bg)" }}>
           {activeSection === "earnings" ? (
             <Container size="lg" py="xl">
               <EarningsSection earnings={MOCK_EARNINGS} />
             </Container>
-          ) : activeSection === "profile" ? (
-            <>
-                  <HeaderBanner
-                    profile={MOCK_PROFILE}
-                    profileCompletion={profileCompletion}
-                    acceptedCount={acceptedCount}
-                    pendingCount={pendingCount}
-                  />
-                  <Container size="lg" py="xl">
-                    <HomeSection
-                      profile={MOCK_PROFILE}
-                      proposals={proposals.map((proposal) => ({
-                        id: proposal.id,
-                        projectTitle: proposal.projectTitle || "Project",
-                        status: proposal.status,
-                        coverLetter: proposal.coverLetter,
-                        proposedRate: proposal.proposedRate,
-                        submittedAt: formatDate(proposal.submittedAt),
-                      }))}
-                      profileCompletion={profileCompletion}
-                    />
-                  </Container>
-            </>
           ) : (
             <Container size="lg" py="xl">
               <Stack gap="xl">
                 {/* Welcome Header */}
                 <Stack gap={4}>
-                  <Title order={2} fw={700} c="dark.9">
+                  <Title order={2} fw={700} c="var(--app-text-strong)">
                     Welcome Back, {user?.name?.split(" ")[0] || "Freelancer"}!
                   </Title>
                   <Text c="dimmed" fz="lg">
@@ -198,7 +170,7 @@ function FreelancerDashboardContent() {
                 {/* My Jobs */}
                 <Stack gap="md">
                   <Stack gap={4}>
-                    <Title order={3} fw={600} c="dark">
+                    <Title order={3} fw={600} c="var(--app-text)">
                       My Jobs
                     </Title>
                     <Text c="dimmed" fz="sm">
@@ -216,8 +188,8 @@ function FreelancerDashboardContent() {
                     <Card withBorder radius="md" p="xl">
                       <Center>
                         <Stack align="center" gap="sm">
-                          <Briefcase size={48} color="#94a3b8" />
-                          <Text fw={600} c="black">
+                          <Briefcase size={48} color="var(--app-muted-soft)" />
+                          <Text fw={600} c="var(--app-text)">
                             You didn&apos;t apply to any job yet
                           </Text>
                           <Text fz="sm" c="dimmed" ta="center">
@@ -252,12 +224,12 @@ function FreelancerDashboardContent() {
                                   size={14}
                                   color="var(--mantine-color-cyan-6)"
                                 />
-                                <Text fw={700} fz="sm" c="black">
+                                <Text fw={700} fz="sm" c="var(--app-text)">
                                   ${proposal.proposedRate.toLocaleString()}
                                 </Text>
                               </Group>
                             </Group>
-                            <Text fw={700} c="black" lineClamp={2}>
+                            <Text fw={700} c="var(--app-text)" lineClamp={2}>
                               {proposal.projectTitle || "Project"}
                             </Text>
                             <Text fz="sm" c="dimmed" lineClamp={2}>
@@ -279,7 +251,7 @@ function FreelancerDashboardContent() {
                 {/* Recommended Jobs */}
                 <Stack gap="md">
                   <Stack gap={4}>
-                    <Title order={3} fw={600} c="dark">
+                    <Title order={3} fw={600} c="var(--app-text)">
                       Recommended Jobs
                     </Title>
                     <Text c="dimmed" fz="sm">
@@ -290,7 +262,7 @@ function FreelancerDashboardContent() {
                   <Group gap="md" wrap="wrap">
                     <TextInput
                       placeholder="Search jobs by title or keyword..."
-                      leftSection={<Search size={16} color="#94a3b8" />}
+                      leftSection={<Search size={16} color="var(--app-muted-soft)" />}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       style={{ flex: 1, minWidth: 250 }}
@@ -298,9 +270,9 @@ function FreelancerDashboardContent() {
                       size="md"
                       styles={{
                         input: {
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #e2e8f0",
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                          backgroundColor: "var(--app-surface)",
+                          border: "1px solid var(--app-border)",
+                          boxShadow: "var(--app-focus-shadow)",
                         },
                       }}
                     />
@@ -310,15 +282,15 @@ function FreelancerDashboardContent() {
                       value={skillFilter}
                       onChange={setSkillFilter}
                       clearable
-                      leftSection={<Filter size={16} color="#94a3b8" />}
+                      leftSection={<Filter size={16} color="var(--app-muted-soft)" />}
                       style={{ minWidth: 180 }}
                       radius="xl"
                       size="md"
                       styles={{
                         input: {
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #e2e8f0",
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                          backgroundColor: "var(--app-surface)",
+                          border: "1px solid var(--app-border)",
+                          boxShadow: "var(--app-focus-shadow)",
                         },
                       }}
                     />
@@ -342,8 +314,8 @@ function FreelancerDashboardContent() {
                     <Card withBorder radius="md" p="xl">
                       <Center>
                         <Stack align="center" gap="sm">
-                          <Briefcase size={48} color="#94a3b8" />
-                          <Text fw={600} c="black">
+                          <Briefcase size={48} color="var(--app-muted-soft)" />
+                          <Text fw={600} c="var(--app-text)">
                             No jobs found
                           </Text>
                           <Text fz="sm" c="dimmed" ta="center">
@@ -368,7 +340,7 @@ function FreelancerDashboardContent() {
                             (e.currentTarget as HTMLElement).style.transform =
                               "translateY(-4px)";
                             (e.currentTarget as HTMLElement).style.boxShadow =
-                              "0 12px 40px rgba(0,0,0,0.1)";
+                              "var(--app-hover-shadow)";
                           }}
                           onMouseLeave={(e) => {
                             (e.currentTarget as HTMLElement).style.transform =
@@ -393,13 +365,13 @@ function FreelancerDashboardContent() {
                                     size={14}
                                     color="var(--mantine-color-cyan-6)"
                                   />
-                                  <Text fw={700} fz="sm" c="black">
+                                  <Text fw={700} fz="sm" c="var(--app-text)">
                                     ${job.budget.toLocaleString()}
                                   </Text>
                                 </Group>
                               )}
                             </Group>
-                            <Text fw={700} c="black" lineClamp={2} fz="lg">
+                            <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg">
                               {job.title}
                             </Text>
                             <Text fz="sm" c="dimmed" lineClamp={3}>

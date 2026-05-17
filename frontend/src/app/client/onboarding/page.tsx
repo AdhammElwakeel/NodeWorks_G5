@@ -115,7 +115,8 @@ export default function ClientOnboardingPage() {
     <Box
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)",
+        background:
+          "linear-gradient(135deg, var(--app-bg) 0%, rgba(79, 70, 229, 0.14) 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -129,7 +130,7 @@ export default function ClientOnboardingPage() {
         style={{
           width: "100%",
           maxWidth: 640,
-          background: "white",
+          background: "var(--app-surface)",
         }}
       >
         <Stack gap="xs" ta="center" mb="xl">
@@ -147,7 +148,7 @@ export default function ClientOnboardingPage() {
             >
               <Sparkles size={20} color="white" />
             </Box>
-            <Title order={3} c="dark.9">
+            <Title order={3} c="var(--app-text-strong)">
               NodeWorks
             </Title>
           </Group>
@@ -186,9 +187,9 @@ export default function ClientOnboardingPage() {
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                leftSection={<Building2 size={16} color="#94a3b8" />}
+                leftSection={<Building2 size={16} color="var(--app-muted-soft)" />}
                 size="md"
-                styles={{ label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 } }}
+                styles={{ label: { color: "var(--app-text)", fontWeight: 600 } }}
               />
               <Select
                 label="Industry"
@@ -198,7 +199,7 @@ export default function ClientOnboardingPage() {
                 value={industry}
                 onChange={setIndustry}
                 size="md"
-                styles={{ label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 } }}
+                styles={{ label: { color: "var(--app-text)", fontWeight: 600 } }}
               />
               <Select
                 label="Company Size"
@@ -208,7 +209,7 @@ export default function ClientOnboardingPage() {
                 value={companySize}
                 onChange={setCompanySize}
                 size="md"
-                styles={{ label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 } }}
+                styles={{ label: { color: "var(--app-text)", fontWeight: 600 } }}
               />
             </Stack>
           )}
@@ -223,7 +224,7 @@ export default function ClientOnboardingPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 size="md"
-                styles={{ label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 } }}
+                styles={{ label: { color: "var(--app-text)", fontWeight: 600 } }}
               />
               <Text size="xs" c={description.length >= 20 ? "green" : "dimmed"}>
                 {description.length}/500 characters (minimum 20)
@@ -233,9 +234,9 @@ export default function ClientOnboardingPage() {
                 placeholder="https://yourcompany.com"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                leftSection={<Globe size={16} color="#94a3b8" />}
+                leftSection={<Globe size={16} color="var(--app-muted-soft)" />}
                 size="md"
-                styles={{ label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 } }}
+                styles={{ label: { color: "var(--app-text)", fontWeight: 600 } }}
               />
             </Stack>
           )}
@@ -253,7 +254,7 @@ export default function ClientOnboardingPage() {
                 <CheckCircle2 size={40} color="white" />
               </Avatar>
               <Stack gap="xs" ta="center">
-                <Title order={4} c="dark.9">
+                <Title order={4} c="var(--app-text-strong)">
                   You're all set!
                 </Title>
                 <Text c="dimmed" fz="sm" maw={360}>
@@ -261,11 +262,11 @@ export default function ClientOnboardingPage() {
                 </Text>
               </Stack>
 
-              <Card withBorder radius="md" bg="white" w="100%">
+              <Card withBorder radius="md" bg="var(--app-surface)" w="100%">
                 <Stack gap="sm">
                   <Group>
                     <Building2 size={18} color="#4f46e5" />
-                    <Text fw={600} c="dark.9">{companyName}</Text>
+                    <Text fw={600} c="var(--app-text)">{companyName}</Text>
                   </Group>
                   <Group>
                     <Briefcase size={18} color="#4f46e5" />

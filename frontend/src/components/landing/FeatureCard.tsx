@@ -44,7 +44,7 @@ export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps
         </Box>
 
         {/* Title */}
-        <Title order={4} c="dark">
+        <Title order={4} c="var(--app-text)">
           {title}
         </Title>
 

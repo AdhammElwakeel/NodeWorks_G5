@@ -162,7 +162,7 @@ export default function ClientProfilePage() {
         }
       />
 
-      <Card withBorder radius="md" bg="white">
+      <Card withBorder radius="md" bg="var(--app-surface)">
         <Stack gap="xl">
           {/* Header */}
           <Group align="flex-start" gap="lg">
@@ -179,7 +179,7 @@ export default function ClientProfilePage() {
             </Avatar>
             <Stack gap={4} style={{ flex: 1 }}>
               <Group gap="xs" align="center">
-                <Title order={3} c="dark.9">
+                <Title order={3} c="var(--app-text-strong)">
                   {profile.companyName || "Your Company"}
                 </Title>
                 {profile.industry && (
@@ -190,7 +190,7 @@ export default function ClientProfilePage() {
               </Group>
               {profile.companySize && (
                 <Group gap="xs">
-                  <Users size={14} color="#94a3b8" />
+                  <Users size={14} color="var(--app-muted-soft)" />
                   <Text fz="sm" c="dimmed">
                     {profile.companySize}
                   </Text>
@@ -198,7 +198,7 @@ export default function ClientProfilePage() {
               )}
               {profile.location && (
                 <Group gap="xs">
-                  <MapPin size={14} color="#94a3b8" />
+                  <MapPin size={14} color="var(--app-muted-soft)" />
                   <Text fz="sm" c="dimmed">
                     {profile.location}
                   </Text>
@@ -218,9 +218,9 @@ export default function ClientProfilePage() {
                   onChange={(e) =>
                     setForm({ ...form, companyName: e.target.value })
                   }
-                  leftSection={<Building2 size={16} color="#94a3b8" />}
+                  leftSection={<Building2 size={16} color="var(--app-muted-soft)" />}
                   styles={{
-                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                    label: { color: "var(--app-text)", fontWeight: 600 },
                   }}
                 />
                 <TextInput
@@ -229,9 +229,9 @@ export default function ClientProfilePage() {
                   onChange={(e) =>
                     setForm({ ...form, website: e.target.value })
                   }
-                  leftSection={<Globe size={16} color="#94a3b8" />}
+                  leftSection={<Globe size={16} color="var(--app-muted-soft)" />}
                   styles={{
-                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                    label: { color: "var(--app-text)", fontWeight: 600 },
                   }}
                 />
               </Group>
@@ -244,7 +244,7 @@ export default function ClientProfilePage() {
                     setForm({ ...form, industry: val || "" })
                   }
                   styles={{
-                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                    label: { color: "var(--app-text)", fontWeight: 600 },
                   }}
                 />
                 <Select
@@ -255,7 +255,7 @@ export default function ClientProfilePage() {
                     setForm({ ...form, companySize: val || "" })
                   }
                   styles={{
-                    label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                    label: { color: "var(--app-text)", fontWeight: 600 },
                   }}
                 />
               </Group>
@@ -265,9 +265,9 @@ export default function ClientProfilePage() {
                 onChange={(e) =>
                   setForm({ ...form, location: e.target.value })
                 }
-                leftSection={<MapPin size={16} color="#94a3b8" />}
+                leftSection={<MapPin size={16} color="var(--app-muted-soft)" />}
                 styles={{
-                  label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                  label: { color: "var(--app-text)", fontWeight: 600 },
                 }}
               />
               <Textarea
@@ -278,7 +278,7 @@ export default function ClientProfilePage() {
                 }
                 minRows={4}
                 styles={{
-                  label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                  label: { color: "var(--app-text)", fontWeight: 600 },
                 }}
               />
               <Group justify="flex-end" gap="sm">
@@ -301,7 +301,7 @@ export default function ClientProfilePage() {
               {profile.website && (
                 <Group>
                   <Globe size={18} color="#4f46e5" />
-                  <Text c="dark.9" fz="sm">
+                  <Text c="var(--app-text)" fz="sm">
                     {profile.website}
                   </Text>
                 </Group>
@@ -309,7 +309,7 @@ export default function ClientProfilePage() {
               {user?.email && (
                 <Group>
                   <Mail size={18} color="#4f46e5" />
-                  <Text c="dark.9" fz="sm">
+                  <Text c="var(--app-text)" fz="sm">
                     {user.email}
                   </Text>
                 </Group>
@@ -319,7 +319,7 @@ export default function ClientProfilePage() {
                 <>
                   <Divider />
                   <Box>
-                    <Text fw={600} c="dark.9" mb="xs">
+                    <Text fw={600} c="var(--app-text)" mb="xs">
                       About
                     </Text>
                     <Text c="dimmed" fz="sm" style={{ lineHeight: 1.7 }}>

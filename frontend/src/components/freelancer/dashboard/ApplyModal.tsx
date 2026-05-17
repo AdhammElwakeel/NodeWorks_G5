@@ -69,7 +69,7 @@ export function ApplyModal({ opened, onClose, job, onSubmit }: ApplyModalProps) 
       radius="md"
     >
       <Stack gap="md">
-        <Text fw={600} c="dark.9">
+        <Text fw={600} c="var(--app-text)">
           {job.title}
         </Text>
         {job.budget && (

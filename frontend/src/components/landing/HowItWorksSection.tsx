@@ -73,7 +73,7 @@ function ProcessCard({ title, steps, gradient }: ProcessCardProps) {
       }}
     >
       <Stack gap="xl">
-        <Title order={3} ta="center" c="dark">
+        <Title order={3} ta="center" c="var(--app-text)">
           {title}
         </Title>
 
@@ -106,7 +106,7 @@ function ProcessCard({ title, steps, gradient }: ProcessCardProps) {
                   )}
                 </Box>
                 <Stack gap={4} style={{ flex: 1 }} pt={4}>
-                  <Text fw={600} c="dark">
+                  <Text fw={600} c="var(--app-text)">
                     {step.title}
                   </Text>
                   <Text fz="sm" c="dimmed">
@@ -124,12 +124,12 @@ function ProcessCard({ title, steps, gradient }: ProcessCardProps) {
 
 export function HowItWorksSection() {
   return (
-    <Box component="section" py={{ base: 60, md: 80, lg: 100 }} bg="gray.0">
+    <Box component="section" py={{ base: 60, md: 80, lg: 100 }} bg="var(--app-bg)">
       <Container size="xl">
         <Stack gap="xl">
           {/* Section Header */}
           <Stack gap="sm" align="center" ta="center" mb="xl">
-            <Title order={2} fz={{ base: 28, md: 36 }} fw={700} c="dark">
+            <Title order={2} fz={{ base: 28, md: 36 }} fw={700} c="var(--app-text-strong)">
               How It Works
             </Title>
             <Text fz="lg" c="dimmed" maw={500}>

@@ -13,7 +13,7 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
     <Box mb="xl">
       <Group justify="space-between" align="flex-start" wrap="wrap">
         <Box>
-          <Title order={2} c="dark.9">
+          <Title order={2} c="var(--app-text-strong)">
             {title}
           </Title>
           {subtitle && (

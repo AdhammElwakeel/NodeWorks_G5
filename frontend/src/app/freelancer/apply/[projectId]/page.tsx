@@ -116,14 +116,14 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
 
   return (
     <ProtectedRoute requiredRole="freelancer">
-      <Box style={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      <Box style={{ minHeight: "100vh", backgroundColor: "var(--app-bg)" }}>
         <Container size="md" py="xl">
           <Stack gap="lg">
             <Breadcrumbs mb="xs">
               <Anchor component={Link} href="/freelancer/dashboard" size="sm" c="dimmed">
                 Dashboard
               </Anchor>
-              <Text size="sm" c="dark">
+              <Text size="sm" c="var(--app-text)">
                 Apply
               </Text>
             </Breadcrumbs>
@@ -140,17 +140,17 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
               </Button>
             </Group>
 
-            <Paper withBorder radius="md" shadow="sm" p="xl" bg="white">
+            <Paper withBorder radius="md" shadow="sm" p="xl" bg="var(--app-surface)">
               <Stack gap="md">
                 <Group gap="sm">
                   <Briefcase size={24} color="var(--mantine-color-cyan-6)" />
-                  <Title order={3} c="dark">
+                  <Title order={3} c="var(--app-text)">
                     Apply for Job
                   </Title>
                 </Group>
                 <Divider />
 
-                <Text fw={700} fz="xl" c="dark">
+                <Text fw={700} fz="xl" c="var(--app-text)">
                   {project.title}
                 </Text>
                 <Text c="dimmed" style={{ lineHeight: 1.6 }}>
@@ -175,7 +175,7 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
                   {project.budget && (
                     <Group gap={4}>
                       <DollarSign size={16} color="var(--mantine-color-cyan-6)" />
-                      <Text fw={600} fz="sm" c="dark">
+                      <Text fw={600} fz="sm" c="var(--app-text)">
                         Budget: ${project.budget.toLocaleString()}
                       </Text>
                     </Group>
@@ -192,9 +192,9 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
               </Stack>
             </Paper>
 
-            <Paper withBorder radius="md" shadow="sm" p="xl" bg="white">
+            <Paper withBorder radius="md" shadow="sm" p="xl" bg="var(--app-surface)">
               <Stack gap="md">
-                <Title order={4} c="dark">
+                <Title order={4} c="var(--app-text)">
                   Your Proposal
                 </Title>
                 <Divider />
@@ -206,7 +206,7 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
                   minRows={6}
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
-                  styles={{ label: { fontWeight: 600, color: "var(--mantine-color-dark-9)" } }}
+                  styles={{ label: { fontWeight: 600, color: "var(--app-text)" } }}
                 />
 
                 <Group grow>
@@ -219,7 +219,7 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
                     onChange={(val) => setProposedRate(val as number | "")}
                     prefix="$"
                     leftSection={<DollarSign size={16} />}
-                    styles={{ label: { fontWeight: 600, color: "var(--mantine-color-dark-9)" } }}
+                    styles={{ label: { fontWeight: 600, color: "var(--app-text)" } }}
                   />
                   <TextInput
                     label="Estimated Duration"
@@ -227,7 +227,7 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
                     value={estimatedDuration}
                     onChange={(e) => setEstimatedDuration(e.target.value)}
                     leftSection={<Clock size={16} />}
-                    styles={{ label: { fontWeight: 600, color: "var(--mantine-color-dark-9)" } }}
+                    styles={{ label: { fontWeight: 600, color: "var(--app-text)" } }}
                   />
                 </Group>
 
@@ -240,7 +240,7 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
                   leftSection={<Upload size={16} />}
                   clearable
                   description="Optional: attach examples of your previous work"
-                  styles={{ label: { fontWeight: 600, color: "var(--mantine-color-dark-9)" } }}
+                  styles={{ label: { fontWeight: 600, color: "var(--app-text)" } }}
                 />
 
                 {error && (
