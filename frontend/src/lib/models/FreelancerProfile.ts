@@ -10,6 +10,7 @@ export interface IFreelancerProfile {
   about?: string;
   hourlyRate?: number;
   availability?: string;
+  portfolioLinks?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +33,7 @@ const FreelancerProfileSchema = new mongoose.Schema<IFreelancerProfile>(
     about: { type: String },
     hourlyRate: { type: Number, min: 0 },
     availability: { type: String },
+    portfolioLinks: [{ type: String, trim: true }],
   },
   {
     timestamps: true,

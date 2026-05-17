@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SynergyAI",
+  title: "NodeWorks",
   description: "AI-Powered Smart Freelance & Team Formation Platform",
 };
 

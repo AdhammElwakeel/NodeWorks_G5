@@ -1,265 +1,459 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Box, Container, Burger, Title, Group, Drawer, Loader, Center } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { Suspense, useState, useMemo, useEffect } from "react";
+import {
+  Box,
+  Container,
+  Title,
+  Text,
+  Group,
+  Stack,
+  Center,
+  Card,
+  Badge,
+  SimpleGrid,
+  Divider,
+  TextInput,
+  Select,
+  Button,
+  Loader,
+} from "@mantine/core";
+import { Briefcase, Search, Filter, Send, DollarSign } from "lucide-react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   Sidebar,
+  EarningsSection,
   HeaderBanner,
   HomeSection,
-  JobsSection,
-  EarningsSection,
-  ApplyModal,
 } from "@/components/freelancer/dashboard";
-import type { Section, Job } from "@/components/freelancer/dashboard/types";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { profileApi, projectApi, proposalApi, type ProjectData, type ProposalData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { notifications } from "@mantine/notifications";
+import { useRouter, useSearchParams } from "next/navigation";
+import { projectApi, proposalApi } from "@/lib/api";
+import {
+  MOCK_PROFILE,
+  MOCK_EARNINGS,
+} from "@/components/freelancer/dashboard/data";
+import type { Section } from "@/components/freelancer/dashboard/types";
+import type { ProjectData, ProposalData } from "@/lib/api";
 
-function adaptProjectToJob(p: ProjectData): Job {
-  return {
-    id: p.id,
-    title: p.title,
-    description: p.description,
-    budget: p.budget,
-    budgetType: "fixed",
-    skills: p.skills,
-    clientName: "Client",
-    clientAvatar: "CL",
-    postedAt: new Date(p.createdAt).toLocaleDateString(),
-    proposals: p.proposalsCount,
-    saved: false,
-  };
-}
-
-interface FreelancerProfile {
-  name: string;
-  email: string;
-  headline: string;
-  about: string;
-  country: string;
-  hourlyRate: number;
-  experienceLevel: string;
-  availability: string;
-  skills: string[];
-  portfolioLinks: string[];
-  role: string;
-  memberSince: string;
-  completedJobs: number;
-  totalEarnings: number;
-  rating: number;
-  reviews: number;
-}
-
-function userToProfile(user: any, profile: any): FreelancerProfile {
-  return {
-    name: user?.name || "Freelancer",
-    email: user?.email || "",
-    headline: profile?.headline || user?.freelancerProfile?.headline || "Freelancer",
-    about: profile?.about || user?.freelancerProfile?.about || "",
-    country: profile?.country || user?.freelancerProfile?.country || "N/A",
-    hourlyRate: profile?.hourlyRate || user?.freelancerProfile?.hourlyRate || 0,
-    experienceLevel: profile?.experienceLevel || user?.freelancerProfile?.experienceLevel || "Junior",
-    availability: profile?.availability || user?.freelancerProfile?.availability || "Available",
-    skills: profile?.skills || user?.freelancerProfile?.skills || [],
-    portfolioLinks: profile?.portfolioLinks || user?.freelancerProfile?.portfolioLinks || [],
-    role: user?.role || "freelancer",
-    memberSince: "2026",
-    completedJobs: 0,
-    totalEarnings: 0,
-    rating: 0,
-    reviews: 0,
-  };
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default function FreelancerDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <Center style={{ minHeight: "100vh" }}>
+          <Loader color="cyan" />
+        </Center>
+      }
+    >
+      <FreelancerDashboardContent />
+    </Suspense>
+  );
+}
+
+function FreelancerDashboardContent() {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<Section>("home");
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [profile, setProfile] = useState<FreelancerProfile | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const sectionParam = searchParams.get("section");
+  let initialSection: Section = "home";
+  if (sectionParam === "earnings") initialSection = "earnings";
+  else if (sectionParam === "profile") initialSection = "profile";
+
+  const [activeSection, setActiveSection] =
+    useState<Section>(initialSection);
+
+  const [search, setSearch] = useState("");
+  const [skillFilter, setSkillFilter] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectData[]>([]);
-  const [myProposals, setMyProposals] = useState<ProposalData[]>([]);
+  const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [applyJob, setApplyJob] = useState<Job | null>(null);
-  const [applyOpened, { open: openApply, close: closeApply }] = useDisclosure(false);
-
-  const profileCompletion = 50;
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [profileRes, projectsRes, proposalsRes] = await Promise.all([
-        profileApi.get().catch(() => null),
-        projectApi.list({ status: "open" }).catch(() => ({ projects: [] })),
-        proposalApi.list({ mine: true }).catch(() => ({ proposals: [] })),
-      ]);
-
-      if (profileRes) {
-        setProfile(userToProfile(profileRes.user, profileRes.user.freelancerProfile));
-      }
-      setProjects(projectsRes.projects || []);
-      setMyProposals(proposalsRes.proposals || []);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadData();
+    Promise.all([
+      projectApi.list({ status: "open" }),
+      proposalApi.list({ mine: true }),
+    ])
+      .then(([projectData, proposalData]) => {
+        setProjects(projectData.projects);
+        setProposals(proposalData.proposals);
+      })
+      .catch(() => {
+        setProjects([]);
+        setProposals([]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleApplySubmit = async (data: { coverLetter: string; proposedRate: number; estimatedDuration?: string }) => {
-    if (!applyJob) return;
-    try {
-      await proposalApi.create({
-        projectId: applyJob.id,
-        coverLetter: data.coverLetter,
-        proposedRate: data.proposedRate,
-        estimatedDuration: data.estimatedDuration,
-      });
-      notifications.show({
-        title: "Proposal submitted!",
-        message: "Your proposal has been sent to the client.",
-        color: "green",
-      });
-      closeApply();
-      loadData();
-    } catch (err: any) {
-      notifications.show({
-        title: "Error",
-        message: err?.message || "Failed to submit proposal.",
-        color: "red",
-      });
-      throw err;
-    }
-  };
+  const appliedProjectIds = useMemo(
+    () => new Set(proposals.map((proposal) => proposal.projectId)),
+    [proposals]
+  );
 
-  function handleApply(job: Job) {
-    setApplyJob(job);
-    openApply();
-  }
+  const profileCompletion = 85;
+  const acceptedCount = proposals.filter(
+    (p) => p.status === "accepted"
+  ).length;
+  const pendingCount = proposals.filter(
+    (p) => p.status === "pending"
+  ).length;
+
+  const recommendedJobs = useMemo(
+    () => projects.filter((project) => !appliedProjectIds.has(project.id)),
+    [projects, appliedProjectIds]
+  );
+
+  const allJobSkills = useMemo(
+    () => Array.from(new Set(projects.flatMap((project) => project.skills))),
+    [projects]
+  );
+
+  const filteredRecommended = useMemo(
+    () =>
+      recommendedJobs.filter((job) => {
+        const matchSearch =
+          !search ||
+          job.title.toLowerCase().includes(search.toLowerCase()) ||
+          job.description.toLowerCase().includes(search.toLowerCase());
+        const matchSkill = !skillFilter || job.skills.includes(skillFilter);
+        return matchSearch && matchSkill;
+      }),
+    [recommendedJobs, search, skillFilter]
+  );
 
   const sidebar = (
     <Sidebar
       activeSection={activeSection}
-      onSectionChange={(section) => {
-        setActiveSection(section);
-        setMobileOpen(false);
-      }}
-      pendingCount={myProposals.filter((p) => p.status === "pending").length}
+      onSectionChange={setActiveSection}
     />
   );
-
-  if (loading) {
-    return (
-      <ProtectedRoute requiredRole="freelancer">
-        <Center style={{ minHeight: "100vh" }}>
-          <Loader size="lg" color="indigo" />
-        </Center>
-      </ProtectedRoute>
-    );
-  }
 
   return (
     <ProtectedRoute requiredRole="freelancer">
       <Box style={{ display: "flex", minHeight: "100vh" }}>
-        <Box visibleFrom="md" w={260} style={{ flexShrink: 0 }} />
-
-        <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "#f8fafc" }}>
-          <Group
-            hiddenFrom="md"
-            p="md"
-            style={{ borderBottom: "1px solid #e2e8f0", background: "white" }}
-          >
-            <Burger
-              opened={mobileOpen}
-              onClick={() => setMobileOpen((o) => !o)}
-              size="sm"
-            />
-            <Title order={5} c="dark.9">
-              NodeWorks
-            </Title>
-          </Group>
-
-          {profile && (
-            <HeaderBanner
-              profile={profile}
-              profileCompletion={profileCompletion}
-              acceptedCount={myProposals.filter((p) => p.status === "accepted").length}
-              pendingCount={myProposals.filter((p) => p.status === "pending").length}
-            />
-          )}
-
-          <Container size="xl" py="xl">
-            {activeSection === "home" && profile && (
-              <HomeSection
-                profile={profile}
-                proposals={myProposals.map((p) => ({
-                  id: p.id,
-                  projectTitle: p.projectTitle || "Project",
-                  status: p.status,
-                  coverLetter: p.coverLetter,
-                  proposedRate: p.proposedRate,
-                  submittedAt: p.submittedAt,
-                }))}
-                profileCompletion={profileCompletion}
-              />
-            )}
-            {activeSection === "jobs" && (
-              <JobsSection
-                jobs={projects.map(adaptProjectToJob)}
-                onApply={handleApply}
-              />
-            )}
-            {activeSection === "earnings" && (
-              <EarningsSection
-                earnings={{
-                  totalEarnings: 0,
-                  thisMonth: 0,
-                  pending: 0,
-                  available: 0,
-                  transactions: [],
-                  monthlyStats: [],
-                }}
-              />
-            )}
-          </Container>
-        </Box>
-
+        {/* Desktop sidebar stays in layout so expanded hover reserves space. */}
         <Box
           visibleFrom="md"
           style={{
-            position: "fixed",
+            position: "sticky",
             top: 0,
-            left: 0,
-            width: 260,
             height: "100vh",
             zIndex: 200,
+            flexShrink: 0,
           }}
         >
           {sidebar}
         </Box>
 
-        <Drawer
-          opened={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          size="xs"
-          withCloseButton={false}
-          padding={0}
-          hiddenFrom="md"
-        >
-          {sidebar}
-        </Drawer>
-      </Box>
+        {/* Main content */}
+        <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+          {activeSection === "earnings" ? (
+            <Container size="lg" py="xl">
+              <EarningsSection earnings={MOCK_EARNINGS} />
+            </Container>
+          ) : activeSection === "profile" ? (
+            <>
+                  <HeaderBanner
+                    profile={MOCK_PROFILE}
+                    profileCompletion={profileCompletion}
+                    acceptedCount={acceptedCount}
+                    pendingCount={pendingCount}
+                  />
+                  <Container size="lg" py="xl">
+                    <HomeSection
+                      profile={MOCK_PROFILE}
+                      proposals={proposals.map((proposal) => ({
+                        id: proposal.id,
+                        projectTitle: proposal.projectTitle || "Project",
+                        status: proposal.status,
+                        coverLetter: proposal.coverLetter,
+                        proposedRate: proposal.proposedRate,
+                        submittedAt: formatDate(proposal.submittedAt),
+                      }))}
+                      profileCompletion={profileCompletion}
+                    />
+                  </Container>
+            </>
+          ) : (
+            <Container size="lg" py="xl">
+              <Stack gap="xl">
+                {/* Welcome Header */}
+                <Stack gap={4}>
+                  <Title order={2} fw={700} c="dark.9">
+                    Welcome Back, {user?.name?.split(" ")[0] || "Freelancer"}!
+                  </Title>
+                  <Text c="dimmed" fz="lg">
+                    Find the right job for you and apply
+                  </Text>
+                </Stack>
 
-      <ApplyModal
-        opened={applyOpened}
-        onClose={closeApply}
-        job={applyJob}
-        onSubmit={handleApplySubmit}
-      />
+                {/* My Jobs */}
+                <Stack gap="md">
+                  <Stack gap={4}>
+                    <Title order={3} fw={600} c="dark">
+                      My Jobs
+                    </Title>
+                    <Text c="dimmed" fz="sm">
+                      Jobs you already applied on
+                    </Text>
+                  </Stack>
+
+                  {loading ? (
+                    <Card withBorder radius="md" p="xl">
+                      <Center>
+                        <Loader color="cyan" />
+                      </Center>
+                    </Card>
+                  ) : proposals.length === 0 ? (
+                    <Card withBorder radius="md" p="xl">
+                      <Center>
+                        <Stack align="center" gap="sm">
+                          <Briefcase size={48} color="#94a3b8" />
+                          <Text fw={600} c="black">
+                            You didn&apos;t apply to any job yet
+                          </Text>
+                          <Text fz="sm" c="dimmed" ta="center">
+                            Browse the recommended jobs below and submit your
+                            first proposal!
+                          </Text>
+                        </Stack>
+                      </Center>
+                    </Card>
+                  ) : (
+                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+                      {proposals.map((proposal) => (
+                        <Card key={proposal.id} withBorder radius="md" shadow="sm">
+                          <Stack gap="sm">
+                            <Group justify="space-between">
+                              <Badge
+                                color={
+                                  proposal.status === "accepted"
+                                    ? "green"
+                                    : proposal.status === "rejected"
+                                      ? "red"
+                                      : "orange"
+                                }
+                                variant="light"
+                                size="sm"
+                                radius="sm"
+                              >
+                                {proposal.status}
+                              </Badge>
+                              <Group gap={4}>
+                                <DollarSign
+                                  size={14}
+                                  color="var(--mantine-color-cyan-6)"
+                                />
+                                <Text fw={700} fz="sm" c="black">
+                                  ${proposal.proposedRate.toLocaleString()}
+                                </Text>
+                              </Group>
+                            </Group>
+                            <Text fw={700} c="black" lineClamp={2}>
+                              {proposal.projectTitle || "Project"}
+                            </Text>
+                            <Text fz="sm" c="dimmed" lineClamp={2}>
+                              {proposal.coverLetter}
+                            </Text>
+                            <Divider />
+                            <Group justify="space-between">
+                              <Text fz="xs" c="dimmed">
+                                Submitted {formatDate(proposal.submittedAt)}
+                              </Text>
+                            </Group>
+                          </Stack>
+                        </Card>
+                      ))}
+                    </SimpleGrid>
+                  )}
+                </Stack>
+
+                {/* Recommended Jobs */}
+                <Stack gap="md">
+                  <Stack gap={4}>
+                    <Title order={3} fw={600} c="dark">
+                      Recommended Jobs
+                    </Title>
+                    <Text c="dimmed" fz="sm">
+                      Jobs that match your profile
+                    </Text>
+                  </Stack>
+
+                  <Group gap="md" wrap="wrap">
+                    <TextInput
+                      placeholder="Search jobs by title or keyword..."
+                      leftSection={<Search size={16} color="#94a3b8" />}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{ flex: 1, minWidth: 250 }}
+                      radius="xl"
+                      size="md"
+                      styles={{
+                        input: {
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #e2e8f0",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                        },
+                      }}
+                    />
+                    <Select
+                      placeholder="Filter by skill"
+                      data={allJobSkills}
+                      value={skillFilter}
+                      onChange={setSkillFilter}
+                      clearable
+                      leftSection={<Filter size={16} color="#94a3b8" />}
+                      style={{ minWidth: 180 }}
+                      radius="xl"
+                      size="md"
+                      styles={{
+                        input: {
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #e2e8f0",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                        },
+                      }}
+                    />
+                    <Button
+                      color="cyan"
+                      radius="xl"
+                      size="md"
+                      leftSection={<Search size={16} />}
+                    >
+                      Search
+                    </Button>
+                  </Group>
+
+                  {loading ? (
+                    <Card withBorder radius="md" p="xl">
+                      <Center>
+                        <Loader color="cyan" />
+                      </Center>
+                    </Card>
+                  ) : filteredRecommended.length === 0 ? (
+                    <Card withBorder radius="md" p="xl">
+                      <Center>
+                        <Stack align="center" gap="sm">
+                          <Briefcase size={48} color="#94a3b8" />
+                          <Text fw={600} c="black">
+                            No jobs found
+                          </Text>
+                          <Text fz="sm" c="dimmed" ta="center">
+                            Try adjusting your search or check back later for
+                            new opportunities.
+                          </Text>
+                        </Stack>
+                      </Center>
+                    </Card>
+                  ) : (
+                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+                      {filteredRecommended.map((job) => (
+                        <Card
+                          key={job.id}
+                          withBorder
+                          radius="md"
+                          shadow="sm"
+                          style={{
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.transform =
+                              "translateY(-4px)";
+                            (e.currentTarget as HTMLElement).style.boxShadow =
+                              "0 12px 40px rgba(0,0,0,0.1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.transform =
+                              "translateY(0)";
+                            (e.currentTarget as HTMLElement).style.boxShadow =
+                              "none";
+                          }}
+                        >
+                          <Stack gap="sm">
+                            <Group justify="space-between">
+                              <Badge
+                                color="green"
+                                variant="light"
+                                size="sm"
+                                radius="sm"
+                              >
+                                Open
+                              </Badge>
+                              {job.budget && (
+                                <Group gap={4}>
+                                  <DollarSign
+                                    size={14}
+                                    color="var(--mantine-color-cyan-6)"
+                                  />
+                                  <Text fw={700} fz="sm" c="black">
+                                    ${job.budget.toLocaleString()}
+                                  </Text>
+                                </Group>
+                              )}
+                            </Group>
+                            <Text fw={700} c="black" lineClamp={2} fz="lg">
+                              {job.title}
+                            </Text>
+                            <Text fz="sm" c="dimmed" lineClamp={3}>
+                              {job.description}
+                            </Text>
+                            <Group gap="xs" wrap="wrap">
+                              {job.skills.slice(0, 4).map((s: string) => (
+                                <Badge
+                                  key={s}
+                                  size="sm"
+                                  variant="light"
+                                  color="cyan"
+                                  radius="sm"
+                                >
+                                  {s}
+                                </Badge>
+                              ))}
+                              {job.skills.length > 4 && (
+                                <Badge
+                                  size="sm"
+                                  variant="light"
+                                  color="gray"
+                                  radius="sm"
+                                >
+                                  +{job.skills.length - 4}
+                                </Badge>
+                              )}
+                            </Group>
+                            <Divider />
+                            <Text fz="xs" c="dimmed">
+                              {formatDate(job.createdAt)} · {job.proposalsCount} proposals
+                            </Text>
+                            <Button
+                              fullWidth
+                              color="cyan"
+                              radius="md"
+                              leftSection={<Send size={16} />}
+                              onClick={() =>
+                                router.push(`/freelancer/apply/${job.id}`)
+                              }
+                            >
+                              Apply Now
+                            </Button>
+                          </Stack>
+                        </Card>
+                      ))}
+                    </SimpleGrid>
+                  )}
+                </Stack>
+              </Stack>
+            </Container>
+          )}
+        </Box>
+      </Box>
     </ProtectedRoute>
   );
 }

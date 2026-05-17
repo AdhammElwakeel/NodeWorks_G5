@@ -176,33 +176,7 @@ export function HomeSection({
               </Stack>
             </Card>
 
-            {/* Experience */}
-            <Card withBorder radius="md" shadow="sm">
-              <Stack gap="sm">
-                <Group justify="space-between">
-                  <Group gap="sm">
-                    <ThemeIcon color="indigo" variant="light" radius="md">
-                      <Award size={16} />
-                    </ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">
-                      Experience
-                    </Text>
-                  </Group>
-                  <ActionIcon
-                    variant="subtle"
-                    color="cyan"
-                    component={Link}
-                    href="/freelancer/profile"
-                  >
-                    <Edit3 size={16} />
-                  </ActionIcon>
-                </Group>
-                <Badge size="lg" variant="light" color="indigo">
-                  {profile.experienceLevel} Level
-                </Badge>
-              </Stack>
-            </Card>
-
+            {/* Portfolio Links */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">

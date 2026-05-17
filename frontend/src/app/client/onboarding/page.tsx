@@ -72,6 +72,7 @@ export default function ClientOnboardingPage() {
         profile: {
           companyName: companyName.trim(),
           industry,
+          companySize,
           description: description.trim(),
           website: website.trim() || undefined,
         },
@@ -151,7 +152,7 @@ export default function ClientOnboardingPage() {
             </Title>
           </Group>
           <Text c="dimmed" fz="sm">
-            Let's set up your client profile
+            Welcome to NodeWorks Client. Let's find you some talent.
           </Text>
         </Stack>
 

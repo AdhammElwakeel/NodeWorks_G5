@@ -48,6 +48,7 @@ export const authApi = {
   login: (body: { email: string; password: string }) =>
     fetchApi("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   me: () => fetchApi("/auth/me"),
+  logout: () => fetchApi("/auth/logout", { method: "POST" }),
 };
 
 // ─── Profile ───────────────────────────────────────────────────────────

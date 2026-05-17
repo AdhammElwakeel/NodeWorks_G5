@@ -22,8 +22,29 @@ export async function GET(req: NextRequest) {
 
     const filter: Record<string, unknown> = {};
 
-    if (projectId) filter.projectId = projectId;
-    if (mine === "true") filter.freelancerId = payload.userId;
+    if (mine === "true") {
+      filter.freelancerId = payload.userId;
+    }
+
+    if (projectId) {
+      const project = await Project.findById(projectId).lean();
+      if (!project) {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      }
+
+      filter.projectId = projectId;
+
+      if (payload.role === "client") {
+        if (project.clientId.toString() !== payload.userId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      } else {
+        filter.freelancerId = payload.userId;
+      }
+    } else if (payload.role === "client" && mine !== "true") {
+      const projectIds = await Project.find({ clientId: payload.userId }).distinct("_id");
+      filter.projectId = { $in: projectIds };
+    }
 
     const proposals = await Proposal.find(filter)
       .populate("freelancerId", "name email avatar")
