@@ -18,14 +18,15 @@ import {
   Center,
 } from "@mantine/core";
 import { Search, Filter, Send, Bookmark, Briefcase, DollarSign } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { Job } from "./types";
 
 interface JobsSectionProps {
   jobs: Job[];
-  onApply: (job: Job) => void;
 }
 
-export function JobsSection({ jobs, onApply }: JobsSectionProps) {
+export function JobsSection({ jobs }: JobsSectionProps) {
+  const router = useRouter();
 
   const [search, setSearch] = useState("");
   const [skillFilter, setSkillFilter] = useState<string | null>(null);
@@ -247,7 +248,7 @@ export function JobsSection({ jobs, onApply }: JobsSectionProps) {
                     color="cyan"
                     radius="md"
                     leftSection={<Send size={16} />}
-                    onClick={() => onApply(job)}
+                    onClick={() => router.push(`/freelancer/apply/${job.id}`)}
                   >
                     Apply Now
                   </Button>

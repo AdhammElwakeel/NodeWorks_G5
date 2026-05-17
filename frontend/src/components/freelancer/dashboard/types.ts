@@ -1,4 +1,4 @@
-export type Section = "home" | "jobs" | "earnings";
+export type Section = "home" | "browse" | "earnings" | "profile";
 
 export interface Profile {
   name: string;

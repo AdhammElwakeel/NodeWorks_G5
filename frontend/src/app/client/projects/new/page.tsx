@@ -13,6 +13,7 @@ import {
   Group,
   Title,
   Loader,
+  Text,
 } from "@mantine/core";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";

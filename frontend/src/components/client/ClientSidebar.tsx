@@ -1,7 +1,8 @@
 "use client";
 
 import { Box, Text, Stack, Group, Avatar, Divider } from "@mantine/core";
-import { LayoutDashboard, FolderOpen, PlusCircle, User, ChevronRight, Zap, LogOut, Building2 } from "lucide-react";
+import { LayoutDashboard, FolderOpen, PlusCircle, User, ChevronRight, LogOut, Building2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -90,20 +91,7 @@ export function ClientSidebar() {
       {/* Logo */}
       <Box p="lg" pb="sm">
         <Group gap="sm">
-          <Box
-            style={{
-              width: 34,
-              height: 34,
-              background: "linear-gradient(135deg, #4f46e5, #06b6d4)",
-              borderRadius: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(79,70,229,0.25)",
-            }}
-          >
-            <Zap size={18} color="white" fill="white" />
-          </Box>
+          <Image src="/logo.svg" alt="NodeWorks" width={34} height={34} />
           <Stack gap={0}>
             <Text fw={700} fz="lg" c="black" lh={1.2}>NodeWorks</Text>
             <Text fz={10} c="#94a3b8" fw={600} tt="uppercase" lh={1}>Client</Text>

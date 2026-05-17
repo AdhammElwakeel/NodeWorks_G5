@@ -24,7 +24,7 @@ interface AuthContextType {
     name: string;
     role: "freelancer" | "client";
   }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -63,7 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.user);
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      await authApi.logout();
+    } catch {
+      // Continue locally even if the network request fails.
+    }
     setUser(null);
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = "/login";

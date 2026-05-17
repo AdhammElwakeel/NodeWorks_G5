@@ -3,7 +3,7 @@
 import { Badge } from "@mantine/core";
 
 interface StatusBadgeProps {
-  status: "open" | "closed" | "pending";
+  status: "open" | "closed" | "pending" | "in-progress";
   size?: string;
 }
 
@@ -11,6 +11,7 @@ const config = {
   open: { color: "green", label: "Open" },
   closed: { color: "gray", label: "Closed" },
   pending: { color: "yellow", label: "Pending" },
+  "in-progress": { color: "blue", label: "In progress" },
 } as const;
 
 export function StatusBadge({ status, size = "sm" }: StatusBadgeProps) {
