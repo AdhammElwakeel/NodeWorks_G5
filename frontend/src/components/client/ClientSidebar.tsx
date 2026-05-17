@@ -2,7 +2,6 @@
 
 import { Box, Text, Stack, Group, Avatar, Divider } from "@mantine/core";
 import { LayoutDashboard, FolderOpen, PlusCircle, User, ChevronRight, LogOut, Building2 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -29,12 +28,12 @@ function NavItem({ icon, label, href, active }: NavItemProps) {
         transition: "all 0.2s ease",
         position: "relative",
         overflow: "hidden",
-        backgroundColor: active ? "rgba(6,182,212,0.08)" : "transparent",
-        color: active ? "#0f172a" : "#64748b",
+        backgroundColor: active ? "var(--app-active-bg)" : "transparent",
+        color: active ? "var(--app-text)" : "var(--app-muted)",
         textDecoration: "none",
       }}
       onMouseEnter={(e) => {
-        if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(2,8,23,0.04)";
+        if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--app-hover-soft)";
       }}
       onMouseLeave={(e) => {
         if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
@@ -84,26 +83,26 @@ export function ClientSidebar() {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: "#ffffff",
-        borderRight: "1px solid #f1f5f9",
+        backgroundColor: "var(--app-sidebar)",
+        borderRight: "1px solid var(--app-border-subtle)",
       }}
     >
       {/* Logo */}
       <Box p="lg" pb="sm">
-        <Group gap="sm">
-          <Image src="/logo.svg" alt="NodeWorks" width={34} height={34} />
+        <Group gap="sm" align="center" wrap="nowrap">
+          <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
           <Stack gap={0}>
-            <Text fw={700} fz="lg" c="black" lh={1.2}>NodeWorks</Text>
-            <Text fz={10} c="#94a3b8" fw={600} tt="uppercase" lh={1}>Client</Text>
+            <Text fw={700} fz="lg" c="var(--app-text-strong)" lh={1.2}>NodeWorks</Text>
+            <Text fz={10} c="var(--app-muted-soft)" fw={600} tt="uppercase" lh={1}>Client</Text>
           </Stack>
         </Group>
       </Box>
 
-      <Divider mx="lg" color="#f1f5f9" />
+      <Divider mx="lg" color="var(--app-border-subtle)" />
 
       {/* Nav */}
       <Stack gap={4} px="md" pt="lg" flex={1}>
-        <Text fz={11} fw={700} tt="uppercase" c="#94a3b8" mb={4} ml={14} style={{ letterSpacing: "0.08em" }}>
+        <Text fz={11} fw={700} tt="uppercase" c="var(--app-muted-soft)" mb={4} ml={14} style={{ letterSpacing: "0.08em" }}>
           Menu
         </Text>
         {navItems.map((item) => (
@@ -113,7 +112,7 @@ export function ClientSidebar() {
 
       {/* Bottom: Profile + Sign Out */}
       <Stack gap="sm" p="md">
-        <Divider color="#f1f5f9" />
+        <Divider color="var(--app-border-subtle)" />
 
         {/* Profile Card — linked to profile page */}
         <Box
@@ -127,20 +126,20 @@ export function ClientSidebar() {
             borderRadius: 12,
             cursor: "pointer",
             transition: "all 0.2s ease",
-            backgroundColor: pathname === "/client/profile" ? "rgba(6,182,212,0.08)" : "transparent",
-            border: pathname === "/client/profile" ? "1px solid rgba(6,182,212,0.2)" : "1px solid #f1f5f9",
+            backgroundColor: pathname === "/client/profile" ? "var(--app-active-bg)" : "transparent",
+            border: pathname === "/client/profile" ? "1px solid var(--app-active-border)" : "1px solid var(--app-border-subtle)",
             textDecoration: "none",
           }}
           onMouseEnter={(e) => {
             if (pathname !== "/client/profile") {
-              (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(2,8,23,0.03)";
-              (e.currentTarget as HTMLElement).style.borderColor = "#e2e8f0";
+              (e.currentTarget as HTMLElement).style.backgroundColor = "var(--app-hover-soft)";
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--app-border)";
             }
           }}
           onMouseLeave={(e) => {
             if (pathname !== "/client/profile") {
               (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-              (e.currentTarget as HTMLElement).style.borderColor = "#f1f5f9";
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--app-border-subtle)";
             }
           }}
         >
@@ -148,11 +147,11 @@ export function ClientSidebar() {
             <Avatar size={38} radius="xl" color="indigo" style={{ border: "2px solid rgba(99,102,241,0.2)" }}>
               <Building2 size={18} />
             </Avatar>
-            <Box style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, borderRadius: "50%", background: "#22c55e", border: "2px solid #ffffff" }} />
+            <Box style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, borderRadius: "50%", background: "#22c55e", border: "2px solid var(--app-sidebar)" }} />
           </Box>
           <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-            <Text fw={600} fz="sm" c="black" lineClamp={1}>{displayName}</Text>
-            <Text fz={11} c="#94a3b8" lineClamp={1}>{displayRole}</Text>
+            <Text fw={600} fz="sm" c="var(--app-text)" lineClamp={1}>{displayName}</Text>
+            <Text fz={11} c="var(--app-muted-soft)" lineClamp={1}>{displayRole}</Text>
           </Stack>
           <ChevronRight size={14} color="#cbd5e1" />
         </Box>
@@ -169,8 +168,8 @@ export function ClientSidebar() {
             cursor: "pointer",
             transition: "all 0.2s ease",
             backgroundColor: "transparent",
-            color: "#64748b",
-            border: "1px solid #f1f5f9",
+            color: "var(--app-muted)",
+            border: "1px solid var(--app-border-subtle)",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(239,68,68,0.06)";
@@ -179,8 +178,8 @@ export function ClientSidebar() {
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-            (e.currentTarget as HTMLElement).style.borderColor = "#f1f5f9";
-            (e.currentTarget as HTMLElement).style.color = "#64748b";
+            (e.currentTarget as HTMLElement).style.borderColor = "var(--app-border-subtle)";
+            (e.currentTarget as HTMLElement).style.color = "var(--app-muted)";
           }}
         >
           <Box style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 8, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>

@@ -15,7 +15,7 @@ import {
   Anchor,
   Badge,
 } from "@mantine/core";
-import { Zap, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -120,20 +120,9 @@ function RegisterForm() {
           style={{ position: "relative", zIndex: 1 }}
         >
           {/* Logo */}
-          <Group gap="sm" align="center">
-            <Box
-              p="md"
-              style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                borderRadius: "var(--mantine-radius-lg)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Zap size={32} color="white" fill="white" />
-            </Box>
-            <Text fw={700} fz={32} c="white">
+          <Group gap="sm" align="center" wrap="nowrap">
+            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+            <Text fw={700} fz={32} c="white" lh={1}>
               NodeWorks
             </Text>
           </Group>
@@ -191,25 +180,13 @@ function RegisterForm() {
           justifyContent: "center",
           alignItems: "center",
           padding: "var(--mantine-spacing-xl)",
-          backgroundColor: "var(--mantine-color-gray-0)",
+          backgroundColor: "var(--app-bg)",
         }}
       >
         {/* Mobile Logo */}
-        <Group gap="xs" align="center" mb="xl" hiddenFrom="md">
-          <Box
-            p="xs"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-blue-6))",
-              borderRadius: "var(--mantine-radius-md)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Zap size={20} color="white" fill="white" />
-          </Box>
-          <Text fw={700} fz="xl" c="dark">
+        <Group gap="xs" align="center" mb="xl" hiddenFrom="md" wrap="nowrap">
+          <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+          <Text fw={700} fz="xl" c="var(--app-text-strong)" lh={1}>
             NodeWorks
           </Text>
         </Group>
@@ -221,12 +198,12 @@ function RegisterForm() {
           radius="lg"
           maw={480}
           w="100%"
-          bg="white"
+          bg="var(--app-surface)"
         >
           <Stack gap="lg">
             {/* Header */}
             <Stack gap={4} ta="center">
-              <Title order={2} fw={700} c="dark">
+              <Title order={2} fw={700} c="var(--app-text-strong)">
                 Create your account
               </Title>
               <Text c="dimmed" fz="sm">
@@ -287,7 +264,7 @@ function RegisterForm() {
                     size="md"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
+                    styles={{ label: { color: "var(--app-text)" } }}
                   />
                   <TextInput
                     label="Last name"
@@ -296,7 +273,7 @@ function RegisterForm() {
                     size="md"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
+                    styles={{ label: { color: "var(--app-text)" } }}
                   />
                 </Group>
                 <TextInput
@@ -307,7 +284,7 @@ function RegisterForm() {
                   leftSection={<Mail size={18} />}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
+                  styles={{ label: { color: "var(--app-text)" } }}
                 />
                 <PasswordInput
                   label="Password"
@@ -317,7 +294,7 @@ function RegisterForm() {
                   leftSection={<Lock size={18} />}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  styles={{ label: { color: "var(--mantine-color-dark-7)" } }}
+                  styles={{ label: { color: "var(--app-text)" } }}
                 />
                 <Text fz="xs" c="dimmed">
                   By creating an account, you agree to our{" "}

@@ -14,10 +14,10 @@ export function CTASection() {
           radius="xl"
           p={{ base: "xl", md: 48 }}
           shadow="xl"
-          bg="white"
+          bg="var(--app-surface)"
           style={{
-            border: "1px solid var(--mantine-color-gray-2)",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 20px 25px -5px rgba(0, 0, 0, 0.08)",
+            border: "1px solid var(--app-border)",
+            boxShadow: "var(--app-hover-shadow)",
           }}
         >
           <Stack gap="xl" align="center" ta="center">
@@ -40,7 +40,7 @@ export function CTASection() {
 
             {/* Heading */}
             <Stack gap="sm">
-              <Title order={2} fz={{ base: 28, md: 40 }} fw={800} c="dark" lh={1.2}>
+              <Title order={2} fz={{ base: 28, md: 40 }} fw={800} c="var(--app-text-strong)" lh={1.2}>
                 Ready to Get Started?
               </Title>
               <Text fz={{ base: "md", md: "lg" }} c="dimmed" maw={450} lh={1.6}>

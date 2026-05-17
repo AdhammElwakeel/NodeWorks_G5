@@ -15,11 +15,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <Box visibleFrom="md" w={260} style={{ flexShrink: 0 }} />
 
         {/* Main content */}
-        <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+        <Box style={{ flex: 1, minHeight: "100vh", backgroundColor: "var(--app-bg)" }}>
           {/* Mobile header */}
-          <Group hiddenFrom="md" p="md" style={{ borderBottom: "1px solid #e2e8f0", background: "white" }}>
+          <Group hiddenFrom="md" p="md" style={{ borderBottom: "1px solid var(--app-border)", background: "var(--app-surface)" }}>
             <Burger opened={mobileOpen} onClick={() => setMobileOpen((o) => !o)} size="sm" />
-            <Title order={5} c="dark.9">NodeWorks</Title>
+            <Title order={5} c="var(--app-text-strong)">NodeWorks</Title>
           </Group>
 
           <Box p={{ base: "md", md: 32 }}>

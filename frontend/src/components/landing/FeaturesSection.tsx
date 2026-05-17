@@ -52,12 +52,12 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <Box component="section" py={{ base: 60, md: 80, lg: 100 }} bg="white">
+    <Box component="section" py={{ base: 60, md: 80, lg: 100 }} bg="var(--app-surface)">
       <Container size="xl">
         <Stack gap="xl">
           {/* Section Header */}
           <Stack gap="sm" align="center" ta="center" mb="xl">
-            <Title order={2} fz={{ base: 28, md: 36 }} fw={700} c="dark">
+            <Title order={2} fz={{ base: 28, md: 36 }} fw={700} c="var(--app-text-strong)">
               Everything You Need to Succeed
             </Title>
             <Text fz="lg" c="dimmed" maw={600}>

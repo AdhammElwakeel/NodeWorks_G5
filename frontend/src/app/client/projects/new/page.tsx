@@ -95,11 +95,11 @@ export default function CreateProjectPage() {
         </Button>
       </Group>
 
-      <Title order={2} c="dark.9" mb="lg">
+      <Title order={2} c="var(--app-text-strong)" mb="lg">
         Create New Project
       </Title>
 
-      <Card withBorder radius="md" bg="white" p="xl">
+      <Card withBorder radius="md" bg="var(--app-surface)" p="xl">
         <form onSubmit={handleSubmit}>
           <Stack gap="lg">
             <TextInput
@@ -110,7 +110,7 @@ export default function CreateProjectPage() {
               onChange={(e) => setTitle(e.target.value)}
               size="md"
               styles={{
-                label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                label: { color: "var(--app-text)", fontWeight: 600 },
               }}
             />
 
@@ -122,7 +122,7 @@ export default function CreateProjectPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               styles={{
-                label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
+                label: { color: "var(--app-text)", fontWeight: 600 },
               }}
             />
 
@@ -137,7 +137,7 @@ export default function CreateProjectPage() {
                 prefix="$"
                 styles={{
                   label: {
-                    color: "var(--mantine-color-dark-9)",
+                    color: "var(--app-text)",
                     fontWeight: 600,
                   },
                 }}
@@ -149,7 +149,7 @@ export default function CreateProjectPage() {
                 onChange={(e) => setTimeline(e.target.value)}
                 styles={{
                   label: {
-                    color: "var(--mantine-color-dark-9)",
+                    color: "var(--app-text)",
                     fontWeight: 600,
                   },
                 }}
@@ -165,8 +165,8 @@ export default function CreateProjectPage() {
               clearable
               required
               styles={{
-                label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
-                option: { color: "var(--mantine-color-dark-9)" },
+                label: { color: "var(--app-text)", fontWeight: 600 },
+                option: { color: "var(--app-text)" },
                 pill: {
                   backgroundColor: "var(--mantine-color-indigo-6)",
                   color: "white",

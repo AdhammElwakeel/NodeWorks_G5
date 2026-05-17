@@ -29,7 +29,7 @@ export function ConfirmModal({
       <Stack gap="lg">
         <Group gap="sm" align="flex-start">
           <AlertTriangle size={24} color="#ef4444" />
-          <Text c="dark.9" fz="sm" style={{ flex: 1 }}>
+          <Text c="var(--app-text)" fz="sm" style={{ flex: 1 }}>
             {description}
           </Text>
         </Group>

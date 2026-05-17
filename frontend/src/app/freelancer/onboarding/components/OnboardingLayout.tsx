@@ -52,7 +52,7 @@ export function OnboardingLayout({
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 45%), radial-gradient(circle at 85% 15%, rgba(14, 116, 144, 0.12), transparent 35%), #f8fafc",
+          "radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 45%), radial-gradient(circle at 85% 15%, rgba(14, 116, 144, 0.12), transparent 35%), var(--app-bg)",
         padding: "32px 0 64px",
       }}
     >
@@ -64,10 +64,10 @@ export function OnboardingLayout({
               <Badge size="lg" radius="sm" variant="light" color="cyan">
                 Freelancer Setup
               </Badge>
-              <Title order={1} c="dark.9">
+              <Title order={1} c="var(--app-text-strong)">
                 Complete your freelancer onboarding
               </Title>
-              <Text c="dark.9" maw={720}>
+              <Text c="var(--app-text)" maw={720}>
                 Upload your CV, complete required information, and finish AI
                 interview setup before entering your freelancer workspace.
               </Text>
@@ -84,13 +84,13 @@ export function OnboardingLayout({
           </Group>
 
           {/* Progress */}
-          <Paper withBorder radius="md" p="lg" bg="white">
+          <Paper withBorder radius="md" p="lg" bg="var(--app-surface)">
             <Stack gap="md">
               <Group justify="space-between">
-                <Text fw={600} c="dark.9">
+                <Text fw={600} c="var(--app-text)">
                   Progress
                 </Text>
-                <Text fw={700} c="dark.9">
+                <Text fw={700} c="var(--app-text)">
                   {completion}%
                 </Text>
               </Group>
@@ -112,10 +112,10 @@ export function OnboardingLayout({
                       withBorder
                       radius="md"
                       p="md"
-                      bg={isActive ? "cyan.0" : "white"}
+                      bg={isActive ? "var(--app-active-bg)" : "var(--app-surface)"}
                     >
                       <Group justify="space-between" mb={6}>
-                        <Text fw={700} c={isActive ? "cyan.8" : "dark.8"}>
+                        <Text fw={700} c={isActive ? "cyan.6" : "var(--app-text)"}>
                           {index + 1}. {item.title}
                         </Text>
                         {isDone ? (

@@ -16,9 +16,9 @@ import {
 import { FileText, CheckCircle, AlertCircle, Brain } from "lucide-react";
 
 const fieldLabelStyles = {
-  label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
-  required: { color: "var(--mantine-color-dark-9)" },
-  input: { color: "var(--mantine-color-dark-9)" },
+  label: { color: "var(--app-text)", fontWeight: 600 },
+  required: { color: "var(--app-text)" },
+  input: { color: "var(--app-text)" },
 };
 
 export interface CvData {
@@ -55,17 +55,17 @@ export function CVUploadStep({
   onUpload,
 }: CVUploadStepProps) {
   return (
-    <Paper withBorder radius="md" p="lg" bg="white">
+    <Paper withBorder radius="md" p="lg" bg="var(--app-surface)">
       <Stack gap="lg">
         <Group>
           <ThemeIcon size={46} radius="md" color="blue" variant="light">
             <FileText size={24} />
           </ThemeIcon>
           <Stack gap={0}>
-            <Title order={3} c="dark.9">
+            <Title order={3} c="var(--app-text-strong)">
               CV extraction
             </Title>
-            <Text c="dark.9" fz="sm">
+            <Text c="var(--app-text)" fz="sm">
               Upload your PDF and let AI extract your profile details automatically.
             </Text>
           </Stack>
@@ -83,11 +83,11 @@ export function CVUploadStep({
 
         {/* Analyzing state */}
         {isAnalyzing && (
-          <Card withBorder radius="md" p="md" bg="blue.0">
+          <Card withBorder radius="md" p="md" bg="var(--app-active-bg)">
             <Group>
               <Loader size="sm" color="blue" />
               <Stack gap={2}>
-                <Text fw={600} c="dark.9" fz="sm">
+                <Text fw={600} c="var(--app-text)" fz="sm">
                   Analyzing your CV with AI…
                 </Text>
                 <Text fz="xs" c="dimmed">
@@ -112,12 +112,12 @@ export function CVUploadStep({
 
         {/* Success state */}
         {cvExtracted && cvData && !isAnalyzing && (
-          <Card withBorder radius="md" p="md" bg="cyan.0">
+          <Card withBorder radius="md" p="md" bg="var(--app-active-bg)">
             <Stack gap="sm">
               <Group justify="space-between">
                 <Group gap="xs">
                   <CheckCircle size={18} color="var(--mantine-color-teal-6)" />
-                  <Text fw={600} c="dark.9">
+                  <Text fw={600} c="var(--app-text)">
                     CV Analysis Complete
                   </Text>
                 </Group>
@@ -126,7 +126,7 @@ export function CVUploadStep({
                 </Badge>
               </Group>
 
-              <Text fz="sm" c="dark.9">
+              <Text fz="sm" c="var(--app-text)">
                 <strong>{cvFileName}</strong> processed successfully. The form on
                 the next step has been pre-filled with the data below.
               </Text>
@@ -164,16 +164,16 @@ export function CVUploadStep({
 
         {/* Pending state (no file selected yet) */}
         {!cvExtracted && !isAnalyzing && !analysisError && (
-          <Card withBorder radius="md" p="md" bg="white">
+          <Card withBorder radius="md" p="md" bg="var(--app-surface)">
             <Group justify="space-between">
-              <Text fw={600} c="dark.9">
+              <Text fw={600} c="var(--app-text)">
                 CV upload status
               </Text>
               <Badge color="gray" variant="light">
                 Pending
               </Badge>
             </Group>
-            <Text fz="sm" c="dark.9" mt={6}>
+            <Text fz="sm" c="var(--app-text)" mt={6}>
               Upload your CV to continue to the next step.
             </Text>
           </Card>

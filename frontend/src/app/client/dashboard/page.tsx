@@ -65,7 +65,7 @@ export default function ClientDashboardPage() {
 
       {/* Stats Cards */}
       <SimpleGrid cols={{ base: 1, sm: 3 }} mb="xl">
-        <Card withBorder radius="md" bg="white">
+        <Card withBorder radius="md" bg="var(--app-surface)">
           <Group>
             <Box
               p="sm"
@@ -80,13 +80,13 @@ export default function ClientDashboardPage() {
               <Text fz="sm" c="dimmed">
                 Open Projects
               </Text>
-              <Text fw={700} fz="xl" c="dark.9">
+              <Text fw={700} fz="xl" c="var(--app-text)">
                 {openCount}
               </Text>
             </Stack>
           </Group>
         </Card>
-        <Card withBorder radius="md" bg="white">
+        <Card withBorder radius="md" bg="var(--app-surface)">
           <Group>
             <Box
               p="sm"
@@ -101,13 +101,13 @@ export default function ClientDashboardPage() {
               <Text fz="sm" c="dimmed">
                 Closed Projects
               </Text>
-              <Text fw={700} fz="xl" c="dark.9">
+              <Text fw={700} fz="xl" c="var(--app-text)">
                 {closedCount}
               </Text>
             </Stack>
           </Group>
         </Card>
-        <Card withBorder radius="md" bg="white">
+        <Card withBorder radius="md" bg="var(--app-surface)">
           <Group>
             <Box
               p="sm"
@@ -122,7 +122,7 @@ export default function ClientDashboardPage() {
               <Text fz="sm" c="dimmed">
                 Pending Proposals
               </Text>
-              <Text fw={700} fz="xl" c="dark.9">
+              <Text fw={700} fz="xl" c="var(--app-text)">
                 {totalProposals}
               </Text>
             </Stack>
@@ -131,7 +131,7 @@ export default function ClientDashboardPage() {
       </SimpleGrid>
 
       {/* Recent Projects */}
-      <Text fw={600} fz="lg" c="dark.9" mb="md">
+      <Text fw={600} fz="lg" c="var(--app-text)" mb="md">
         Recent Projects
       </Text>
 
@@ -140,7 +140,7 @@ export default function ClientDashboardPage() {
           <Loader size="md" />
         </Box>
       ) : recentProjects.length === 0 ? (
-        <Card withBorder radius="md" bg="white" py="xl">
+        <Card withBorder radius="md" bg="var(--app-surface)" py="xl">
           <Text ta="center" c="dimmed">
             No projects yet.{" "}
             <Button
@@ -161,14 +161,14 @@ export default function ClientDashboardPage() {
               key={project.id}
               withBorder
               radius="md"
-              bg="white"
+              bg="var(--app-surface)"
               component={Link}
               href={`/client/projects/${project.id}`}
               style={{ textDecoration: "none" }}
             >
               <Group justify="space-between" align="flex-start" mb="xs">
                 <Box>
-                  <Text fw={600} c="dark.9" fz="md">
+                  <Text fw={600} c="var(--app-text)" fz="md">
                     {project.title}
                   </Text>
                   <Text c="dimmed" fz="sm" lineClamp={1} mt={2}>

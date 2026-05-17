@@ -18,9 +18,9 @@ import { useEffect, useState } from "react";
 import { type CvData } from "./CVUploadStep";
 
 const fieldLabelStyles = {
-  label: { color: "var(--mantine-color-dark-9)", fontWeight: 600 },
-  required: { color: "var(--mantine-color-dark-9)" },
-  input: { color: "var(--mantine-color-dark-9)" },
+  label: { color: "var(--app-text)", fontWeight: 600 },
+  required: { color: "var(--app-text)" },
+  input: { color: "var(--app-text)" },
 };
 
 /**
@@ -115,17 +115,17 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
   }, [headline, experienceLevel, country, skills, bio]);
 
   return (
-    <Paper withBorder radius="md" p="lg" bg="white">
+    <Paper withBorder radius="md" p="lg" bg="var(--app-surface)">
       <Stack gap="lg">
         <Group>
           <ThemeIcon size={46} radius="md" color="indigo" variant="light">
             <UserCircle size={24} />
           </ThemeIcon>
           <Stack gap={0}>
-            <Title order={3} c="dark.9">
+            <Title order={3} c="var(--app-text-strong)">
               Required freelancer information
             </Title>
-            <Text c="dark.9" fz="sm">
+            <Text c="var(--app-text)" fz="sm">
               {cvData
                 ? "Fields have been pre-filled from your CV — review and adjust as needed."
                 : "Add key profile details before entering the platform."}
@@ -151,7 +151,7 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
             onChange={setExperienceLevel}
             styles={{
               ...fieldLabelStyles,
-              option: { color: "var(--mantine-color-dark-9)" },
+              option: { color: "var(--app-text)" },
             }}
           />
         </SimpleGrid>
@@ -176,9 +176,9 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
           required
           styles={{
             ...fieldLabelStyles,
-            option: { color: "var(--mantine-color-dark-9)" },
+            option: { color: "var(--app-text)" },
             pill: {
-              backgroundColor: "var(--mantine-color-dark-9)",
+              backgroundColor: "var(--mantine-color-cyan-6)",
               color: "white",
             },
           }}

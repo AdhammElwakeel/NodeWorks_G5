@@ -86,7 +86,7 @@ export function JobsSection({ jobs }: JobsSectionProps) {
       </Card>
 
       <Group justify="space-between">
-        <Text fw={600} c="black">
+        <Text fw={600} c="var(--app-text)">
           {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
         </Text>
         <Button
@@ -107,11 +107,11 @@ export function JobsSection({ jobs }: JobsSectionProps) {
         <Card withBorder radius="md" p="xl">
           <Center>
             <Stack align="center" gap="sm">
-              <Briefcase size={48} color="#94a3b8" />
-              <Text fw={600} c="black">
+              <Briefcase size={48} color="var(--app-muted-soft)" />
+              <Text fw={600} c="var(--app-text)">
                 No jobs found
               </Text>
-              <Text fz="sm" c="black" ta="center">
+              <Text fz="sm" c="var(--app-muted)" ta="center">
                 Try adjusting your search or check back later for new
                 opportunities.
               </Text>
@@ -137,7 +137,7 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                   (e.currentTarget as HTMLElement).style.transform =
                     "translateY(-4px)";
                   (e.currentTarget as HTMLElement).style.boxShadow =
-                    "0 12px 40px rgba(0,0,0,0.1)";
+                    "var(--app-hover-shadow)";
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.transform =
@@ -176,7 +176,7 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                           size={14}
                           color="var(--mantine-color-cyan-6)"
                         />
-                        <Text fw={700} fz="sm" c="black">
+                        <Text fw={700} fz="sm" c="var(--app-text)">
                           {job.budgetType === "hourly"
                             ? `$${job.budget}/hr`
                             : `$${job.budget.toLocaleString()}`}
@@ -185,10 +185,10 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                     )}
                   </Group>
 
-                  <Text fw={700} c="black" lineClamp={2} fz="lg">
+                  <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg">
                     {job.title}
                   </Text>
-                  <Text fz="sm" c="black" lineClamp={3}>
+                  <Text fz="sm" c="var(--app-muted)" lineClamp={3}>
                     {job.description}
                   </Text>
 
@@ -233,10 +233,10 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                         {job.clientAvatar}
                       </Avatar>
                       <Stack gap={0}>
-                        <Text fz="sm" fw={500} c="black">
+                        <Text fz="sm" fw={500} c="var(--app-text)">
                           {job.clientName}
                         </Text>
-                        <Text fz="xs" c="black">
+                        <Text fz="xs" c="var(--app-muted)">
                           {job.postedAt} · {job.proposals} proposals
                         </Text>
                       </Stack>

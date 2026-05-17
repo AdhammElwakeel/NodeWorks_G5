@@ -45,7 +45,7 @@ export function HomeSection({
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c="black">
+                  <Text fw={600} c="var(--app-text)">
                     Profile Completion
                   </Text>
                   <Text fw={700} c="cyan.8">
@@ -65,14 +65,14 @@ export function HomeSection({
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="sm">
                 <Group justify="space-between">
-                  <Text fw={600} c="black">
+                  <Text fw={600} c="var(--app-text)">
                     Skills
                   </Text>
                   <ActionIcon
                     variant="subtle"
                     color="cyan"
                     component={Link}
-                    href="/freelancer/profile"
+                    href="/freelancer/profile/edit"
                   >
                     <Edit3 size={16} />
                   </ActionIcon>
@@ -100,12 +100,12 @@ export function HomeSection({
             {/* Hourly Rate */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c="black">
+                <Text fw={600} c="var(--app-text)">
                   Hourly Rate
                 </Text>
                 <Group gap="xs">
                   <DollarSign size={18} color="var(--mantine-color-cyan-6)" />
-                  <Text fw={700} fz="xl" c="black">
+                  <Text fw={700} fz="xl" c="var(--app-text)">
                     ${profile.hourlyRate}/hr
                   </Text>
                 </Group>
@@ -115,7 +115,7 @@ export function HomeSection({
             {/* Availability */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c="black">
+                <Text fw={600} c="var(--app-text)">
                   Availability
                 </Text>
                 <Group gap="xs">
@@ -127,7 +127,7 @@ export function HomeSection({
                       background: "#22c55e",
                     }}
                   />
-                  <Text c="black">{profile.availability}</Text>
+                  <Text c="var(--app-text)">{profile.availability}</Text>
                 </Group>
               </Stack>
             </Card>
@@ -135,10 +135,10 @@ export function HomeSection({
             {/* Member Since */}
             <Card withBorder radius="md" shadow="sm">
               <Stack gap="xs">
-                <Text fw={600} c="black">
+                <Text fw={600} c="var(--app-text)">
                   Member Since
                 </Text>
-                <Text c="black">{profile.memberSince}</Text>
+                <Text c="var(--app-text)">{profile.memberSince}</Text>
               </Stack>
             </Card>
           </Stack>
@@ -154,7 +154,7 @@ export function HomeSection({
                     <ThemeIcon color="blue" variant="light" radius="md">
                       <FileText size={16} />
                     </ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">
+                    <Text fw={700} c="var(--app-text)" fz="lg">
                       About
                     </Text>
                   </Group>
@@ -162,13 +162,13 @@ export function HomeSection({
                     variant="subtle"
                     color="cyan"
                     component={Link}
-                    href="/freelancer/profile"
+                    href="/freelancer/profile/edit"
                   >
                     <Edit3 size={16} />
                   </ActionIcon>
                 </Group>
                 <Text
-                  c="black"
+                  c="var(--app-text)"
                   style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}
                 >
                   {profile.about}
@@ -184,7 +184,7 @@ export function HomeSection({
                     <ThemeIcon color="green" variant="light" radius="md">
                       <Globe size={16} />
                     </ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">
+                    <Text fw={700} c="var(--app-text)" fz="lg">
                       Portfolio Links
                     </Text>
                   </Group>
@@ -192,7 +192,7 @@ export function HomeSection({
                     variant="subtle"
                     color="cyan"
                     component={Link}
-                    href="/freelancer/profile"
+                    href="/freelancer/profile/edit"
                   >
                     <Edit3 size={16} />
                   </ActionIcon>
@@ -235,7 +235,7 @@ export function HomeSection({
                     <ThemeIcon color="orange" variant="light" radius="md">
                       <FileText size={16} />
                     </ThemeIcon>
-                    <Text fw={700} c="black" fz="lg">
+                    <Text fw={700} c="var(--app-text)" fz="lg">
                       Recent Proposals
                     </Text>
                   </Group>
@@ -249,7 +249,7 @@ export function HomeSection({
                       <Group justify="space-between" align="flex-start">
                         <Stack gap={4} style={{ flex: 1 }}>
                           <Group gap="sm">
-                            <Text fw={600} c="black" fz="sm">
+                            <Text fw={600} c="var(--app-text)" fz="sm">
                               {proposal.projectTitle}
                             </Text>
                             <Badge
@@ -266,7 +266,7 @@ export function HomeSection({
                               {proposal.status}
                             </Badge>
                           </Group>
-                          <Text fz="xs" c="black" lineClamp={2}>
+                          <Text fz="xs" c="var(--app-text)" lineClamp={2}>
                             {proposal.coverLetter}
                           </Text>
                         </Stack>

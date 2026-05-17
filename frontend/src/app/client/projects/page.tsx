@@ -85,7 +85,7 @@ export default function ClientProjectsPage() {
           <Loader size="md" />
         </Box>
       ) : projects.length === 0 ? (
-        <Card withBorder radius="md" bg="white" py="xl">
+        <Card withBorder radius="md" bg="var(--app-surface)" py="xl">
           <Text ta="center" c="dimmed">
             No projects yet.{" "}
             <Button
@@ -100,7 +100,7 @@ export default function ClientProjectsPage() {
           </Text>
         </Card>
       ) : (
-        <Card withBorder radius="md" bg="white" p={0}>
+        <Card withBorder radius="md" bg="var(--app-surface)" p={0}>
           <Table highlightOnHover>
             <Table.Thead>
               <Table.Tr>
@@ -116,7 +116,7 @@ export default function ClientProjectsPage() {
               {projects.map((project) => (
                 <Table.Tr key={project.id}>
                   <Table.Td>
-                    <Text fw={500} c="dark.9" fz="sm">
+                    <Text fw={500} c="var(--app-text)" fz="sm">
                       {project.title}
                     </Text>
                   </Table.Td>

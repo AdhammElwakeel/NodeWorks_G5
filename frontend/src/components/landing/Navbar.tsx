@@ -1,7 +1,6 @@
 "use client";
 
 import { Group, Button, Container, Text, Box } from "@mantine/core";
-import { Zap } from "lucide-react";
 import Link from "next/link";
 
 export function Navbar() {
@@ -10,8 +9,8 @@ export function Navbar() {
       component="header"
       py="md"
       style={{
-        borderBottom: "1px solid var(--mantine-color-gray-2)",
-        backgroundColor: "rgba(255, 255, 255, 0.9)",
+        borderBottom: "1px solid var(--app-border)",
+        backgroundColor: "color-mix(in srgb, var(--app-surface) 90%, transparent)",
         backdropFilter: "blur(8px)",
         position: "sticky",
         top: 0,
@@ -21,20 +20,9 @@ export function Navbar() {
       <Container size="xl">
         <Group justify="space-between" align="center">
           {/* Logo */}
-          <Group gap="xs" align="center">
-            <Box
-              p="xs"
-              style={{
-                background: "linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-blue-6))",
-                borderRadius: "var(--mantine-radius-md)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Zap size={20} color="white" fill="white" />
-            </Box>
-            <Text fw={700} fz="xl" c="dark">
+          <Group gap="xs" align="center" wrap="nowrap">
+            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+            <Text fw={700} fz="xl" c="var(--app-text-strong)" lh={1}>
               NodeWorks
             </Text>
           </Group>

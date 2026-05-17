@@ -9,7 +9,8 @@ export function HeroSection() {
       component="section"
       py={{ base: 60, md: 80, lg: 100 }}
       style={{
-        background: "linear-gradient(135deg, var(--mantine-color-gray-0), var(--mantine-color-blue-0), var(--mantine-color-indigo-1))",
+        background:
+          "linear-gradient(135deg, var(--app-bg), rgba(6, 182, 212, 0.08), rgba(79, 70, 229, 0.14))",
         position: "relative",
         overflow: "hidden",
       }}
@@ -52,7 +53,7 @@ export function HeroSection() {
                   order={1}
                   fz={{ base: 36, md: 44, lg: 52 }}
                   fw={700}
-                  c="dark"
+                  c="var(--app-text-strong)"
                   lh={1.2}
                 >
                   Find Perfect Talent with{" "}
