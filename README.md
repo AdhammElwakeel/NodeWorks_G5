@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+NodeWorks is an AI-powered freelance and team formation platform.
+
+The project is split into a Next.js frontend and a Python FastAPI CV-analysis service.
 
 ## Getting Started
 
-First, run the development server:
+Install frontend dependencies, then run the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The frontend runs from `frontend/` and starts on [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env` for the backend CV analyzer. Copy `frontend/.env.example` to `frontend/.env` for the Next.js app.
 
-## Learn More
+Required frontend variables:
 
-To learn more about Next.js, take a look at the following resources:
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `NEXT_PUBLIC_CV_ANALYSIS_API_URL`
+- `CV_ANALYSIS_API_URL`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Required CV analyzer variable depends on the selected model in `backend/MergedCVAnalyzer-with-KBS/cv_analysis_module/config.py`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, or `ZHIPUAI_API_KEY`
 
-## Deploy on Vercel
+Optional:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `CV_ANALYSIS_MODEL` to force a specific model. If omitted, the analyzer chooses a model based on the available API key.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## CV Analysis API
+
+```bash
+cd backend/cv_api
+pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 8000
+```
+
+The API exposes `POST /api/analyze-cv` for PDF analysis.

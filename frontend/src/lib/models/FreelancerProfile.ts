@@ -11,6 +11,9 @@ export interface IFreelancerProfile {
   hourlyRate?: number;
   availability?: string;
   portfolioLinks?: string[];
+  cvFileName?: string;
+  cvStoragePath?: string;
+  cvUploadedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +37,9 @@ const FreelancerProfileSchema = new mongoose.Schema<IFreelancerProfile>(
     hourlyRate: { type: Number, min: 0 },
     availability: { type: String },
     portfolioLinks: [{ type: String, trim: true }],
+    cvFileName: { type: String, trim: true },
+    cvStoragePath: { type: String, trim: true },
+    cvUploadedAt: { type: Date },
   },
   {
     timestamps: true,

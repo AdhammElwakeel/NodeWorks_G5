@@ -7,6 +7,8 @@ export interface IProposal {
   coverLetter: string;
   proposedRate: number;
   estimatedDuration?: string;
+  portfolioFileName?: string;
+  portfolioFileUrl?: string;
   status: "pending" | "accepted" | "rejected";
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +38,8 @@ const ProposalSchema = new mongoose.Schema<IProposal>(
       min: 1,
     },
     estimatedDuration: { type: String, trim: true },
+    portfolioFileName: { type: String, trim: true },
+    portfolioFileUrl: { type: String, trim: true },
     status: {
       type: String,
       enum: ["pending", "accepted", "rejected"],

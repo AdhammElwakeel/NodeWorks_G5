@@ -94,13 +94,6 @@ function FreelancerDashboardContent() {
     [proposals]
   );
 
-  const acceptedCount = proposals.filter(
-    (p) => p.status === "accepted"
-  ).length;
-  const pendingCount = proposals.filter(
-    (p) => p.status === "pending"
-  ).length;
-
   const recommendedJobs = useMemo(
     () => projects.filter((project) => !appliedProjectIds.has(project.id)),
     [projects, appliedProjectIds]
@@ -163,8 +156,65 @@ function FreelancerDashboardContent() {
                     Welcome Back, {user?.name?.split(" ")[0] || "Freelancer"}!
                   </Title>
                   <Text c="dimmed" fz="lg">
-                    Find the right job for you and apply
+                    Welcome aboard!
                   </Text>
+                </Stack>
+
+                {/* Jobs Search */}
+                <Stack gap="md">
+                  <Stack gap={4}>
+                    <Title order={3} fw={600} c="var(--app-text)">
+                      Jobs
+                    </Title>
+                    <Text c="dimmed" fz="sm">
+                      Find the right job for you and apply
+                    </Text>
+                  </Stack>
+
+                  <Group gap="md" wrap="wrap">
+                    <TextInput
+                      placeholder="Search jobs by title or keyword..."
+                      leftSection={<Search size={16} color="var(--app-muted-soft)" />}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{ flex: 1, minWidth: 250 }}
+                      radius="xl"
+                      size="md"
+                      styles={{
+                        input: {
+                          backgroundColor: "var(--app-surface)",
+                          border: "1px solid var(--app-border)",
+                          boxShadow: "var(--app-focus-shadow)",
+                        },
+                      }}
+                    />
+                    <Select
+                      placeholder="Filter by skill"
+                      data={allJobSkills}
+                      value={skillFilter}
+                      onChange={setSkillFilter}
+                      clearable
+                      leftSection={<Filter size={16} color="var(--app-muted-soft)" />}
+                      style={{ minWidth: 180 }}
+                      radius="xl"
+                      size="md"
+                      styles={{
+                        input: {
+                          backgroundColor: "var(--app-surface)",
+                          border: "1px solid var(--app-border)",
+                          boxShadow: "var(--app-focus-shadow)",
+                        },
+                      }}
+                    />
+                    <Button
+                      color="cyan"
+                      radius="xl"
+                      size="md"
+                      leftSection={<Search size={16} />}
+                    >
+                      Search
+                    </Button>
+                  </Group>
                 </Stack>
 
                 {/* My Jobs */}
@@ -258,51 +308,6 @@ function FreelancerDashboardContent() {
                       Jobs that match your profile
                     </Text>
                   </Stack>
-
-                  <Group gap="md" wrap="wrap">
-                    <TextInput
-                      placeholder="Search jobs by title or keyword..."
-                      leftSection={<Search size={16} color="var(--app-muted-soft)" />}
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      style={{ flex: 1, minWidth: 250 }}
-                      radius="xl"
-                      size="md"
-                      styles={{
-                        input: {
-                          backgroundColor: "var(--app-surface)",
-                          border: "1px solid var(--app-border)",
-                          boxShadow: "var(--app-focus-shadow)",
-                        },
-                      }}
-                    />
-                    <Select
-                      placeholder="Filter by skill"
-                      data={allJobSkills}
-                      value={skillFilter}
-                      onChange={setSkillFilter}
-                      clearable
-                      leftSection={<Filter size={16} color="var(--app-muted-soft)" />}
-                      style={{ minWidth: 180 }}
-                      radius="xl"
-                      size="md"
-                      styles={{
-                        input: {
-                          backgroundColor: "var(--app-surface)",
-                          border: "1px solid var(--app-border)",
-                          boxShadow: "var(--app-focus-shadow)",
-                        },
-                      }}
-                    />
-                    <Button
-                      color="cyan"
-                      radius="xl"
-                      size="md"
-                      leftSection={<Search size={16} />}
-                    >
-                      Search
-                    </Button>
-                  </Group>
 
                   {loading ? (
                     <Card withBorder radius="md" p="xl">
