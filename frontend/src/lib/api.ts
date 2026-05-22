@@ -132,6 +132,8 @@ export interface ProposalData {
   coverLetter: string;
   proposedRate: number;
   estimatedDuration?: string;
+  portfolioFileName?: string;
+  portfolioFileUrl?: string;
   status: "pending" | "accepted" | "rejected";
   submittedAt: string;
 }
@@ -155,11 +157,36 @@ export const proposalApi = {
     coverLetter: string;
     proposedRate: number;
     estimatedDuration?: string;
-  }): Promise<{ proposal: ProposalData }> =>
-    fetchApi("/proposals", {
+    portfolioFile?: File | null;
+  }): Promise<{ proposal: ProposalData }> => {
+    if (body.portfolioFile) {
+      const formData = new FormData();
+      formData.append("projectId", body.projectId);
+      formData.append("coverLetter", body.coverLetter);
+      formData.append("proposedRate", String(body.proposedRate));
+      if (body.estimatedDuration) {
+        formData.append("estimatedDuration", body.estimatedDuration);
+      }
+      formData.append("portfolioFile", body.portfolioFile);
+
+      return fetch(`${API_BASE}/proposals`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new ApiError(data?.error || `HTTP ${res.status}`, res.status);
+        }
+        return data;
+      });
+    }
+
+    return fetchApi("/proposals", {
       method: "POST",
       body: JSON.stringify(body),
-    }),
+    });
+  },
 
   update: (body: {
     proposalId: string;

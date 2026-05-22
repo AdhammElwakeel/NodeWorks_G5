@@ -16,8 +16,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
-# Load env vars from the root .env (two levels up from backend/cv_api/)
-load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
+# Load env vars from the repo root first, then the frontend env used by Next.js.
+# load_dotenv does not override existing values by default.
+ROOT_DIR = Path(__file__).parent.parent.parent
+load_dotenv(dotenv_path=ROOT_DIR / ".env")
+load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
 
 from cv_analysis_module import process_cv  # noqa: E402  (import after sys.path patch)
 

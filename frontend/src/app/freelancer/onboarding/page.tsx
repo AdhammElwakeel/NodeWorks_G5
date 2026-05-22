@@ -18,8 +18,7 @@ const steps = [
   { key: "ai", title: "AI Interview", description: "Readiness and voice interview" },
 ] as const;
 
-const CV_ANALYSIS_URL =
-  process.env.NEXT_PUBLIC_CV_ANALYSIS_API_URL ?? "http://localhost:8000/api/analyze-cv";
+const CV_ANALYSIS_URL = "/api/cv/analyze";
 
 export default function FreelancerOnboardingPage() {
   const [step, setStep] = useState<OnboardingStep>(0);
@@ -76,8 +75,8 @@ export default function FreelancerOnboardingPage() {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(err?.detail ?? "CV analysis failed");
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err?.error ?? err?.detail ?? "CV analysis failed");
       }
 
       const data: CvData = await res.json();

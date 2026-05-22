@@ -14,6 +14,7 @@ import {
   Divider,
   SimpleGrid,
   Avatar,
+  Anchor,
 } from "@mantine/core";
 import {
   ArrowLeft,
@@ -24,6 +25,7 @@ import {
   Check,
   X,
   User,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/client/PageHeader";
@@ -395,6 +397,22 @@ function ProposalCard({
             </Badge>
           )}
         </Group>
+
+        {proposal.portfolioFileUrl && (
+          <Anchor
+            href={proposal.portfolioFileUrl}
+            target="_blank"
+            rel="noreferrer"
+            fz="sm"
+            c="cyan"
+            underline="hover"
+          >
+            <Group gap={6}>
+              <FileText size={14} />
+              {proposal.portfolioFileName || "Portfolio PDF"}
+            </Group>
+          </Anchor>
+        )}
 
         {!readonly && (
           <Group gap="sm" mt="xs">

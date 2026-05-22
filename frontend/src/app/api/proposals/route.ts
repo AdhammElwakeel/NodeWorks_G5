@@ -2,6 +2,101 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Proposal, Project } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
+
+export const runtime = "nodejs";
+
+interface ProposalRequestBody {
+  projectId: string;
+  coverLetter: string;
+  proposedRate: number;
+  estimatedDuration?: string;
+  portfolioFileName?: string;
+  portfolioFileUrl?: string;
+  portfolioFile?: File;
+}
+
+interface PopulatedRef {
+  _id?: { toString(): string };
+  title?: string;
+  name?: string;
+  avatar?: string | null;
+  toString(): string;
+}
+
+interface ProposalListItem {
+  _id: { toString(): string };
+  projectId: PopulatedRef;
+  freelancerId: PopulatedRef;
+  coverLetter: string;
+  proposedRate: number;
+  estimatedDuration?: string;
+  portfolioFileName?: string;
+  portfolioFileUrl?: string;
+  status: string;
+  createdAt: Date;
+}
+
+interface PopulatedProject {
+  _id: { toString(): string };
+  clientId?: { toString(): string };
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function isDuplicateKeyError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11000
+  );
+}
+
+function safeFileName(fileName: string) {
+  return fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+async function savePortfolioFile(file: File, userId: string) {
+  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+    throw new Error("Portfolio attachment must be a PDF file");
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "portfolio");
+  await mkdir(uploadDir, { recursive: true });
+
+  const fileName = `${userId}-${Date.now()}-${safeFileName(file.name)}`;
+  await writeFile(path.join(uploadDir, fileName), bytes);
+
+  return {
+    portfolioFileName: file.name,
+    portfolioFileUrl: `/uploads/portfolio/${fileName}`,
+  };
+}
+
+async function readProposalBody(
+  req: NextRequest
+): Promise<ProposalRequestBody> {
+  const contentType = req.headers.get("content-type") || "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const form = await req.formData();
+    const file = form.get("portfolioFile");
+    return {
+      projectId: String(form.get("projectId") || ""),
+      coverLetter: String(form.get("coverLetter") || ""),
+      proposedRate: Number(form.get("proposedRate") || 0),
+      estimatedDuration: String(form.get("estimatedDuration") || "") || undefined,
+      portfolioFile: file instanceof File ? file : undefined,
+    };
+  }
+
+  return req.json() as Promise<ProposalRequestBody>;
+}
 
 // GET /api/proposals — list proposals
 // ?projectId=... → proposals for a specific project
@@ -53,22 +148,27 @@ export async function GET(req: NextRequest) {
       .lean();
 
     return NextResponse.json({
-      proposals: proposals.map((p: any) => ({
-        id: p._id.toString(),
-        projectId: p.projectId?._id?.toString() || p.projectId.toString(),
-        projectTitle: p.projectId?.title || "Unknown Project",
-        freelancerId: p.freelancerId?._id?.toString() || p.freelancerId.toString(),
-        freelancerName: p.freelancerId?.name || "Unknown",
-        freelancerAvatar: p.freelancerId?.avatar || null,
-        coverLetter: p.coverLetter,
-        proposedRate: p.proposedRate,
-        estimatedDuration: p.estimatedDuration,
-        status: p.status,
-        submittedAt: p.createdAt,
-      })),
+      proposals: proposals.map((proposal) => {
+        const p = proposal as ProposalListItem;
+        return {
+          id: p._id.toString(),
+          projectId: p.projectId?._id?.toString() || p.projectId.toString(),
+          projectTitle: p.projectId?.title || "Unknown Project",
+          freelancerId: p.freelancerId?._id?.toString() || p.freelancerId.toString(),
+          freelancerName: p.freelancerId?.name || "Unknown",
+          freelancerAvatar: p.freelancerId?.avatar || null,
+          coverLetter: p.coverLetter,
+          proposedRate: p.proposedRate,
+          estimatedDuration: p.estimatedDuration,
+          portfolioFileName: p.portfolioFileName,
+          portfolioFileUrl: p.portfolioFileUrl,
+          status: p.status,
+          submittedAt: p.createdAt,
+        };
+      }),
     });
-  } catch (error: any) {
-    console.error("Proposals GET error:", error?.message || error);
+  } catch (error: unknown) {
+    console.error("Proposals GET error:", errorMessage(error));
     return NextResponse.json({ error: "Failed to fetch proposals" }, { status: 500 });
   }
 }
@@ -88,8 +188,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Only freelancers can submit proposals" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { projectId, coverLetter, proposedRate, estimatedDuration } = body;
+    const body = await readProposalBody(req);
+    const {
+      projectId,
+      coverLetter,
+      proposedRate,
+      estimatedDuration,
+      portfolioFile,
+    } = body;
 
     if (!projectId || !coverLetter || !proposedRate) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -118,12 +224,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You already submitted a proposal for this project" }, { status: 409 });
     }
 
+    const portfolioData = portfolioFile
+      ? await savePortfolioFile(portfolioFile, payload.userId)
+      : {};
+
     const proposal = await Proposal.create({
       projectId,
       freelancerId: payload.userId,
       coverLetter,
       proposedRate,
       estimatedDuration: estimatedDuration || undefined,
+      ...portfolioData,
       status: "pending",
     });
 
@@ -135,21 +246,23 @@ export async function POST(req: NextRequest) {
           freelancerId: proposal.freelancerId.toString(),
           coverLetter: proposal.coverLetter,
           proposedRate: proposal.proposedRate,
+          portfolioFileName: proposal.portfolioFileName,
+          portfolioFileUrl: proposal.portfolioFileUrl,
           status: proposal.status,
           submittedAt: proposal.createdAt,
         },
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Duplicate key error
-    if (error?.code === 11000) {
+    if (isDuplicateKeyError(error)) {
       return NextResponse.json(
         { error: "You already submitted a proposal for this project" },
         { status: 409 }
       );
     }
-    console.error("Proposals POST error:", error?.message || error);
+    console.error("Proposals POST error:", errorMessage(error));
     return NextResponse.json({ error: "Failed to submit proposal" }, { status: 500 });
   }
 }
@@ -182,7 +295,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Only the project owner can accept/reject
-    const project = proposal.projectId as any;
+    const project = proposal.projectId as PopulatedProject;
     if (project.clientId?.toString() !== payload.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -207,8 +320,8 @@ export async function PATCH(req: NextRequest) {
         status: proposal.status,
       },
     });
-  } catch (error: any) {
-    console.error("Proposals PATCH error:", error?.message || error);
+  } catch (error: unknown) {
+    console.error("Proposals PATCH error:", errorMessage(error));
     return NextResponse.json({ error: "Failed to update proposal" }, { status: 500 });
   }
 }

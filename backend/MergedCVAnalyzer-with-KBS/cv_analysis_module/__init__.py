@@ -14,6 +14,15 @@ def process_cv(file_input) -> dict:
     if text.startswith("Error"):
         return {"error": text}
 
+    if MODEL_NAME == "missing-api-key":
+        return {
+            "error": (
+                "Missing AI provider API key. Set one of OPENROUTER_API_KEY, "
+                "GEMINI_API_KEY, or ZHIPUAI_API_KEY in the root .env file, "
+                "then restart the CV API."
+            )
+        }
+
     # 2. Extract Data with AI
     if "/" in MODEL_NAME:  # OpenRouter uses provider/model format
         ai_data = get_openrouter_extraction(text)

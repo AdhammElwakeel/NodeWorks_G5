@@ -1,7 +1,12 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from datetime import date
-# Load .env variables
+
+# Load .env variables from common project locations. Values loaded earlier win.
+ROOT_DIR = Path(__file__).resolve().parents[3]
+load_dotenv(dotenv_path=ROOT_DIR / ".env")
+load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
@@ -11,12 +16,24 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # ------------------------------------------------------------------
 # 🤖 MODEL CONFIGURATION
 # ------------------------------------------------------------------
-# MODEL_NAME = "gemini-2.5-flash" 
-# MODEL_NAME = "gemini-pro" 
-# MODEL_NAME = "glm-4.7-flash" # Use GLM 4.7 Flash (free version)
-# MODEL_NAME = "glm-4"
-MODEL_NAME = "nvidia/nemotron-3-super-120b-a12b:free" 
-# MODEL_NAME = "google/gemini-2.0-flash-exp:free" # Faster OpenRouter model
+def choose_model() -> str:
+    configured_model = os.getenv("CV_ANALYSIS_MODEL")
+    if configured_model:
+        return configured_model
+
+    if OPENROUTER_API_KEY:
+        return "nvidia/nemotron-3-super-120b-a12b:free"
+
+    if API_KEY:
+        return "gemini-2.5-flash"
+
+    if ZHIPUAI_API_KEY:
+        return "glm-4.7-flash"
+
+    return "missing-api-key"
+
+
+MODEL_NAME = choose_model()
 
 # ------------------------------------------------------------------
 # 🎯 ROLE DEFINITIONS (The Source of Truth)

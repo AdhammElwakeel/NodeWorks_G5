@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Box,
   Container,
-  Card,
   Text,
   Title,
   Stack,
@@ -26,7 +25,6 @@ import {
 import {
   ArrowLeft,
   Send,
-  FileText,
   DollarSign,
   Clock,
   Upload,
@@ -80,6 +78,7 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
         coverLetter: coverLetter.trim(),
         proposedRate: Number(proposedRate),
         estimatedDuration: estimatedDuration.trim() || undefined,
+        portfolioFile: workFile,
       });
       notifications.show({
         title: "Proposal submitted!",
@@ -87,8 +86,12 @@ export default function ApplyPage({ params }: { params: Promise<{ projectId: str
         color: "green",
       });
       router.push("/freelancer/dashboard");
-    } catch (err: any) {
-      setError(err?.message || "Failed to submit proposal. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to submit proposal. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
