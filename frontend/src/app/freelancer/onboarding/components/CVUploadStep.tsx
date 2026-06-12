@@ -34,7 +34,12 @@ export interface CvData {
   Publications?: { name: string; technologies?: string[] }[];
   best_role?: string;
   best_score?: number;
-  role_rankings?: { role: string; score: number }[];
+  role_rankings?: {
+    role: string;
+    score: number;
+    matched_skills?: string[];
+    missing_skills?: string[];
+  }[];
 }
 
 interface CVUploadStepProps {

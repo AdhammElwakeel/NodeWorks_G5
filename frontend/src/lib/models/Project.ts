@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+export interface IKbsSync {
+  status: "not_synced" | "synced" | "outdated" | "failed";
+  syncedAt?: Date;
+  error?: string;
+}
+
 export interface IProject {
   _id: string;
   clientId: mongoose.Types.ObjectId;
@@ -9,9 +15,23 @@ export interface IProject {
   skills: string[];
   status: "open" | "closed" | "in-progress";
   timeline?: string;
+  kbsSync?: IKbsSync;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const KbsSyncSchema = new mongoose.Schema<IKbsSync>(
+  {
+    status: {
+      type: String,
+      enum: ["not_synced", "synced", "outdated", "failed"],
+      default: "not_synced",
+    },
+    syncedAt: { type: Date },
+    error: { type: String },
+  },
+  { _id: false }
+);
 
 const ProjectSchema = new mongoose.Schema<IProject>(
   {
@@ -43,6 +63,7 @@ const ProjectSchema = new mongoose.Schema<IProject>(
       index: true,
     },
     timeline: { type: String, trim: true },
+    kbsSync: { type: KbsSyncSchema, default: () => ({ status: "not_synced" }) },
   },
   {
     timestamps: true,

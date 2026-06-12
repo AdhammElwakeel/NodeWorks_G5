@@ -15,6 +15,7 @@ import {
   SimpleGrid,
   Avatar,
   Anchor,
+  Center,
 } from "@mantine/core";
 import {
   ArrowLeft,
@@ -26,13 +27,15 @@ import {
   X,
   User,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/client/PageHeader";
 import { StatusBadge } from "@/components/client/StatusBadge";
 import { SkillsTags } from "@/components/client/SkillsTags";
 import { ConfirmModal } from "@/components/client/ConfirmModal";
-import { projectApi, proposalApi, type ProjectData, type ProposalData } from "@/lib/api";
+import { projectApi, proposalApi, recApi, type ProjectData, type ProposalData } from "@/lib/api";
+import { KbsExplanationPanel } from "@/components/kbs/KbsExplanationPanel";
 import { notifications } from "@mantine/notifications";
 
 export default function ProjectDetailPage() {
@@ -42,6 +45,52 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [freelancerRecommendations, setFreelancerRecommendations] = useState<
+    {
+      score: number;
+      reason: string;
+      matchedSkills: string[];
+      missingSkills: string[];
+      bestRole?: string;
+      bestRoleScore?: number;
+      freelancer: {
+        id: string;
+        name: string;
+        headline?: string;
+        experienceLevel?: string;
+        country?: string;
+        hourlyRate?: number;
+        skills: string[];
+      };
+    }[]
+  >([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
+  const [teamRecommendations, setTeamRecommendations] = useState<
+    {
+      score: number;
+      finalScore: number;
+      technicalScore: number;
+      synergyScore: number;
+      coverageScore: number;
+      reason: string;
+      coveredSkills: string[];
+      missingSkills: string[];
+      sharedEntities: string[];
+      members: {
+        userId: string;
+        name: string;
+        headline?: string;
+        experienceLevel?: string;
+        hourlyRate?: number;
+        coveredSkills: string[];
+        bestRole?: string;
+      }[];
+    }[]
+  >([]);
+  const [requiredRoles, setRequiredRoles] = useState<{ name: string; count: number }[]>([]);
+  const [teamsLoading, setTeamsLoading] = useState(false);
+  const [teamsError, setTeamsError] = useState<string | null>(null);
 
   const [actionTarget, setActionTarget] = useState<{
     proposalId: string;
@@ -70,6 +119,51 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    if (!project) {
+      setFreelancerRecommendations([]);
+      setRecommendationsError(null);
+      return;
+    }
+
+    setRecommendationsLoading(true);
+    recApi
+      .freelancers(project.id, { limit: 8 })
+      .then((data) => {
+        setFreelancerRecommendations(data.recommendations);
+        setRecommendationsError(null);
+      })
+      .catch((error: any) => {
+        setFreelancerRecommendations([]);
+        setRecommendationsError(error?.message || "KBS recommendations unavailable");
+      })
+      .finally(() => setRecommendationsLoading(false));
+  }, [project?.id]);
+
+  useEffect(() => {
+    if (!project) {
+      setTeamRecommendations([]);
+      setRequiredRoles([]);
+      setTeamsError(null);
+      return;
+    }
+
+    setTeamsLoading(true);
+    recApi
+      .team(project.id, { limit: 3, maxTeamSize: 4 })
+      .then((data) => {
+        setTeamRecommendations(data.recommendations);
+        setRequiredRoles(data.requiredRoles || []);
+        setTeamsError(null);
+      })
+      .catch((error: any) => {
+        setTeamRecommendations([]);
+        setRequiredRoles([]);
+        setTeamsError(error?.message || "KBS team recommendations unavailable");
+      })
+      .finally(() => setTeamsLoading(false));
+  }, [project?.id]);
 
   const handleClose = async () => {
     if (!project) return;
@@ -223,6 +317,218 @@ export default function ProjectDetailPage() {
             </Text>
             <SkillsTags skills={project.skills} />
           </Box>
+        </Stack>
+      </Card>
+
+      {/* Recommended Freelancers */}
+      <Card withBorder radius="md" bg="var(--app-surface)" mb="xl">
+        <Stack gap="md">
+          <Group justify="space-between">
+            <Group gap="xs">
+              <Sparkles size={18} color="var(--mantine-color-violet-6)" />
+              <Text fw={700} fz="lg" c="var(--app-text)">
+                Recommended Freelancers
+              </Text>
+            </Group>
+            <Badge color="violet" variant="light">
+              KBS Match
+            </Badge>
+          </Group>
+
+          {requiredRoles.length > 0 && (
+            <Group gap="xs" wrap="wrap">
+              {requiredRoles.map((role) => (
+                <Badge key={role.name} color="teal" variant="light">
+                  {role.count}x {role.name}
+                </Badge>
+              ))}
+            </Group>
+          )}
+
+          {recommendationsLoading ? (
+            <Center py="md">
+              <Loader size="sm" color="violet" />
+            </Center>
+          ) : recommendationsError ? (
+            <Text fz="sm" c="orange">
+              {recommendationsError}
+            </Text>
+          ) : freelancerRecommendations.length === 0 ? (
+            <Text fz="sm" c="dimmed">
+              No synced freelancers match this project yet.
+            </Text>
+          ) : (
+            <SimpleGrid cols={{ base: 1, lg: 2 }}>
+              {freelancerRecommendations.map((item) => (
+                <Card key={item.freelancer.id} withBorder radius="md">
+                  <Stack gap="sm">
+                    <Group justify="space-between" align="flex-start">
+                      <Group gap="sm">
+                        <Avatar size={42} radius="xl" color="violet">
+                          <User size={22} />
+                        </Avatar>
+                        <Stack gap={2}>
+                          <Text fw={700} c="var(--app-text)">
+                            {item.freelancer.name}
+                          </Text>
+                          <Text fz="sm" c="dimmed" lineClamp={1}>
+                            {item.freelancer.headline || item.bestRole || "Freelancer"}
+                          </Text>
+                        </Stack>
+                      </Group>
+                      <Badge color="violet" variant="light">
+                        {item.score}% match
+                      </Badge>
+                    </Group>
+                    <KbsExplanationPanel
+                      score={item.score}
+                      reason={item.reason}
+                      matchedSkills={item.matchedSkills}
+                      missingSkills={item.missingSkills}
+                      graphPath="Project - REQUIRES_SKILL -> Skill <- HAS_SKILL - Freelancer"
+                    />
+                    <Group gap="xs" wrap="wrap">
+                      {item.freelancer.skills.slice(0, 5).map((skill) => (
+                        <Badge key={skill} size="sm" color="cyan" variant="light">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </Group>
+                    <Group gap="xs">
+                      {item.freelancer.experienceLevel && (
+                        <Badge size="sm" color="gray" variant="light">
+                          {item.freelancer.experienceLevel}
+                        </Badge>
+                      )}
+                      {item.freelancer.hourlyRate && (
+                        <Badge size="sm" color="green" variant="light">
+                          ${item.freelancer.hourlyRate}/hr
+                        </Badge>
+                      )}
+                      {item.bestRole && (
+                        <Badge size="sm" color="violet" variant="light">
+                          {item.bestRole}
+                        </Badge>
+                      )}
+                    </Group>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
+          )}
+        </Stack>
+      </Card>
+
+      {/* Recommended Teams */}
+      <Card withBorder radius="md" bg="var(--app-surface)" mb="xl">
+        <Stack gap="md">
+          <Group justify="space-between">
+            <Group gap="xs">
+              <Users size={18} color="var(--mantine-color-teal-6)" />
+              <Text fw={700} fz="lg" c="var(--app-text)">
+                Recommended Teams
+              </Text>
+            </Group>
+            <Badge color="teal" variant="light">
+              Dynamic Skill Coverage
+            </Badge>
+          </Group>
+
+          {teamsLoading ? (
+            <Center py="md">
+              <Loader size="sm" color="teal" />
+            </Center>
+          ) : teamsError ? (
+            <Text fz="sm" c="orange">
+              {teamsError}
+            </Text>
+          ) : teamRecommendations.length === 0 ? (
+            <Text fz="sm" c="dimmed">
+              No synced freelancer team can cover this project yet.
+            </Text>
+          ) : (
+            <Stack gap="md">
+              {teamRecommendations.map((team, index) => (
+                <Card key={`${team.score}-${index}`} withBorder radius="md">
+                  <Stack gap="sm">
+                    <Group justify="space-between">
+                      <Text fw={700} c="var(--app-text)">
+                        Team Option {index + 1}
+                      </Text>
+                      <Group gap="xs">
+                        <Badge color="teal" variant="light">
+                          Final {team.finalScore}
+                        </Badge>
+                        <Badge color="cyan" variant="light">
+                          {team.coverageScore}% coverage
+                        </Badge>
+                      </Group>
+                    </Group>
+                    <KbsExplanationPanel
+                      score={team.coverageScore}
+                      reason={team.reason}
+                      matchedSkills={team.coveredSkills}
+                      missingSkills={team.missingSkills}
+                      graphPath="Project skills are covered by multiple Freelancer - HAS_SKILL relationships"
+                      color="teal"
+                    />
+                    <Group gap="xs">
+                      <Badge size="sm" color="blue" variant="light">
+                        Tech score: {team.technicalScore}
+                      </Badge>
+                      <Badge size="sm" color="grape" variant="light">
+                        Synergy: {team.synergyScore}
+                      </Badge>
+                    </Group>
+                    {team.sharedEntities.length > 0 && (
+                      <Text fz="xs" c="dimmed">
+                        Shared graph entities: {team.sharedEntities.slice(0, 6).join(", ")}
+                        {team.sharedEntities.length > 6 ? "..." : ""}
+                      </Text>
+                    )}
+                    <Group gap="xs" wrap="wrap">
+                      {team.coveredSkills.map((skill) => (
+                        <Badge key={skill} size="sm" color="teal" variant="light">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {team.missingSkills.map((skill) => (
+                        <Badge key={skill} size="sm" color="orange" variant="light">
+                          Missing: {skill}
+                        </Badge>
+                      ))}
+                    </Group>
+                    <SimpleGrid cols={{ base: 1, md: 2 }}>
+                      {team.members.map((member) => (
+                        <Card key={member.userId} withBorder radius="sm" p="sm">
+                          <Stack gap={6}>
+                            <Group justify="space-between" align="flex-start">
+                              <Stack gap={1}>
+                                <Text fw={600} fz="sm" c="var(--app-text)">
+                                  {member.name}
+                                </Text>
+                                <Text fz="xs" c="dimmed" lineClamp={1}>
+                                  {member.headline || member.bestRole || "Freelancer"}
+                                </Text>
+                              </Stack>
+                              {member.hourlyRate && (
+                                <Badge size="xs" color="green" variant="light">
+                                  ${member.hourlyRate}/hr
+                                </Badge>
+                              )}
+                            </Group>
+                            <Text fz="xs" c="dimmed">
+                              Covers: {member.coveredSkills.join(", ")}
+                            </Text>
+                          </Stack>
+                        </Card>
+                      ))}
+                    </SimpleGrid>
+                  </Stack>
+                </Card>
+              ))}
+            </Stack>
+          )}
         </Stack>
       </Card>
 

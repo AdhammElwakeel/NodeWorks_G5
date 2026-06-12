@@ -2,6 +2,8 @@ from zhipuai import ZhipuAI
 import json
 from .config import ZHIPUAI_API_KEY, MODEL_NAME, CV_PARSER_PROMPT
 
+GLM_TIMEOUT_SECONDS = 120
+
 def get_glm_extraction(cv_text: str) -> dict:
     """
     Sends CV text to Zhipu AI GLM and returns a Python Dictionary.
@@ -10,7 +12,7 @@ def get_glm_extraction(cv_text: str) -> dict:
         return {"error": "Missing ZHIPUAI_API_KEY in .env file"}
 
     try:
-        client = ZhipuAI(api_key=ZHIPUAI_API_KEY)
+        client = ZhipuAI(api_key=ZHIPUAI_API_KEY, timeout=GLM_TIMEOUT_SECONDS)
         
         response = client.chat.completions.create(
             model=MODEL_NAME,
