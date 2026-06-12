@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Project } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
+import { syncProjectToKbs } from "@/lib/server/kbs-sync";
 
 // GET /api/projects — list projects with filters
 export async function GET(req: NextRequest) {
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
           skills: obj.skills || [],
           status: obj.status,
           timeline: obj.timeline,
+          kbsSync: obj.kbsSync,
           createdAt: obj.createdAt,
           updatedAt: obj.updatedAt,
           proposalsCount: count,
@@ -104,7 +106,18 @@ export async function POST(req: NextRequest) {
       skills: skills || [],
       timeline: timeline || undefined,
       status: "open",
+      kbsSync: { status: "not_synced" },
     });
+
+    let kbsSync = project.kbsSync;
+    try {
+      const sync = await syncProjectToKbs(project._id.toString());
+      kbsSync = sync.kbsSync;
+    } catch (syncError: any) {
+      console.warn("Project auto KBS sync failed:", syncError?.message || syncError);
+      const refreshedProject = await Project.findById(project._id).lean();
+      kbsSync = refreshedProject?.kbsSync || kbsSync;
+    }
 
     return NextResponse.json(
       {
@@ -117,6 +130,7 @@ export async function POST(req: NextRequest) {
           skills: project.skills || [],
           status: project.status,
           timeline: project.timeline,
+          kbsSync,
           createdAt: project.createdAt,
           updatedAt: project.updatedAt,
           proposalsCount: 0,

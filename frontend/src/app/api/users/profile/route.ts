@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { User, FreelancerProfile, ClientProfile } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
+import { syncFreelancerToKbs } from "@/lib/server/kbs-sync";
 
 async function getCurrentUser(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
@@ -72,11 +73,29 @@ export async function PATCH(req: NextRequest) {
     // Update role-specific profile
     if (body.profile) {
       if (user.role === "freelancer") {
+        const existingProfile = await FreelancerProfile.findOne({ userId: user._id });
+        const profileUpdates = { ...body.profile };
+        delete profileUpdates.kbsSync;
+
+        if (existingProfile?.kbsSync?.status === "synced") {
+          profileUpdates.kbsSync = {
+            status: "outdated",
+            syncedAt: existingProfile.kbsSync.syncedAt,
+            error: undefined,
+          };
+        }
+
         await FreelancerProfile.findOneAndUpdate(
           { userId: user._id },
-          { $set: body.profile },
+          { $set: profileUpdates },
           { upsert: true, new: true }
         );
+
+        try {
+          await syncFreelancerToKbs(user._id.toString());
+        } catch (syncError: any) {
+          console.warn("Freelancer auto KBS sync failed:", syncError?.message || syncError);
+        }
       } else if (user.role === "client") {
         await ClientProfile.findOneAndUpdate(
           { userId: user._id },

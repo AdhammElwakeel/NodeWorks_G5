@@ -6,6 +6,7 @@ Endpoint: POST /api/analyze-cv
 
 import sys
 import os
+import asyncio
 from pathlib import Path
 
 # Make the sibling cv_analysis_module importable
@@ -73,8 +74,8 @@ async def analyze_cv(file: UploadFile = File(...)):
     if not pdf_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
-    # Run the CV analysis pipeline
-    result = process_cv(pdf_bytes)
+    # Run the CV analysis pipeline in a thread pool to avoid blocking the event loop
+    result = await asyncio.to_thread(process_cv, pdf_bytes)
 
     # The module returns {"error": "..."} on failure
     if "error" in result:
