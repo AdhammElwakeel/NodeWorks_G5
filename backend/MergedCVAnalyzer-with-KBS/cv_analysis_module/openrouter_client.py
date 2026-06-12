@@ -15,7 +15,7 @@ def get_openrouter_extraction(cv_text: str) -> dict:
             api_key=OPENROUTER_API_KEY,
         )
         
-        print(f"🚀 Sending CV to OpenRouter ({MODEL_NAME})...")
+        print(f"[*] Sending CV to OpenRouter ({MODEL_NAME})...")
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
@@ -26,7 +26,13 @@ def get_openrouter_extraction(cv_text: str) -> dict:
             temperature=0.4
         )
         
+        if not hasattr(response, 'choices') or not response.choices:
+            return {"error": f"OpenRouter API returned no choices. Raw response: {getattr(response, '__dict__', response)}"}
+            
         content = response.choices[0].message.content
+        if not content:
+            return {"error": "OpenRouter API returned empty content."}
+            
         return json.loads(content)
 
     except Exception as e:

@@ -5,12 +5,12 @@ Uses the OpenAI-compatible API so no extra library is needed beyond `openai`.
 import json
 import re
 from openai import OpenAI
-from config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, INTERVIEW_MODEL
+from config import GEMINI_API_KEY, OPENROUTER_BASE_URL, INTERVIEW_MODEL
 
 
 def _get_client() -> OpenAI:
     return OpenAI(
-        api_key=OPENROUTER_API_KEY,
+        api_key=GEMINI_API_KEY,
         base_url=OPENROUTER_BASE_URL,
     )
 
@@ -25,6 +25,10 @@ def _call(messages: list[dict], fallback: dict) -> dict:
             temperature=0.6,
             response_format={"type": "json_object"},
         )
+        if not hasattr(response, 'choices') or not response.choices:
+            print(f"[OpenRouter] API returned no choices. Raw response: {getattr(response, '__dict__', response)}")
+            return fallback
+
         text = response.choices[0].message.content or ""
         return json.loads(text)
     except json.JSONDecodeError:

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # ── Interview configuration ───────────────────────────────────────────────────
 NUM_SKILLS = 5             # How many skills to test per interview
@@ -16,7 +16,6 @@ DIFFICULTY = "easy"      # easy | medium | hard
 
 VERIFICATION_THRESHOLD = 65  # Score percentage to be considered verified
 
-# ── Model ─────────────────────────────────────────────────────────────────────
-# Using the free Nemotron model via OpenRouter
-INTERVIEW_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+# Using the free Gemini model via OpenAI compatibility API
+INTERVIEW_MODEL = "gemini-2.5-flash"
+OPENROUTER_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"

@@ -11,11 +11,11 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # ------------------------------------------------------------------
 # 🤖 MODEL CONFIGURATION
 # ------------------------------------------------------------------
-# MODEL_NAME = "gemini-2.5-flash" 
+MODEL_NAME = "gemini-2.5-flash" 
 # MODEL_NAME = "gemini-pro" 
 # MODEL_NAME = "glm-4.7-flash" # Use GLM 4.7 Flash (free version)
 # MODEL_NAME = "glm-4"
-MODEL_NAME = "nvidia/nemotron-3-super-120b-a12b:free" 
+# MODEL_NAME = "nvidia/nemotron-3-super-120b-a12b:free" 
 # MODEL_NAME = "google/gemini-2.0-flash-exp:free" # Faster OpenRouter model
 
 # ------------------------------------------------------------------
