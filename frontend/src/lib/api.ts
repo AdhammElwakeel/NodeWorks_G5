@@ -77,6 +77,11 @@ export interface ProjectData {
   skills: string[];
   status: "open" | "closed" | "in-progress";
   timeline?: string;
+  kbsSync?: {
+    status: "not_synced" | "synced" | "outdated" | "failed";
+    syncedAt?: string;
+    error?: string;
+  };
   createdAt: string;
   updatedAt: string;
   proposalsCount: number;
@@ -217,6 +222,86 @@ export const messageApi = {
 // ─── Recommendations (stub — AI team feature) ──────────────────────────
 
 export const recApi = {
+  jobs: (params?: { limit?: number }): Promise<{
+    recommendations: {
+      score: number;
+      reason: string;
+      matchedSkills: string[];
+      missingSkills: string[];
+      requiredSkills: string[];
+      project: ProjectData;
+    }[];
+  }> => {
+    const qs = params?.limit ? `?limit=${params.limit}` : "";
+    return fetchApi(`/recommendations/jobs${qs}`);
+  },
+  freelancers: (
+    projectId: string,
+    params?: { limit?: number }
+  ): Promise<{
+    recommendations: {
+      score: number;
+      reason: string;
+      matchedSkills: string[];
+      missingSkills: string[];
+      requiredSkills: string[];
+      bestRole?: string;
+      bestRoleScore?: number;
+      freelancer: {
+        id: string;
+        name: string;
+        email: string;
+        avatar?: string | null;
+        headline?: string;
+        experienceLevel?: string;
+        country?: string;
+        hourlyRate?: number;
+        availability?: string;
+        skills: string[];
+        kbsSync?: ProjectData["kbsSync"];
+      };
+    }[];
+  }> => {
+    const qs = params?.limit ? `?limit=${params.limit}` : "";
+    return fetchApi(`/recommendations/projects/${projectId}/freelancers${qs}`);
+  },
+  team: (
+    projectId: string,
+    params?: { limit?: number; maxTeamSize?: number }
+  ): Promise<{
+    requiredSkills: string[];
+    requiredRoles: { name: string; count: number }[];
+    recommendations: {
+      score: number;
+      finalScore: number;
+      technicalScore: number;
+      synergyScore: number;
+      coverageScore: number;
+      reason: string;
+      coveredSkills: string[];
+      missingSkills: string[];
+      sharedEntities: string[];
+      members: {
+        userId: string;
+        name: string;
+        headline?: string;
+        experienceLevel?: string;
+        hourlyRate?: number;
+        skills: string[];
+        coveredSkills: string[];
+        bestRole?: string;
+        bestRoleScore?: number;
+      }[];
+    }[];
+  }> => {
+    const entries = Object.entries(params || {})
+      .filter(([, v]) => v !== undefined)
+      .map(([key, value]) => [key, String(value)] as [string, string]);
+    const qs = entries.length
+      ? "?" + new URLSearchParams(entries).toString()
+      : "";
+    return fetchApi(`/recommendations/projects/${projectId}/team${qs}`);
+  },
   get: (body: { context?: string; projectId?: string; limit?: number }) =>
     fetchApi("/recommendations", {
       method: "POST",
@@ -227,6 +312,13 @@ export const recApi = {
 // ─── KBS (stub — AI team feature) ──────────────────────────────────────
 
 export const kbsApi = {
+  health: () => fetchApi("/kbs/health"),
+  syncFreelancer: (): Promise<{ kbsSync: ProjectData["kbsSync"]; result: any }> =>
+    fetchApi("/kbs/freelancer/sync", { method: "POST" }),
+  syncProject: (
+    projectId: string
+  ): Promise<{ kbsSync: ProjectData["kbsSync"]; result: any }> =>
+    fetchApi(`/kbs/projects/${projectId}/sync`, { method: "POST" }),
   list: (params?: { category?: string; search?: string; mine?: boolean }) => {
     const entries = Object.entries(params || {}).filter(
       ([, v]) => v !== undefined

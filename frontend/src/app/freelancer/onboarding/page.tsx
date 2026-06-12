@@ -20,6 +20,30 @@ const steps = [
 
 const CV_ANALYSIS_URL = "/api/cv/analyze";
 
+function normalizeCvAnalysis(cvData: CvData) {
+  return {
+    name: cvData.name,
+    email: cvData.email,
+    phone: cvData.phone,
+    yearsOfExperience: cvData["years of experience"],
+    allSkills: cvData.all_skills ?? [],
+    experience: cvData.experience ?? [],
+    education: cvData.education ?? [],
+    projects: cvData.projects ?? [],
+    certifications: cvData.certifications ?? [],
+    publications: cvData.Publications ?? [],
+    bestRole: cvData.best_role,
+    bestScore: cvData.best_score,
+    roleRankings: (cvData.role_rankings ?? []).map((ranking) => ({
+      role: ranking.role,
+      score: ranking.score,
+      matchedSkills: ranking.matched_skills ?? [],
+      missingSkills: ranking.missing_skills ?? [],
+    })),
+    analyzedAt: new Date().toISOString(),
+  };
+}
+
 export default function FreelancerOnboardingPage() {
   const [step, setStep] = useState<OnboardingStep>(0);
 
@@ -118,6 +142,7 @@ export default function FreelancerOnboardingPage() {
           country: profileData.country.trim() || undefined,
           skills: profileData.skills,
           about: profileData.bio.trim() || undefined,
+          cvAnalysis: cvData ? normalizeCvAnalysis(cvData) : undefined,
         },
       });
 
