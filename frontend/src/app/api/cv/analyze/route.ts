@@ -23,10 +23,15 @@ export async function POST(req: NextRequest) {
     const upstreamForm = new FormData();
     upstreamForm.append("file", file, file.name);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120_000);
+
     const response = await fetch(CV_ANALYSIS_API_URL, {
       method: "POST",
       body: upstreamForm,
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const data = await response.json().catch(() => null);
 

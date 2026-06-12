@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Project } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
+import { syncProjectToKbs } from "@/lib/server/kbs-sync";
 
 // GET /api/projects/[id] — get single project
 export async function GET(
@@ -38,6 +39,7 @@ export async function GET(
         skills: project.skills || [],
         status: project.status,
         timeline: project.timeline,
+        kbsSync: project.kbsSync,
         createdAt: (project as any).createdAt,
         updatedAt: (project as any).updatedAt,
         proposalsCount,
@@ -77,11 +79,28 @@ export async function PATCH(
 
     const body = await req.json();
 
-    if (body.title !== undefined) project.title = body.title;
-    if (body.description !== undefined) project.description = body.description;
-    if (body.budget !== undefined) project.budget = body.budget;
-    if (body.skills !== undefined) project.skills = body.skills;
-    if (body.timeline !== undefined) project.timeline = body.timeline;
+    let recommendationDataChanged = false;
+
+    if (body.title !== undefined) {
+      project.title = body.title;
+      recommendationDataChanged = true;
+    }
+    if (body.description !== undefined) {
+      project.description = body.description;
+      recommendationDataChanged = true;
+    }
+    if (body.budget !== undefined) {
+      project.budget = body.budget;
+      recommendationDataChanged = true;
+    }
+    if (body.skills !== undefined) {
+      project.skills = body.skills;
+      recommendationDataChanged = true;
+    }
+    if (body.timeline !== undefined) {
+      project.timeline = body.timeline;
+      recommendationDataChanged = true;
+    }
     if (body.status !== undefined) {
       if (!["open", "closed", "in-progress"].includes(body.status)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -89,20 +108,36 @@ export async function PATCH(
       project.status = body.status;
     }
 
+    if (recommendationDataChanged && project.kbsSync?.status === "synced") {
+      project.kbsSync.status = "outdated";
+      project.kbsSync.error = undefined;
+    }
+
     await project.save();
+
+    if (recommendationDataChanged) {
+      try {
+        await syncProjectToKbs(project._id.toString());
+      } catch (syncError: any) {
+        console.warn("Project auto KBS sync failed:", syncError?.message || syncError);
+      }
+    }
+
+    const updatedProject = await Project.findById(project._id).lean();
 
     return NextResponse.json({
       project: {
         id: project._id.toString(),
         clientId: project.clientId.toString(),
-        title: project.title,
-        description: project.description,
-        budget: project.budget,
-        skills: project.skills || [],
-        status: project.status,
-        timeline: project.timeline,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
+        title: updatedProject?.title || project.title,
+        description: updatedProject?.description || project.description,
+        budget: updatedProject?.budget || project.budget,
+        skills: updatedProject?.skills || project.skills || [],
+        status: updatedProject?.status || project.status,
+        timeline: updatedProject?.timeline || project.timeline,
+        kbsSync: updatedProject?.kbsSync || project.kbsSync,
+        createdAt: updatedProject?.createdAt || project.createdAt,
+        updatedAt: updatedProject?.updatedAt || project.updatedAt,
       },
     });
   } catch (error: any) {

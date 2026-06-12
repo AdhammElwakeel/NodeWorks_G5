@@ -2,6 +2,8 @@ import google.generativeai as genai
 import json
 from .config import API_KEY, MODEL_NAME, CV_PARSER_PROMPT
 
+GEMINI_TIMEOUT_SECONDS = 120
+
 def get_gemini_extraction(cv_text: str) -> dict:
     """
     Sends CV text to Google Gemini and returns a Python Dictionary.
@@ -23,7 +25,10 @@ def get_gemini_extraction(cv_text: str) -> dict:
             system_instruction=CV_PARSER_PROMPT
         )
 
-        response = model.generate_content(cv_text)
+        response = model.generate_content(
+            cv_text,
+            request_options={"timeout": GEMINI_TIMEOUT_SECONDS},
+        )
         
         return json.loads(response.text)
 

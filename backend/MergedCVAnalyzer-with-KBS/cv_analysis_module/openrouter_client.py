@@ -2,6 +2,8 @@ import json
 from openai import OpenAI
 from .config import OPENROUTER_API_KEY, MODEL_NAME, CV_PARSER_PROMPT
 
+OPENROUTER_TIMEOUT_SECONDS = 120
+
 def get_openrouter_extraction(cv_text: str) -> dict:
     """
     Sends CV text to OpenRouter and returns a Python Dictionary.
@@ -13,9 +15,9 @@ def get_openrouter_extraction(cv_text: str) -> dict:
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=OPENROUTER_API_KEY,
+            timeout=OPENROUTER_TIMEOUT_SECONDS,
         )
         
-        print(f"🚀 Sending CV to OpenRouter ({MODEL_NAME})...")
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[

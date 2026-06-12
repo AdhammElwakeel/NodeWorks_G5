@@ -18,7 +18,7 @@ import {
   Button,
   Loader,
 } from "@mantine/core";
-import { Briefcase, Search, Filter, Send, DollarSign } from "lucide-react";
+import { Briefcase, Search, Filter, Send, DollarSign, Sparkles } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   Sidebar,
@@ -26,7 +26,8 @@ import {
 } from "@/components/freelancer/dashboard";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
-import { projectApi, proposalApi } from "@/lib/api";
+import { projectApi, proposalApi, recApi } from "@/lib/api";
+import { KbsExplanationPanel } from "@/components/kbs/KbsExplanationPanel";
 import {
   MOCK_EARNINGS,
 } from "@/components/freelancer/dashboard/data";
@@ -72,6 +73,17 @@ function FreelancerDashboardContent() {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [jobRecommendations, setJobRecommendations] = useState<
+    {
+      score: number;
+      reason: string;
+      matchedSkills: string[];
+      missingSkills: string[];
+      project: ProjectData;
+    }[]
+  >([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -88,6 +100,27 @@ function FreelancerDashboardContent() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setJobRecommendations([]);
+      setRecommendationsError(null);
+      return;
+    }
+
+    setRecommendationsLoading(true);
+    recApi
+      .jobs({ limit: 12 })
+      .then((data) => {
+        setJobRecommendations(data.recommendations);
+        setRecommendationsError(null);
+      })
+      .catch((error: any) => {
+        setJobRecommendations([]);
+        setRecommendationsError(error?.message || "KBS recommendations unavailable");
+      })
+      .finally(() => setRecommendationsLoading(false));
+  }, [user]);
 
   const appliedProjectIds = useMemo(
     () => new Set(proposals.map((proposal) => proposal.projectId)),
@@ -115,6 +148,16 @@ function FreelancerDashboardContent() {
         return matchSearch && matchSkill;
       }),
     [recommendedJobs, search, skillFilter]
+  );
+
+  const recommendedFromKbs = jobRecommendations.length > 0;
+  const recommendationByProjectId = useMemo(
+    () => new Map(jobRecommendations.map((item) => [item.project.id, item])),
+    [jobRecommendations]
+  );
+  const displayedRecommended = useMemo(
+    () => filteredRecommended,
+    [filteredRecommended]
   );
 
   const sidebar = (
@@ -149,7 +192,7 @@ function FreelancerDashboardContent() {
             </Container>
           ) : (
             <Container size="lg" py="xl">
-              <Stack gap="xl">
+                <Stack gap="xl">
                 {/* Welcome Header */}
                 <Stack gap={4}>
                   <Title order={2} fw={700} c="var(--app-text-strong)">
@@ -160,14 +203,115 @@ function FreelancerDashboardContent() {
                   </Text>
                 </Stack>
 
+                {/* Best Matches */}
+                <Stack gap="md">
+                  <Group justify="space-between" align="flex-start">
+                    <Stack gap={4}>
+                      <Group gap="xs">
+                        <Sparkles size={20} color="var(--mantine-color-violet-6)" />
+                        <Title order={3} fw={700} c="var(--app-text)">
+                          Best Matches For You
+                        </Title>
+                      </Group>
+                      <Text c="dimmed" fz="sm">
+                        Ranked by your graph skills, CV analysis, and project requirements.
+                      </Text>
+                      {recommendationsError && (
+                        <Text c="orange" fz="xs">
+                          AI matching is temporarily unavailable. You can still browse open jobs below.
+                        </Text>
+                      )}
+                    </Stack>
+                    <Badge color={recommendedFromKbs ? "violet" : "gray"} variant="light">
+                      {recommendedFromKbs ? "Graph matched" : "Preparing matches"}
+                    </Badge>
+                  </Group>
+
+                  {recommendationsLoading ? (
+                    <Card withBorder radius="lg" p="xl" bg="var(--app-surface)">
+                      <Center>
+                        <Stack align="center" gap="xs">
+                          <Loader color="violet" />
+                          <Text fz="sm" c="dimmed">
+                            Preparing your recommendations...
+                          </Text>
+                        </Stack>
+                      </Center>
+                    </Card>
+                  ) : jobRecommendations.length === 0 ? (
+                    <Card withBorder radius="lg" p="xl" bg="var(--app-surface)">
+                      <Center>
+                        <Stack align="center" gap="sm">
+                          <Sparkles size={42} color="var(--app-muted-soft)" />
+                          <Text fw={600} c="var(--app-text)">
+                            Matches will appear here automatically
+                          </Text>
+                          <Text fz="sm" c="dimmed" ta="center">
+                            Complete your profile and CV analysis to improve graph-based matching.
+                          </Text>
+                        </Stack>
+                      </Center>
+                    </Card>
+                  ) : (
+                    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+                      {jobRecommendations.slice(0, 4).map((item) => (
+                        <Card key={item.project.id} withBorder radius="lg" shadow="sm" bg="var(--app-surface)">
+                          <Stack gap="sm">
+                            <Group justify="space-between" align="flex-start">
+                              <Badge color="violet" variant="filled" radius="sm">
+                                {item.score}% match
+                              </Badge>
+                              <Group gap={4}>
+                                <DollarSign size={14} color="var(--mantine-color-cyan-6)" />
+                                <Text fw={700} fz="sm" c="var(--app-text)">
+                                  ${item.project.budget.toLocaleString()}
+                                </Text>
+                              </Group>
+                            </Group>
+                            <Text fw={800} fz="lg" c="var(--app-text)" lineClamp={2}>
+                              {item.project.title}
+                            </Text>
+                            <Text fz="sm" c="dimmed" lineClamp={2}>
+                              {item.project.description}
+                            </Text>
+                            <KbsExplanationPanel
+                              score={item.score}
+                              reason={item.reason}
+                              matchedSkills={item.matchedSkills}
+                              missingSkills={item.missingSkills}
+                              graphPath="Freelancer - HAS_SKILL -> Skill <- REQUIRES_SKILL - Project"
+                            />
+                            <Group gap="xs" wrap="wrap">
+                              {item.matchedSkills.slice(0, 5).map((skill) => (
+                                <Badge key={skill} size="sm" color="cyan" variant="light">
+                                  {skill}
+                                </Badge>
+                              ))}
+                            </Group>
+                            <Button
+                              fullWidth
+                              color="cyan"
+                              radius="md"
+                              leftSection={<Send size={16} />}
+                              onClick={() => router.push(`/freelancer/apply/${item.project.id}`)}
+                            >
+                              Apply Now
+                            </Button>
+                          </Stack>
+                        </Card>
+                      ))}
+                    </SimpleGrid>
+                  )}
+                </Stack>
+
                 {/* Jobs Search */}
                 <Stack gap="md">
                   <Stack gap={4}>
                     <Title order={3} fw={600} c="var(--app-text)">
-                      Jobs
+                      Browse Jobs
                     </Title>
                     <Text c="dimmed" fz="sm">
-                      Find the right job for you and apply
+                      Search all open jobs and compare them with your top matches.
                     </Text>
                   </Stack>
 
@@ -217,14 +361,14 @@ function FreelancerDashboardContent() {
                   </Group>
                 </Stack>
 
-                {/* My Jobs */}
+                {/* Applications */}
                 <Stack gap="md">
                   <Stack gap={4}>
                     <Title order={3} fw={600} c="var(--app-text)">
-                      My Jobs
+                      Applications
                     </Title>
                     <Text c="dimmed" fz="sm">
-                      Jobs you already applied on
+                      Jobs you already applied to
                     </Text>
                   </Stack>
 
@@ -243,7 +387,7 @@ function FreelancerDashboardContent() {
                             You didn&apos;t apply to any job yet
                           </Text>
                           <Text fz="sm" c="dimmed" ta="center">
-                            Browse the recommended jobs below and submit your
+                            Browse your recommended jobs above and submit your
                             first proposal!
                           </Text>
                         </Stack>
@@ -298,14 +442,14 @@ function FreelancerDashboardContent() {
                   )}
                 </Stack>
 
-                {/* Recommended Jobs */}
+                {/* All Open Jobs */}
                 <Stack gap="md">
                   <Stack gap={4}>
                     <Title order={3} fw={600} c="var(--app-text)">
-                      Recommended Jobs
+                      All Open Jobs
                     </Title>
                     <Text c="dimmed" fz="sm">
-                      Jobs that match your profile
+                      Filter the full marketplace after reviewing your best matches.
                     </Text>
                   </Stack>
 
@@ -315,7 +459,7 @@ function FreelancerDashboardContent() {
                         <Loader color="cyan" />
                       </Center>
                     </Card>
-                  ) : filteredRecommended.length === 0 ? (
+                  ) : displayedRecommended.length === 0 ? (
                     <Card withBorder radius="md" p="xl">
                       <Center>
                         <Stack align="center" gap="sm">
@@ -332,7 +476,9 @@ function FreelancerDashboardContent() {
                     </Card>
                   ) : (
                     <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-                      {filteredRecommended.map((job) => (
+                      {displayedRecommended.map((job) => {
+                        const recommendation = recommendationByProjectId.get(job.id);
+                        return (
                         <Card
                           key={job.id}
                           withBorder
@@ -357,12 +503,12 @@ function FreelancerDashboardContent() {
                           <Stack gap="sm">
                             <Group justify="space-between">
                               <Badge
-                                color="green"
+                                color={recommendation ? "violet" : "green"}
                                 variant="light"
                                 size="sm"
                                 radius="sm"
                               >
-                                Open
+                                {recommendation ? `${recommendation.score}% match` : "Open"}
                               </Badge>
                               {job.budget && (
                                 <Group gap={4}>
@@ -382,6 +528,15 @@ function FreelancerDashboardContent() {
                             <Text fz="sm" c="dimmed" lineClamp={3}>
                               {job.description}
                             </Text>
+                            {recommendation && (
+                              <KbsExplanationPanel
+                                score={recommendation.score}
+                                reason={recommendation.reason}
+                                matchedSkills={recommendation.matchedSkills}
+                                missingSkills={recommendation.missingSkills}
+                                graphPath="Freelancer - HAS_SKILL -> Skill <- REQUIRES_SKILL - Project"
+                              />
+                            )}
                             <Group gap="xs" wrap="wrap">
                               {job.skills.slice(0, 4).map((s: string) => (
                                 <Badge
@@ -422,7 +577,8 @@ function FreelancerDashboardContent() {
                             </Button>
                           </Stack>
                         </Card>
-                      ))}
+                        );
+                      })}
                     </SimpleGrid>
                   )}
                 </Stack>
