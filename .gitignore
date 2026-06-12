@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+architecture-kbs-recsys.excalidraw
 
 # debug
 npm-debug.log*
