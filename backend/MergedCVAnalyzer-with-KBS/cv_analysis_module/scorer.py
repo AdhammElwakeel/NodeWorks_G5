@@ -11,9 +11,12 @@ def calculate_role_scores(cv_data: dict) -> dict:
 
     # 1. Get skills (Gemini has already normalized them now!)
     extracted_skills = cv_data.get("all_skills", [])
-    years_of_experience = cv_data.get("years of experience")
-    years = int(re.findall(r'\d+',years_of_experience)[0]) / 12
-    print(years)
+    years_of_experience = cv_data.get("years of experience") or ""
+    matches = re.findall(r'\d+', str(years_of_experience))
+    raw_months = int(matches[0]) if matches else 0
+    # If the string contains "year", treat the number as years → convert to months
+    years = (raw_months * 12 if re.search(r'year', str(years_of_experience), re.I) else raw_months) / 12
+    years = max(years, 0)  # Safety clamp
     # Convert to lowercase set for fast matching
     user_skills_lower = {s.lower() for s in extracted_skills}
     
@@ -35,7 +38,10 @@ def calculate_role_scores(cv_data: dict) -> dict:
         # Calculate Percentage Score
         total_reqs = len(required_skills)
         score = match_count / total_reqs if total_reqs > 0 else 0
-        score *= min(REQUIRED_YEARS_OF_EPERIENCE,years)/REQUIRED_YEARS_OF_EPERIENCE
+        # Apply experience multiplier — skip if years is unknown (defaults to neutral 1.0)
+        if years > 0:
+            score *= min(REQUIRED_YEARS_OF_EPERIENCE, years) / REQUIRED_YEARS_OF_EPERIENCE
+        # else: unknown experience → don't penalize, leave score as-is
         rankings.append({
             "role": role,
             "score": round(score * 100, 1), # Percentage

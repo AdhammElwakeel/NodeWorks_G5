@@ -14,8 +14,9 @@ import {
   Divider,
   Anchor,
   Checkbox,
+  SegmentedControl,
 } from "@mantine/core";
-import { Mail, Lock } from "lucide-react";
+import { Zap, Mail, Lock, User, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -37,6 +38,10 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Default role from query param or "freelancer"
+  const [signingInAs, setSigningInAs] = useState(
+    searchParams.get("role") === "client" ? "client" : "freelancer",
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,19 +57,18 @@ function LoginForm() {
       } else {
         router.push("/freelancer/dashboard");
       }
-    } catch (err: any) {
-      setError(err?.message || "Login failed. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        (err instanceof Error ? err.message : null) ??
+          "Login failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
   };
+
   return (
-    <Box
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-      }}
-    >
+    <Box style={{ minHeight: "100vh", display: "flex" }}>
       {/* Left Side - Branding */}
       <Box
         style={{
@@ -81,7 +85,6 @@ function LoginForm() {
         }}
         visibleFrom="md"
       >
-        {/* Background decoration */}
         <Box
           style={{
             position: "absolute",
@@ -104,22 +107,28 @@ function LoginForm() {
             background: "rgba(255, 255, 255, 0.05)",
           }}
         />
-
-        {/* Content */}
         <Stack
           align="center"
           gap="xl"
           style={{ position: "relative", zIndex: 1 }}
         >
-          {/* Logo */}
-          <Group gap="sm" align="center" wrap="nowrap">
-            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
-            <Text fw={700} fz={32} c="white" lh={1}>
+          <Group gap="sm" align="center">
+            <Box
+              p="md"
+              style={{
+                background: "rgba(255, 255, 255, 0.2)",
+                borderRadius: "var(--mantine-radius-lg)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Zap size={32} color="white" fill="white" />
+            </Box>
+            <Text fw={700} fz={32} c="white">
               NodeWorks
             </Text>
           </Group>
-
-          {/* Tagline */}
           <Stack gap="md" align="center" maw={400} ta="center">
             <Title order={2} c="white" fw={600}>
               Connect with top talent worldwide
@@ -129,8 +138,6 @@ function LoginForm() {
               work together.
             </Text>
           </Stack>
-
-          {/* Stats */}
           <Group gap={60} mt="xl">
             <Stack gap={4} align="center">
               <Text c="white" fw={700} fz={28}>
@@ -172,10 +179,21 @@ function LoginForm() {
           backgroundColor: "var(--app-bg)",
         }}
       >
-        {/* Mobile Logo */}
-        <Group gap="xs" align="center" mb="xl" hiddenFrom="md" wrap="nowrap">
-          <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
-          <Text fw={700} fz="xl" c="var(--app-text-strong)" lh={1}>
+        <Group gap="xs" align="center" mb="xl" hiddenFrom="md">
+          <Box
+            p="xs"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-blue-6))",
+              borderRadius: "var(--mantine-radius-md)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Zap size={20} color="white" fill="white" />
+          </Box>
+          <Text fw={700} fz="xl" c="dark">
             NodeWorks
           </Text>
         </Group>
@@ -190,7 +208,6 @@ function LoginForm() {
           bg="var(--app-surface)"
         >
           <Stack gap="lg">
-            {/* Header */}
             <Stack gap={4} ta="center">
               <Title order={2} fw={700} c="var(--app-text-strong)">
                 Welcome back
@@ -199,6 +216,33 @@ function LoginForm() {
                 Sign in to your account to continue
               </Text>
             </Stack>
+
+            {/* Role Selector */}
+            <SegmentedControl
+              fullWidth
+              value={signingInAs}
+              onChange={setSigningInAs}
+              data={[
+                {
+                  value: "freelancer",
+                  label: (
+                    <Group gap={6} justify="center" wrap="nowrap">
+                      <User size={14} />
+                      <span>Freelancer</span>
+                    </Group>
+                  ),
+                },
+                {
+                  value: "client",
+                  label: (
+                    <Group gap={6} justify="center" wrap="nowrap">
+                      <Briefcase size={14} />
+                      <span>Client</span>
+                    </Group>
+                  ),
+                },
+              ]}
+            />
 
             {/* Social Login */}
             <Stack gap="sm">
@@ -233,7 +277,6 @@ function LoginForm() {
 
             <Divider label="or continue with email" labelPosition="center" />
 
-            {/* Form */}
             <form onSubmit={handleSubmit}>
               <Stack gap="md">
                 <TextInput
@@ -289,14 +332,19 @@ function LoginForm() {
             {/* Footer */}
             <Text ta="center" fz="sm" c="dimmed">
               Don&apos;t have an account?{" "}
-              <Anchor component={Link} href="/register" fw={500} c="indigo">
-                Create one
+              <Anchor
+                component={Link}
+                href={`/register?role=${signingInAs}`}
+                fw={500}
+                c="indigo"
+              >
+                Create one as{" "}
+                {signingInAs === "client" ? "Client" : "Freelancer"}
               </Anchor>
             </Text>
           </Stack>
         </Paper>
 
-        {/* Back to home */}
         <Anchor component={Link} href="/" fz="sm" c="dimmed" mt="xl">
           ← Back to home
         </Anchor>
