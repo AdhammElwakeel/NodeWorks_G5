@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Button,
   Table,
   Badge,
   Loader,
-  Stack,
   Text,
   Card,
   Group,
@@ -26,18 +25,26 @@ export default function ClientProjectsPage() {
   const [closeTarget, setCloseTarget] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
 
-  const fetchProjects = () => {
+  const fetchProjects = useCallback(() => {
     setLoading(true);
     projectApi
       .list({ mine: true })
       .then((data) => setProjects(data.projects))
       .catch(() => setProjects([]))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) fetchProjects();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchProjects]);
 
   const handleClose = async () => {
     if (!closeTarget) return;
@@ -72,8 +79,9 @@ export default function ClientProjectsPage() {
             component={Link}
             href="/client/projects/new"
             leftSection={<Plus size={18} />}
-            variant="gradient"
-            gradient={{ from: "indigo", to: "cyan", deg: 135 }}
+            color="teal"
+            variant="filled"
+            radius="md"
           >
             New Project
           </Button>
@@ -92,6 +100,7 @@ export default function ClientProjectsPage() {
               component={Link}
               href="/client/projects/new"
               variant="subtle"
+              color="teal"
               size="sm"
               px={0}
             >

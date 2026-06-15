@@ -24,12 +24,19 @@ import { SkillsTags } from "@/components/client/SkillsTags";
 import { projectApi, recApi, type ProjectData } from "@/lib/api";
 import { KbsExplanationPanel } from "@/components/kbs/KbsExplanationPanel";
 
+type FreelancerRecommendation = Awaited<
+  ReturnType<typeof recApi.freelancers>
+>["recommendations"][number];
+type TeamRecommendation = Awaited<
+  ReturnType<typeof recApi.team>
+>["recommendations"][number];
+
 export default function ClientDashboardPage() {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [freelancerRecommendations, setFreelancerRecommendations] = useState<any[]>([]);
-  const [teamRecommendations, setTeamRecommendations] = useState<any[]>([]);
+  const [freelancerRecommendations, setFreelancerRecommendations] = useState<FreelancerRecommendation[]>([]);
+  const [teamRecommendations, setTeamRecommendations] = useState<TeamRecommendation[]>([]);
   const [requiredRoles, setRequiredRoles] = useState<{ name: string; count: number }[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
@@ -45,36 +52,56 @@ export default function ClientDashboardPage() {
   useEffect(() => {
     if (selectedProjectId || projects.length === 0) return;
     const firstOpenProject = projects.find((project) => project.status === "open") || projects[0];
-    setSelectedProjectId(firstOpenProject.id);
+    queueMicrotask(() => setSelectedProjectId(firstOpenProject.id));
   }, [projects, selectedProjectId]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!selectedProjectId) {
-      setFreelancerRecommendations([]);
-      setTeamRecommendations([]);
-      setRequiredRoles([]);
+      queueMicrotask(() => {
+        if (cancelled) return;
+        setFreelancerRecommendations([]);
+        setTeamRecommendations([]);
+        setRequiredRoles([]);
+      });
       return;
     }
 
-    setRecommendationsLoading(true);
-    setRecommendationsError(null);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setRecommendationsLoading(true);
+      setRecommendationsError(null);
+    });
 
     Promise.all([
       recApi.freelancers(selectedProjectId, { limit: 6 }),
       recApi.team(selectedProjectId, { limit: 2, maxTeamSize: 4 }),
     ])
       .then(([freelancerData, teamData]) => {
+        if (cancelled) return;
         setFreelancerRecommendations(freelancerData.recommendations || []);
         setTeamRecommendations(teamData.recommendations || []);
         setRequiredRoles(teamData.requiredRoles || []);
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
+        if (cancelled) return;
         setFreelancerRecommendations([]);
         setTeamRecommendations([]);
         setRequiredRoles([]);
-        setRecommendationsError(error?.message || "Recommendations are temporarily unavailable");
+        setRecommendationsError(
+          error instanceof Error
+            ? error.message
+            : "Recommendations are temporarily unavailable"
+        );
       })
-      .finally(() => setRecommendationsLoading(false));
+      .finally(() => {
+        if (!cancelled) setRecommendationsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedProjectId]);
 
   const openCount = projects.filter((p) => p.status === "open").length;
@@ -106,8 +133,9 @@ export default function ClientDashboardPage() {
             component={Link}
             href="/client/projects/new"
             leftSection={<Plus size={18} />}
-            variant="gradient"
-            gradient={{ from: "indigo", to: "cyan", deg: 135 }}
+            color="teal"
+            variant="filled"
+            radius="md"
           >
             Create new project
           </Button>
@@ -329,7 +357,7 @@ export default function ClientDashboardPage() {
                       {team.reason}
                     </Text>
                     <Group gap="xs" wrap="wrap">
-                      {team.members.map((member: any) => (
+                      {team.members.map((member) => (
                         <Badge key={member.userId} color="teal" variant="light">
                           {member.name}: {member.coveredSkills.slice(0, 2).join(", ")}
                         </Badge>
@@ -360,6 +388,7 @@ export default function ClientDashboardPage() {
               component={Link}
               href="/client/projects/new"
               variant="subtle"
+              color="teal"
               size="sm"
               px={0}
             >

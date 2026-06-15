@@ -23,34 +23,34 @@ function formatDate(value: string) {
 }
 
 export default function FreelancerProfilePage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fp = (user as any)?.freelancerProfile || {};
+  const fp = user?.freelancerProfile;
   const profile: Profile = useMemo(() => ({
     name: user?.name || "",
-    headline: fp.headline || "",
-    role: fp.experienceLevel || "",
-    country: fp.country || "",
-    hourlyRate: fp.hourlyRate || 0,
-    availability: fp.availability || "",
-    about: fp.about || "",
-    skills: fp.skills || [],
-    experienceLevel: fp.experienceLevel || "",
-    portfolioLinks: fp.portfolioLinks || [],
+    headline: fp?.headline || "",
+    role: fp?.experienceLevel || "",
+    country: fp?.country || "",
+    hourlyRate: fp?.hourlyRate || 0,
+    availability: fp?.availability || "",
+    about: fp?.about || "",
+    skills: fp?.skills || [],
+    experienceLevel: fp?.experienceLevel || "",
+    portfolioLinks: fp?.portfolioLinks || [],
     completedJobs: 0,
     totalEarnings: 0,
-    memberSince: fp.createdAt ? new Date(fp.createdAt).getFullYear().toString() : new Date().getFullYear().toString(),
+    memberSince: fp?.createdAt ? new Date(fp.createdAt).getFullYear().toString() : new Date().getFullYear().toString(),
     rating: 0,
     reviews: 0,
-  }), [user]);
+  }), [fp, user?.name]);
 
   const profileCompletion = useMemo(() => {
-    const fields = [fp.headline, fp.about, fp.country, fp.hourlyRate, fp.experienceLevel, fp.availability, fp.skills?.length, fp.portfolioLinks?.length];
+    const fields = [fp?.headline, fp?.about, fp?.country, fp?.hourlyRate, fp?.experienceLevel, fp?.availability, fp?.skills?.length, fp?.portfolioLinks?.length];
     const filled = fields.filter((v) => v && v !== 0).length;
     return Math.round((filled / fields.length) * 100);
-  }, [user]);
+  }, [fp]);
 
   useEffect(() => {
     proposalApi.list({ mine: true })
@@ -71,7 +71,7 @@ export default function FreelancerProfilePage() {
     submittedAt: formatDate(proposal.submittedAt),
   }));
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <ProtectedRoute requiredRole="freelancer">
         <Center style={{ minHeight: "100vh" }}>

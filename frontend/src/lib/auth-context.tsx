@@ -3,15 +3,36 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { authApi, profileApi } from "./api";
 
-interface User {
+interface FreelancerProfileData {
+  headline?: string;
+  experienceLevel?: string;
+  country?: string;
+  skills?: string[];
+  about?: string;
+  hourlyRate?: number;
+  availability?: string;
+  portfolioLinks?: string[];
+  createdAt?: string;
+}
+
+interface ClientProfileData {
+  companyName?: string;
+  industry?: string;
+  companySize?: string;
+  description?: string;
+  website?: string;
+  location?: string;
+}
+
+export interface User {
   id: string;
   email: string;
   name: string | null;
   role: string;
   avatar: string | null;
-  freelancerProfile?: any;
-  clientProfile?: any;
-  cv?: any;
+  freelancerProfile?: FreelancerProfileData | null;
+  clientProfile?: ClientProfileData | null;
+  cv?: unknown;
 }
 
 interface AuthContextType {
@@ -44,13 +65,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    refreshUser().finally(() => setLoading(false));
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      profileApi
+        .get()
+        .then((data) => {
+          if (!cancelled) setUser(data.user);
+        })
+        .catch(() => {
+          if (!cancelled) setUser(null);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function login(email: string, password: string): Promise<User> {
     const data = await authApi.login({ email, password });
-    setUser(data.user);
-    return data.user;
+    try {
+      const profileData = await profileApi.get();
+      setUser(profileData.user);
+      return profileData.user;
+    } catch {
+      setUser(data.user);
+      return data.user;
+    }
   }
 
   async function register(data: {
@@ -60,7 +105,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: "freelancer" | "client";
   }) {
     const res = await authApi.register(data);
-    setUser(res.user);
+    try {
+      const profileData = await profileApi.get();
+      setUser(profileData.user);
+    } catch {
+      setUser(res.user);
+    }
   }
 
   async function logout() {

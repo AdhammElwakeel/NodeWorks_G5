@@ -66,3 +66,14 @@ body {
 .mantine-TagsInput-input::placeholder {
   color: var(--app-muted-soft);
 }
+
+.client-project-form .mantine-Input-input::placeholder,
+.client-project-form .mantine-TagsInput-input::placeholder {
+  color: #7c8798;
+  opacity: 1;
+}
+
+[data-mantine-color-scheme="dark"] .client-project-form .mantine-Input-input::placeholder,
+[data-mantine-color-scheme="dark"] .client-project-form .mantine-TagsInput-input::placeholder {
+  color: #8fa0b6;
+}
