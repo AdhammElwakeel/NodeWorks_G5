@@ -6,6 +6,8 @@
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "start": "cd frontend && npm start",
-    "lint": "cd frontend && npm run lint"
+    "lint": "cd frontend && npm run lint",
+    "docker:dev": "docker compose up --build",
+    "docker:down": "docker compose down"
   }
 }

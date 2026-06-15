@@ -1,5 +1,0 @@
-google-generativeai
-pymupdf
-neo4j==5.28.2
-python-dotenv==1.2.1
-pytz==2025.2
