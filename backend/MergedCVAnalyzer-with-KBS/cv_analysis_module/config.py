@@ -10,8 +10,11 @@ load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY")
+ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY") or os.getenv("GLM_API_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENCODE_GO_API_KEY = os.getenv("OPENCODE_GO_API_KEY")
+OPENCODE_GO_BASE_URL = os.getenv("OPENCODE_GO_BASE_URL")
+CV_ANALYSIS_PROVIDER = os.getenv("CV_ANALYSIS_PROVIDER", "").strip().lower()
 
 # ------------------------------------------------------------------
 # 🤖 MODEL CONFIGURATION
@@ -20,6 +23,9 @@ def choose_model() -> str:
     configured_model = os.getenv("CV_ANALYSIS_MODEL")
     if configured_model:
         return configured_model
+
+    if OPENCODE_GO_API_KEY:
+        return "missing-model"
 
     if OPENROUTER_API_KEY:
         return "nvidia/nemotron-3-super-120b-a12b:free"
@@ -34,6 +40,25 @@ def choose_model() -> str:
 
 
 MODEL_NAME = choose_model()
+
+
+def choose_provider() -> str:
+    if CV_ANALYSIS_PROVIDER:
+        return CV_ANALYSIS_PROVIDER
+
+    if OPENCODE_GO_API_KEY:
+        return "opencode_go"
+
+    if OPENROUTER_API_KEY and "/" in MODEL_NAME:
+        return "openrouter"
+
+    if MODEL_NAME.startswith("glm"):
+        return "glm"
+
+    return "gemini"
+
+
+PROVIDER_NAME = choose_provider()
 
 # ------------------------------------------------------------------
 # 🎯 ROLE DEFINITIONS (The Source of Truth)

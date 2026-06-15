@@ -2,10 +2,10 @@
 
 FastAPI service for manual Knowledge-Based System sync into Neo4j.
 
-Run from this directory:
+Install dependencies from the project root, then run from this directory:
 
 ```bash
-pip install -r requirements.txt
+pip install -r ../../requirements.txt
 python3 -m uvicorn main:app --reload --port 8010
 ```
 

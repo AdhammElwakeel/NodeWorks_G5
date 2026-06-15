@@ -7,3 +7,5 @@ google-generativeai
 pymupdf
 pytz==2025.2
 python-multipart
+zhipuai
+openai

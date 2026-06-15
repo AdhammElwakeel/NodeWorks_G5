@@ -159,6 +159,13 @@ function FreelancerDashboardContent() {
     () => filteredRecommended,
     [filteredRecommended]
   );
+  const recommendationStatusLabel = recommendationsLoading
+    ? "Preparing matches"
+    : recommendedFromKbs
+      ? "Graph matched"
+      : recommendationsError
+        ? "Sync needed"
+        : "No matches yet";
 
   const sidebar = (
     <Sidebar
@@ -218,12 +225,12 @@ function FreelancerDashboardContent() {
                       </Text>
                       {recommendationsError && (
                         <Text c="orange" fz="xs">
-                          AI matching is temporarily unavailable. You can still browse open jobs below.
+                          {recommendationsError}. You can still browse open jobs below.
                         </Text>
                       )}
                     </Stack>
                     <Badge color={recommendedFromKbs ? "violet" : "gray"} variant="light">
-                      {recommendedFromKbs ? "Graph matched" : "Preparing matches"}
+                      {recommendationStatusLabel}
                     </Badge>
                   </Group>
 
@@ -244,10 +251,10 @@ function FreelancerDashboardContent() {
                         <Stack align="center" gap="sm">
                           <Sparkles size={42} color="var(--app-muted-soft)" />
                           <Text fw={600} c="var(--app-text)">
-                            Matches will appear here automatically
+                            No graph matches yet
                           </Text>
                           <Text fz="sm" c="dimmed" ta="center">
-                            Complete your profile and CV analysis to improve graph-based matching.
+                            Complete your profile/CV and make sure there are open projects synced to Neo4j.
                           </Text>
                         </Stack>
                       </Center>
