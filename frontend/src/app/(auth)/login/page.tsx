@@ -16,6 +16,7 @@ import {
   Checkbox,
 } from "@mantine/core";
 import { Mail, Lock } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -37,13 +38,21 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setEmailError(null);
+
+    if (!email.trim().includes("@")) {
+      setEmailError("Please enter a valid email address that contains @.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await login(email.trim(), password);
       const redirect = searchParams.get("redirect");
       if (redirect) {
         router.push(decodeURIComponent(redirect));
@@ -52,8 +61,10 @@ function LoginForm() {
       } else {
         router.push("/freelancer/dashboard");
       }
-    } catch (err: any) {
-      setError(err?.message || "Login failed. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -113,7 +124,13 @@ function LoginForm() {
         >
           {/* Logo */}
           <Group gap="sm" align="center" wrap="nowrap">
-            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+            <Image
+              src="/logo.svg"
+              alt="NodeWorks"
+              width={34}
+              height={34}
+              style={{ display: "block" }}
+            />
             <Text fw={700} fz={32} c="white" lh={1}>
               NodeWorks
             </Text>
@@ -174,7 +191,13 @@ function LoginForm() {
       >
         {/* Mobile Logo */}
         <Group gap="xs" align="center" mb="xl" hiddenFrom="md" wrap="nowrap">
-          <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+          <Image
+            src="/logo.svg"
+            alt="NodeWorks"
+            width={34}
+            height={34}
+            style={{ display: "block" }}
+          />
           <Text fw={700} fz="xl" c="var(--app-text-strong)" lh={1}>
             NodeWorks
           </Text>
@@ -243,7 +266,11 @@ function LoginForm() {
                   size="md"
                   leftSection={<Mail size={18} />}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  error={emailError}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
                   styles={{ label: { color: "var(--app-text)" } }}
                 />
                 <PasswordInput

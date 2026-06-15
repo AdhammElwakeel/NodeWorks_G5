@@ -18,7 +18,17 @@ import {
   Button,
   Loader,
 } from "@mantine/core";
-import { Briefcase, Search, Filter, Send, DollarSign, Sparkles } from "lucide-react";
+import {
+  BadgeCheck,
+  BriefcaseBusiness,
+  CalendarDays,
+  CircleDollarSign,
+  Filter,
+  Search,
+  SearchX,
+  SendHorizontal,
+  UsersRound,
+} from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   Sidebar,
@@ -103,23 +113,38 @@ function FreelancerDashboardContent() {
 
   useEffect(() => {
     if (!user) {
-      setJobRecommendations([]);
-      setRecommendationsError(null);
       return;
     }
 
-    setRecommendationsLoading(true);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) setRecommendationsLoading(true);
+    });
+
     recApi
       .jobs({ limit: 12 })
       .then((data) => {
+        if (cancelled) return;
         setJobRecommendations(data.recommendations);
         setRecommendationsError(null);
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
+        if (cancelled) return;
         setJobRecommendations([]);
-        setRecommendationsError(error?.message || "KBS recommendations unavailable");
+        setRecommendationsError(
+          error instanceof Error
+            ? error.message
+            : "KBS recommendations unavailable"
+        );
       })
-      .finally(() => setRecommendationsLoading(false));
+      .finally(() => {
+        if (!cancelled) setRecommendationsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const appliedProjectIds = useMemo(
@@ -215,7 +240,7 @@ function FreelancerDashboardContent() {
                   <Group justify="space-between" align="flex-start">
                     <Stack gap={4}>
                       <Group gap="xs">
-                        <Sparkles size={20} color="var(--mantine-color-violet-6)" />
+                        <BadgeCheck size={20} color="var(--mantine-color-violet-6)" />
                         <Title order={3} fw={700} c="var(--app-text)">
                           Best Matches For You
                         </Title>
@@ -249,7 +274,7 @@ function FreelancerDashboardContent() {
                     <Card withBorder radius="lg" p="xl" bg="var(--app-surface)">
                       <Center>
                         <Stack align="center" gap="sm">
-                          <Sparkles size={42} color="var(--app-muted-soft)" />
+                          <BadgeCheck size={42} color="var(--app-muted-soft)" />
                           <Text fw={600} c="var(--app-text)">
                             No graph matches yet
                           </Text>
@@ -269,7 +294,11 @@ function FreelancerDashboardContent() {
                                 {item.score}% match
                               </Badge>
                               <Group gap={4}>
-                                <DollarSign size={14} color="var(--mantine-color-cyan-6)" />
+                                <CircleDollarSign
+                                  size={14}
+                                  strokeWidth={1.8}
+                                  color="var(--mantine-color-cyan-6)"
+                                />
                                 <Text fw={700} fz="sm" c="var(--app-text)">
                                   ${item.project.budget.toLocaleString()}
                                 </Text>
@@ -299,7 +328,9 @@ function FreelancerDashboardContent() {
                               fullWidth
                               color="cyan"
                               radius="md"
-                              leftSection={<Send size={16} />}
+                              leftSection={
+                                <SendHorizontal size={16} strokeWidth={1.8} />
+                              }
                               onClick={() => router.push(`/freelancer/apply/${item.project.id}`)}
                             >
                               Apply Now
@@ -389,7 +420,11 @@ function FreelancerDashboardContent() {
                     <Card withBorder radius="md" p="xl">
                       <Center>
                         <Stack align="center" gap="sm">
-                          <Briefcase size={48} color="var(--app-muted-soft)" />
+                          <BriefcaseBusiness
+                            size={48}
+                            strokeWidth={1.6}
+                            color="var(--app-muted-soft)"
+                          />
                           <Text fw={600} c="var(--app-text)">
                             You didn&apos;t apply to any job yet
                           </Text>
@@ -421,8 +456,9 @@ function FreelancerDashboardContent() {
                                 {proposal.status}
                               </Badge>
                               <Group gap={4}>
-                                <DollarSign
+                                <CircleDollarSign
                                   size={14}
+                                  strokeWidth={1.8}
                                   color="var(--mantine-color-cyan-6)"
                                 />
                                 <Text fw={700} fz="sm" c="var(--app-text)">
@@ -470,7 +506,11 @@ function FreelancerDashboardContent() {
                     <Card withBorder radius="md" p="xl">
                       <Center>
                         <Stack align="center" gap="sm">
-                          <Briefcase size={48} color="var(--app-muted-soft)" />
+                          <SearchX
+                            size={48}
+                            strokeWidth={1.6}
+                            color="var(--app-muted-soft)"
+                          />
                           <Text fw={600} c="var(--app-text)">
                             No jobs found
                           </Text>
@@ -482,7 +522,11 @@ function FreelancerDashboardContent() {
                       </Center>
                     </Card>
                   ) : (
-                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+                    <SimpleGrid
+                      cols={{ base: 1, sm: 2, lg: 3 }}
+                      spacing="md"
+                      style={{ alignItems: "start" }}
+                    >
                       {displayedRecommended.map((job) => {
                         const recommendation = recommendationByProjectId.get(job.id);
                         return (
@@ -508,7 +552,7 @@ function FreelancerDashboardContent() {
                           }}
                         >
                           <Stack gap="sm">
-                            <Group justify="space-between">
+                            <Group justify="space-between" align="flex-start">
                               <Badge
                                 color={recommendation ? "violet" : "green"}
                                 variant="light"
@@ -517,65 +561,102 @@ function FreelancerDashboardContent() {
                               >
                                 {recommendation ? `${recommendation.score}% match` : "Open"}
                               </Badge>
-                              {job.budget && (
-                                <Group gap={4}>
-                                  <DollarSign
-                                    size={14}
-                                    color="var(--mantine-color-cyan-6)"
-                                  />
-                                  <Text fw={700} fz="sm" c="var(--app-text)">
-                                    ${job.budget.toLocaleString()}
-                                  </Text>
-                                </Group>
-                              )}
+                              <Group gap={4} wrap="nowrap">
+                                <CircleDollarSign
+                                  size={14}
+                                  strokeWidth={1.8}
+                                  color="var(--mantine-color-cyan-6)"
+                                />
+                                <Text fw={700} fz="sm" c="var(--app-text)">
+                                  {job.budget
+                                    ? `$${job.budget.toLocaleString()}`
+                                    : "Budget TBD"}
+                                </Text>
+                              </Group>
                             </Group>
-                            <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg">
-                              {job.title}
+                            <Text
+                              fw={700}
+                              c="var(--app-text)"
+                              lineClamp={2}
+                              fz="lg"
+                            >
+                              {job.title || "Untitled project"}
                             </Text>
-                            <Text fz="sm" c="dimmed" lineClamp={3}>
-                              {job.description}
-                            </Text>
-                            {recommendation && (
-                              <KbsExplanationPanel
-                                score={recommendation.score}
-                                reason={recommendation.reason}
-                                matchedSkills={recommendation.matchedSkills}
-                                missingSkills={recommendation.missingSkills}
-                                graphPath="Freelancer - HAS_SKILL -> Skill <- REQUIRES_SKILL - Project"
-                              />
+                            {job.description ? (
+                              <Text fz="sm" c="dimmed" lineClamp={3}>
+                                {job.description}
+                              </Text>
+                            ) : (
+                              <Text fz="sm" c="dimmed" fs="italic">
+                                No project description provided yet.
+                              </Text>
                             )}
                             <Group gap="xs" wrap="wrap">
-                              {job.skills.slice(0, 4).map((s: string) => (
-                                <Badge
-                                  key={s}
-                                  size="sm"
-                                  variant="light"
-                                  color="cyan"
-                                  radius="sm"
-                                >
-                                  {s}
-                                </Badge>
-                              ))}
-                              {job.skills.length > 4 && (
+                              {job.skills.length > 0 ? (
+                                <>
+                                  {job.skills.slice(0, 4).map((s: string) => (
+                                    <Badge
+                                      key={s}
+                                      size="sm"
+                                      variant="light"
+                                      color="cyan"
+                                      radius="sm"
+                                    >
+                                      {s}
+                                    </Badge>
+                                  ))}
+                                  {job.skills.length > 4 && (
+                                    <Badge
+                                      size="sm"
+                                      variant="light"
+                                      color="gray"
+                                      radius="sm"
+                                    >
+                                      +{job.skills.length - 4}
+                                    </Badge>
+                                  )}
+                                </>
+                              ) : (
                                 <Badge
                                   size="sm"
                                   variant="light"
                                   color="gray"
                                   radius="sm"
                                 >
-                                  +{job.skills.length - 4}
+                                  No skills listed
                                 </Badge>
                               )}
                             </Group>
                             <Divider />
-                            <Text fz="xs" c="dimmed">
-                              {formatDate(job.createdAt)} · {job.proposalsCount} proposals
-                            </Text>
+                            <Group gap="md" wrap="wrap">
+                              <Group gap={4} wrap="nowrap">
+                                <CalendarDays
+                                  size={14}
+                                  strokeWidth={1.8}
+                                  color="var(--app-muted-soft)"
+                                />
+                                <Text fz="xs" c="dimmed">
+                                  {formatDate(job.createdAt)}
+                                </Text>
+                              </Group>
+                              <Group gap={4} wrap="nowrap">
+                                <UsersRound
+                                  size={14}
+                                  strokeWidth={1.8}
+                                  color="var(--app-muted-soft)"
+                                />
+                                <Text fz="xs" c="dimmed">
+                                  {job.proposalsCount} proposals
+                                </Text>
+                              </Group>
+                            </Group>
                             <Button
                               fullWidth
                               color="cyan"
                               radius="md"
-                              leftSection={<Send size={16} />}
+                              leftSection={
+                                <SendHorizontal size={16} strokeWidth={1.8} />
+                              }
                               onClick={() =>
                                 router.push(`/freelancer/apply/${job.id}`)
                               }

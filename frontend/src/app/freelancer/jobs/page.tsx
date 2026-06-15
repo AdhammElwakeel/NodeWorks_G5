@@ -1,8 +1,33 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Box, Container, Title, Text, Group, Stack, Card, Badge, SimpleGrid, Divider, TextInput, Select, Button, Center } from "@mantine/core";
-import { Briefcase, Search, Filter, Send, DollarSign, Loader } from "lucide-react";
+import {
+  Box,
+  Container,
+  Title,
+  Text,
+  Group,
+  Stack,
+  Card,
+  Badge,
+  SimpleGrid,
+  Divider,
+  TextInput,
+  Select,
+  Button,
+  Center,
+} from "@mantine/core";
+import {
+  BriefcaseBusiness,
+  CalendarDays,
+  CircleDollarSign,
+  Filter,
+  Loader,
+  Search,
+  SearchX,
+  SendHorizontal,
+  UsersRound,
+} from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/freelancer/dashboard";
 import { useRouter } from "next/navigation";
@@ -144,7 +169,7 @@ export default function BrowseJobsPage() {
                 <Card withBorder radius="md" p="xl">
                   <Center>
                     <Stack align="center" gap="sm">
-                      <Briefcase size={48} color="var(--app-muted-soft)" />
+                      <SearchX size={48} strokeWidth={1.6} color="var(--app-muted-soft)" />
                       <Text fw={600} c="var(--app-text)">
                         No jobs found
                       </Text>
@@ -155,7 +180,11 @@ export default function BrowseJobsPage() {
                   </Center>
                 </Card>
               ) : (
-                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+                <SimpleGrid
+                  cols={{ base: 1, sm: 2, lg: 3 }}
+                  spacing="md"
+                  style={{ alignItems: "start" }}
+                >
                   {filteredJobs.map((job) => {
                     const isApplied = appliedProjectIds.has(job.id);
                     return (
@@ -181,42 +210,101 @@ export default function BrowseJobsPage() {
                             <Badge color={isApplied ? "orange" : "green"} variant="light" size="sm" radius="sm">
                               {isApplied ? "Applied" : "Open"}
                             </Badge>
-                           {job.budget && (
+                            {job.budget ? (
                               <Group gap={4}>
-                                <DollarSign size={14} color="var(--mantine-color-cyan-6)" />
+                                <CircleDollarSign
+                                  size={14}
+                                  strokeWidth={1.8}
+                                  color="var(--mantine-color-cyan-6)"
+                                />
                                 <Text fw={700} fz="sm" c="var(--app-text)">
                                   ${job.budget.toLocaleString()}
+                                </Text>
+                              </Group>
+                            ) : (
+                              <Group gap={4}>
+                                <BriefcaseBusiness
+                                  size={14}
+                                  strokeWidth={1.8}
+                                  color="var(--app-muted-soft)"
+                                />
+                                <Text fw={700} fz="sm" c="dimmed">
+                                  Budget TBD
                                 </Text>
                               </Group>
                             )}
                           </Group>
                           <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg">
-                            {job.title}
+                            {job.title || "Untitled project"}
                           </Text>
-                          <Text fz="sm" c="dimmed" lineClamp={3}>
-                            {job.description}
-                          </Text>
+                          {job.description ? (
+                            <Text fz="sm" c="dimmed" lineClamp={3}>
+                              {job.description}
+                            </Text>
+                          ) : (
+                            <Text fz="sm" c="dimmed" fs="italic">
+                              No project description provided yet.
+                            </Text>
+                          )}
                           <Group gap="xs" wrap="wrap">
-                            {job.skills.slice(0, 4).map((s: string) => (
-                              <Badge key={s} size="sm" variant="light" color="cyan" radius="sm">
-                                {s}
-                              </Badge>
-                            ))}
-                            {job.skills.length > 4 && (
+                            {job.skills.length > 0 ? (
+                              <>
+                                {job.skills.slice(0, 4).map((s: string) => (
+                                  <Badge
+                                    key={s}
+                                    size="sm"
+                                    variant="light"
+                                    color="cyan"
+                                    radius="sm"
+                                  >
+                                    {s}
+                                  </Badge>
+                                ))}
+                                {job.skills.length > 4 && (
+                                  <Badge
+                                    size="sm"
+                                    variant="light"
+                                    color="gray"
+                                    radius="sm"
+                                  >
+                                    +{job.skills.length - 4}
+                                  </Badge>
+                                )}
+                              </>
+                            ) : (
                               <Badge size="sm" variant="light" color="gray" radius="sm">
-                                +{job.skills.length - 4}
+                                No skills listed
                               </Badge>
                             )}
                           </Group>
                           <Divider />
-                          <Text fz="xs" c="dimmed">
-                            {formatDate(job.createdAt)} · {job.proposalsCount} proposals
-                          </Text>
+                          <Group gap="md" wrap="wrap">
+                            <Group gap={4} wrap="nowrap">
+                              <CalendarDays
+                                size={14}
+                                strokeWidth={1.8}
+                                color="var(--app-muted-soft)"
+                              />
+                              <Text fz="xs" c="dimmed">
+                                {formatDate(job.createdAt)}
+                              </Text>
+                            </Group>
+                            <Group gap={4} wrap="nowrap">
+                              <UsersRound
+                                size={14}
+                                strokeWidth={1.8}
+                                color="var(--app-muted-soft)"
+                              />
+                              <Text fz="xs" c="dimmed">
+                                {job.proposalsCount} proposals
+                              </Text>
+                            </Group>
+                          </Group>
                           <Button
                             fullWidth
                             color={isApplied ? "gray" : "cyan"}
                             radius="md"
-                            leftSection={<Send size={16} />}
+                            leftSection={<SendHorizontal size={16} strokeWidth={1.8} />}
                             disabled={isApplied}
                             onClick={() => router.push(`/freelancer/apply/${job.id}`)}
                           >

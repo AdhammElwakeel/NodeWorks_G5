@@ -74,8 +74,12 @@ export default function CreateProjectPage() {
         color: "green",
       });
       router.push("/client/projects");
-    } catch (err: any) {
-      setError(err?.message || "Failed to create project. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to create project. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -99,7 +103,13 @@ export default function CreateProjectPage() {
         Create New Project
       </Title>
 
-      <Card withBorder radius="md" bg="var(--app-surface)" p="xl">
+      <Card
+        className="client-project-form"
+        withBorder
+        radius="md"
+        bg="var(--app-surface)"
+        p="xl"
+      >
         <form onSubmit={handleSubmit}>
           <Stack gap="lg">
             <TextInput
@@ -190,8 +200,9 @@ export default function CreateProjectPage() {
               </Button>
               <Button
                 type="submit"
-                variant="gradient"
-                gradient={{ from: "indigo", to: "cyan", deg: 135 }}
+                color="teal"
+                variant="filled"
+                radius="md"
                 leftSection={
                   submitting ? <Loader size={14} color="white" /> : <Save size={16} />
                 }

@@ -16,6 +16,7 @@ import {
   Badge,
 } from "@mantine/core";
 import { Mail, Lock } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -33,7 +34,7 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { register } = useAuth();
-  const [accountType, setAccountType] = useState(
+  const [accountType] = useState(
     searchParams.get("role") === "client" ? "client" : "freelancer"
   );
   const [email, setEmail] = useState("");
@@ -42,14 +43,22 @@ function RegisterForm() {
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setEmailError(null);
+
+    if (!email.trim().includes("@")) {
+      setEmailError("Please enter a valid email address that contains @.");
+      return;
+    }
+
     setLoading(true);
     try {
       await register({
-        email,
+        email: email.trim(),
         password,
         name: `${firstName} ${lastName}`.trim(),
         role: accountType as "freelancer" | "client",
@@ -59,8 +68,12 @@ function RegisterForm() {
       } else {
         router.push("/client/onboarding");
       }
-    } catch (err: any) {
-      setError(err?.message || "Registration failed. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -121,7 +134,13 @@ function RegisterForm() {
         >
           {/* Logo */}
           <Group gap="sm" align="center" wrap="nowrap">
-            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+            <Image
+              src="/logo.svg"
+              alt="NodeWorks"
+              width={34}
+              height={34}
+              style={{ display: "block" }}
+            />
             <Text fw={700} fz={32} c="white" lh={1}>
               NodeWorks
             </Text>
@@ -185,7 +204,13 @@ function RegisterForm() {
       >
         {/* Mobile Logo */}
         <Group gap="xs" align="center" mb="xl" hiddenFrom="md" wrap="nowrap">
-          <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+          <Image
+            src="/logo.svg"
+            alt="NodeWorks"
+            width={34}
+            height={34}
+            style={{ display: "block" }}
+          />
           <Text fw={700} fz="xl" c="var(--app-text-strong)" lh={1}>
             NodeWorks
           </Text>
@@ -283,7 +308,11 @@ function RegisterForm() {
                   size="md"
                   leftSection={<Mail size={18} />}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  error={emailError}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
                   styles={{ label: { color: "var(--app-text)" } }}
                 />
                 <PasswordInput
