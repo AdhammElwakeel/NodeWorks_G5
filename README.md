@@ -65,6 +65,12 @@ Copy the root environment file and set your secrets first:
 cp .env.example .env
 ```
 
+For Docker, keep `DOCKER_MONGODB_URI` pointed at the Compose MongoDB service:
+
+```env
+DOCKER_MONGODB_URI="mongodb://mongo:27017/nodeworks"
+```
+
 For Opencode Go CV extraction, add your API settings to `.env`:
 
 ```env
