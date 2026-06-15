@@ -28,7 +28,11 @@ export interface CvData {
   "years of experience"?: string;
   all_skills?: string[];
   experience?: { role: string; company: string; years: string }[];
-  education?: { degree: string; institution: string; technologies?: string[] }[];
+  education?: {
+    degree: string;
+    institution: string;
+    technologies?: string[];
+  }[];
   projects?: { name: string; technologies?: string[] }[];
   certifications?: { name: string; technologies?: string[] }[];
   Publications?: { name: string; technologies?: string[] }[];
@@ -71,7 +75,8 @@ export function CVUploadStep({
               CV extraction
             </Title>
             <Text c="var(--app-text)" fz="sm">
-              Upload your PDF and let AI extract your profile details automatically.
+              Upload your PDF and let AI extract your profile details
+              automatically.
             </Text>
           </Stack>
         </Group>
@@ -96,7 +101,7 @@ export function CVUploadStep({
                   Analyzing your CV with AI…
                 </Text>
                 <Text fz="xs" c="dimmed">
-                  Gemini is extracting your skills, experience and role match.
+                  extracting your skills, experience and role match.
                 </Text>
               </Stack>
             </Group>
@@ -132,8 +137,8 @@ export function CVUploadStep({
               </Group>
 
               <Text fz="sm" c="var(--app-text)">
-                <strong>{cvFileName}</strong> processed successfully. The form on
-                the next step has been pre-filled with the data below.
+                <strong>{cvFileName}</strong> processed successfully. The form
+                on the next step has been pre-filled with the data below.
               </Text>
 
               <Group gap="xs" wrap="wrap">
