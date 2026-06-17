@@ -5,6 +5,7 @@ import {
   Card,
   Group,
   Paper,
+  NumberInput,
   Select,
   SimpleGrid,
   Stack,
@@ -39,7 +40,11 @@ function deriveExperienceLevel(raw: string | undefined): string | null {
   return "Lead";
 }
 
-function formatExperienceItem(item: { role?: string; company?: string; years?: string }) {
+function formatExperienceItem(item: {
+  role?: string;
+  company?: string;
+  years?: string;
+}) {
   const role = item.role?.trim();
   const company = item.company?.trim();
   const years = item.years?.trim();
@@ -83,7 +88,10 @@ export interface ProfileData {
   headline: string;
   experienceLevel: string | null;
   country: string;
+  hourlyRate: number | "";
+  availability: string | null;
   skills: string[];
+  portfolioLinks: string[];
   bio: string;
   experience: { role: string; company: string; years: string }[];
 }
@@ -94,13 +102,26 @@ interface ProfileStepProps {
   onProfileChange: (data: ProfileData) => void;
 }
 
-export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileStepProps) {
+export function ProfileStep({
+  cvData,
+  profileData,
+  onProfileChange,
+}: ProfileStepProps) {
   const [headline, setHeadline] = useState(profileData.headline);
   const [experienceLevel, setExperienceLevel] = useState<string | null>(
-    profileData.experienceLevel
+    profileData.experienceLevel,
   );
   const [country, setCountry] = useState(profileData.country);
+  const [hourlyRate, setHourlyRate] = useState<number | "">(
+    profileData.hourlyRate,
+  );
+  const [availability, setAvailability] = useState<string | null>(
+    profileData.availability,
+  );
   const [skills, setSkills] = useState<string[]>(profileData.skills);
+  const [portfolioLinks, setPortfolioLinks] = useState<string[]>(
+    profileData.portfolioLinks,
+  );
   const [bio, setBio] = useState(profileData.bio);
   const [bioTouched, setBioTouched] = useState(Boolean(profileData.bio));
   const [experience, setExperience] = useState(profileData.experience);
@@ -109,10 +130,12 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
     if (!cvData) return;
 
     const newHeadline = cvData.headline?.trim() || headline;
-    const newLevel = deriveExperienceLevel(cvData["years of experience"]) ?? experienceLevel;
-    const newSkills = cvData.all_skills && cvData.all_skills.length > 0
-      ? cvData.all_skills
-      : skills;
+    const newLevel =
+      deriveExperienceLevel(cvData["years of experience"]) ?? experienceLevel;
+    const newSkills =
+      cvData.all_skills && cvData.all_skills.length > 0
+        ? cvData.all_skills
+        : skills;
     const newExperience = cvData.experience?.length
       ? cvData.experience.map((item) => ({
           role: item.role ?? "",
@@ -139,28 +162,53 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
   }, [bioTouched, cvData, experience]);
 
   useEffect(() => {
-    onProfileChange({ headline, experienceLevel, country, skills, bio, experience });
+    onProfileChange({
+      headline,
+      experienceLevel,
+      country,
+      hourlyRate,
+      availability,
+      skills,
+      portfolioLinks,
+      bio,
+      experience,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headline, experienceLevel, country, skills, bio, experience]);
+  }, [
+    headline,
+    experienceLevel,
+    country,
+    hourlyRate,
+    availability,
+    skills,
+    portfolioLinks,
+    bio,
+    experience,
+  ]);
 
   const updateExperience = (
     index: number,
     field: "role" | "company" | "years",
-    value: string
+    value: string,
   ) => {
     setExperience((current) =>
       current.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      )
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
     );
   };
 
   const addExperience = () => {
-    setExperience((current) => [...current, { role: "", company: "", years: "" }]);
+    setExperience((current) => [
+      ...current,
+      { role: "", company: "", years: "" },
+    ]);
   };
 
   const removeExperience = (index: number) => {
-    setExperience((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setExperience((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
+    );
   };
 
   const hasCvHeadline = Boolean(cvData?.headline?.trim());
@@ -209,7 +257,7 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
           />
         </SimpleGrid>
 
-        <SimpleGrid cols={{ base: 1 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <TextInput
             label="Country"
             placeholder="Egypt"
@@ -217,6 +265,48 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
             value={country}
             onChange={(e) => setCountry(e.currentTarget.value)}
             styles={fieldLabelStyles}
+          />
+          <NumberInput
+            label="Hourly rate (USD)"
+            placeholder="50"
+            required
+            min={1}
+            value={hourlyRate}
+            onChange={(value) =>
+              setHourlyRate(typeof value === "number" ? value : "")
+            }
+            prefix="$"
+            styles={fieldLabelStyles}
+          />
+        </SimpleGrid>
+
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+          <Select
+            label="Availability"
+            placeholder="Pick one"
+            data={["Full-time", "Part-time", "As needed", "Not available"]}
+            required
+            value={availability}
+            onChange={setAvailability}
+            styles={{
+              ...fieldLabelStyles,
+              option: { color: "var(--app-text)" },
+            }}
+          />
+          <TagsInput
+            label="Portfolio / social links"
+            placeholder="https://github.com/yourname and press Enter"
+            value={portfolioLinks}
+            onChange={setPortfolioLinks}
+            clearable
+            styles={{
+              ...fieldLabelStyles,
+              option: { color: "var(--app-text)" },
+              pill: {
+                backgroundColor: "var(--mantine-color-cyan-6)",
+                color: "white",
+              },
+            }}
           />
         </SimpleGrid>
 
@@ -242,10 +332,12 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
             <Group justify="space-between" align="flex-start" gap="sm">
               <Stack gap={2}>
                 <Text fw={700} fz="sm" c="var(--app-text)">
-                  Past experience
+                  Past experience{" "}
+                  <span style={{ color: "var(--mantine-color-red-6)" }}>*</span>
                 </Text>
                 <Text fz="xs" c="dimmed">
-                  Review the CV-extracted experience. Edit anything wrong before saving; KBS recommendations will use this corrected evidence.
+                  Add at least one complete role, company, and duration. KBS
+                  recommendations use this corrected experience evidence.
                 </Text>
               </Stack>
               <Button
@@ -265,7 +357,13 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
             )}
 
             {experience.map((item, index) => (
-              <Card key={index} withBorder radius="md" p="sm" bg="var(--app-surface)">
+              <Card
+                key={index}
+                withBorder
+                radius="md"
+                p="sm"
+                bg="var(--app-surface)"
+              >
                 <Stack gap="xs">
                   <Group justify="space-between" align="center">
                     <Text fz="xs" fw={700} c="var(--app-text)">
@@ -287,21 +385,31 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
                       label="Role"
                       placeholder="Frontend Developer"
                       value={item.role}
-                      onChange={(e) => updateExperience(index, "role", e.currentTarget.value)}
+                      onChange={(e) =>
+                        updateExperience(index, "role", e.currentTarget.value)
+                      }
                       styles={fieldLabelStyles}
                     />
                     <TextInput
                       label="Company"
                       placeholder="Company name"
                       value={item.company}
-                      onChange={(e) => updateExperience(index, "company", e.currentTarget.value)}
+                      onChange={(e) =>
+                        updateExperience(
+                          index,
+                          "company",
+                          e.currentTarget.value,
+                        )
+                      }
                       styles={fieldLabelStyles}
                     />
                     <TextInput
                       label="Duration"
                       placeholder="4 months"
                       value={item.years}
-                      onChange={(e) => updateExperience(index, "years", e.currentTarget.value)}
+                      onChange={(e) =>
+                        updateExperience(index, "years", e.currentTarget.value)
+                      }
                       styles={fieldLabelStyles}
                     />
                   </SimpleGrid>

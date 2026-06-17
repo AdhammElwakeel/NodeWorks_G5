@@ -9,6 +9,7 @@ import { AIInterviewStep } from "./components/AIInterviewStep";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { profileApi, cvApi } from "@/lib/api";
 import { notifications } from "@mantine/notifications";
+import { useAuth } from "@/lib/auth-context";
 
 type OnboardingStep = 0 | 1 | 2;
 
@@ -53,7 +54,31 @@ function normalizeCvAnalysis(cvData: CvData, experience: ProfileData["experience
   };
 }
 
+function hasCompleteExperience(experience: ProfileData["experience"]) {
+  return experience.some(
+    (item) => item.role.trim() && item.company.trim() && item.years.trim()
+  );
+}
+
+function getMissingProfileFields(profileData: ProfileData) {
+  const missing: string[] = [];
+
+  if (!profileData.headline.trim()) missing.push("headline");
+  if (!profileData.experienceLevel) missing.push("experience level");
+  if (!profileData.country.trim()) missing.push("country");
+  if (typeof profileData.hourlyRate !== "number" || profileData.hourlyRate <= 0) {
+    missing.push("hourly rate");
+  }
+  if (!profileData.availability) missing.push("availability");
+  if (profileData.skills.length === 0) missing.push("skills");
+  if (!profileData.bio.trim()) missing.push("about you");
+  if (!hasCompleteExperience(profileData.experience)) missing.push("past experience");
+
+  return missing;
+}
+
 export default function FreelancerOnboardingPage() {
+  const { refreshUser } = useAuth();
   const [step, setStep] = useState<OnboardingStep>(0);
 
   // --- CV upload & analysis state ---
@@ -70,7 +95,10 @@ export default function FreelancerOnboardingPage() {
     headline: "",
     experienceLevel: null,
     country: "",
+    hourlyRate: "",
+    availability: null,
     skills: [],
+    portfolioLinks: [],
     bio: "",
     experience: [],
   });
@@ -128,10 +156,34 @@ export default function FreelancerOnboardingPage() {
   const handleStepBack = () =>
     setStep((current) => Math.max(0, current - 1) as OnboardingStep);
 
-  const handleStepNext = () =>
+  const handleStepNext = () => {
+    if (step === 1) {
+      const missingFields = getMissingProfileFields(profileData);
+      if (missingFields.length > 0) {
+        notifications.show({
+          title: "Complete required profile fields",
+          message: `Missing: ${missingFields.join(", ")}`,
+          color: "orange",
+        });
+        return;
+      }
+    }
+
     setStep((current) => Math.min(2, current + 1) as OnboardingStep);
+  };
 
   const handleFinish = async () => {
+    const missingFields = getMissingProfileFields(profileData);
+    if (missingFields.length > 0) {
+      notifications.show({
+        title: "Complete required profile fields",
+        message: `Missing: ${missingFields.join(", ")}`,
+        color: "orange",
+      });
+      setStep(1);
+      return;
+    }
+
     setSaving(true);
     try {
       // Upload CV if provided
@@ -150,11 +202,15 @@ export default function FreelancerOnboardingPage() {
           headline: profileData.headline.trim() || undefined,
           experienceLevel: profileData.experienceLevel || undefined,
           country: profileData.country.trim() || undefined,
+          hourlyRate: typeof profileData.hourlyRate === "number" ? profileData.hourlyRate : undefined,
+          availability: profileData.availability || undefined,
           skills: profileData.skills,
+          portfolioLinks: profileData.portfolioLinks,
           about: profileData.bio.trim() || undefined,
           cvAnalysis: cvData ? normalizeCvAnalysis(cvData, profileData.experience) : undefined,
         },
       });
+      await refreshUser();
 
       notifications.show({
         title: "Onboarding complete!",
@@ -173,8 +229,7 @@ export default function FreelancerOnboardingPage() {
     }
   };
 
-  // Can only proceed from step 0 if analysis completed successfully
-  const canContinue = step !== 0 || (cvExtracted && !isAnalyzing);
+  const canContinue = step === 0 ? cvExtracted && !isAnalyzing : true;
 
   return (
     <ProtectedRoute requiredRole="freelancer">

@@ -167,6 +167,7 @@ export function OnboardingLayout({
                 variant="gradient"
                 gradient={{ from: "teal", to: "cyan", deg: 110 }}
                 loading={loading}
+                disabled={!canContinue}
               >
                 Enter freelancer dashboard
               </Button>

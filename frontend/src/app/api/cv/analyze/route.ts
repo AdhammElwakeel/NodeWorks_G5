@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+const AI_API_BASE_URL = process.env.AI_API_BASE_URL || "http://localhost:8010";
 const CV_ANALYSIS_API_URL =
   process.env.CV_ANALYSIS_API_URL ||
   process.env.NEXT_PUBLIC_CV_ANALYSIS_API_URL ||
-  "http://localhost:8000/api/analyze-cv";
+  `${AI_API_BASE_URL}/api/analyze-cv`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Failed to reach the CV analysis service. Make sure the Python API is running on port 8000.",
+          "Failed to reach the CV analysis service. Make sure the Python API is running on port 8010.",
         detail: message,
       },
       { status: 502 }
