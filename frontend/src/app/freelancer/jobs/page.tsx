@@ -183,7 +183,7 @@ export default function BrowseJobsPage() {
                 <SimpleGrid
                   cols={{ base: 1, sm: 2, lg: 3 }}
                   spacing="md"
-                  style={{ alignItems: "start" }}
+                  style={{ alignItems: "stretch" }}
                 >
                   {filteredJobs.map((job) => {
                     const isApplied = appliedProjectIds.has(job.id);
@@ -195,6 +195,9 @@ export default function BrowseJobsPage() {
                         shadow="sm"
                         style={{
                           transition: "all 0.2s ease",
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
                         }}
                         onMouseEnter={(e) => {
                           (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)";
@@ -205,7 +208,7 @@ export default function BrowseJobsPage() {
                           (e.currentTarget as HTMLElement).style.boxShadow = "none";
                         }}
                       >
-                        <Stack gap="sm">
+                        <Stack gap="sm" style={{ height: "100%" }}>
                           <Group justify="space-between">
                             <Badge color={isApplied ? "orange" : "green"} variant="light" size="sm" radius="sm">
                               {isApplied ? "Applied" : "Open"}
@@ -234,19 +237,19 @@ export default function BrowseJobsPage() {
                               </Group>
                             )}
                           </Group>
-                          <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg">
+                          <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg" style={{ minHeight: 52 }}>
                             {job.title || "Untitled project"}
                           </Text>
                           {job.description ? (
-                            <Text fz="sm" c="dimmed" lineClamp={3}>
+                            <Text fz="sm" c="dimmed" lineClamp={3} style={{ minHeight: 66 }}>
                               {job.description}
                             </Text>
                           ) : (
-                            <Text fz="sm" c="dimmed" fs="italic">
+                            <Text fz="sm" c="dimmed" fs="italic" style={{ minHeight: 66 }}>
                               No project description provided yet.
                             </Text>
                           )}
-                          <Group gap="xs" wrap="wrap">
+                          <Group gap="xs" wrap="wrap" align="flex-start" style={{ minHeight: 58 }}>
                             {job.skills.length > 0 ? (
                               <>
                                 {job.skills.slice(0, 4).map((s: string) => (
@@ -277,7 +280,7 @@ export default function BrowseJobsPage() {
                               </Badge>
                             )}
                           </Group>
-                          <Divider />
+                          <Divider style={{ marginTop: "auto" }} />
                           <Group gap="md" wrap="wrap">
                             <Group gap={4} wrap="nowrap">
                               <CalendarDays
