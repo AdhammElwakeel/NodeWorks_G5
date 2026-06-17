@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  Box,
   Card,
   Text,
   Badge,
@@ -119,7 +118,7 @@ export function JobsSection({ jobs }: JobsSectionProps) {
           </Center>
         </Card>
       ) : (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md" style={{ alignItems: "stretch" }}>
           {filteredJobs.map((job) => {
             const isSaved = savedJobs.has(job.id);
             return (
@@ -128,11 +127,14 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                 withBorder
                 radius="md"
                 shadow="sm"
-                style={{
-                  transition: "all 0.2s ease",
-                  position: "relative",
-                  overflow: "visible",
-                }}
+                 style={{
+                   transition: "all 0.2s ease",
+                   position: "relative",
+                   overflow: "visible",
+                   height: "100%",
+                   display: "flex",
+                   flexDirection: "column",
+                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.transform =
                     "translateY(-4px)";
@@ -160,7 +162,7 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                   />
                 </ActionIcon>
 
-                <Stack gap="sm">
+                <Stack gap="sm" style={{ height: "100%" }}>
                   <Group justify="space-between" pr={30}>
                     <Badge
                       color="green"
@@ -185,14 +187,14 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                     )}
                   </Group>
 
-                  <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg">
+                  <Text fw={700} c="var(--app-text)" lineClamp={2} fz="lg" style={{ minHeight: 52 }}>
                     {job.title}
                   </Text>
-                  <Text fz="sm" c="var(--app-muted)" lineClamp={3}>
+                  <Text fz="sm" c="var(--app-muted)" lineClamp={3} style={{ minHeight: 66 }}>
                     {job.description}
                   </Text>
 
-                  <Group gap="xs" wrap="wrap">
+                  <Group gap="xs" wrap="wrap" align="flex-start" style={{ minHeight: 58 }}>
                     {job.skills.slice(0, 4).map((s: string) => (
                       <Badge
                         key={s}
@@ -220,7 +222,7 @@ export function JobsSection({ jobs }: JobsSectionProps) {
                     )}
                   </Group>
 
-                  <Divider />
+                  <Divider style={{ marginTop: "auto" }} />
 
                   <Group justify="space-between">
                     <Group gap="xs">
