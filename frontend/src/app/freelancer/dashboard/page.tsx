@@ -44,6 +44,8 @@ import {
 import type { Section } from "@/components/freelancer/dashboard/types";
 import type { ProjectData, ProposalData } from "@/lib/api";
 
+type JobRecommendation = Awaited<ReturnType<typeof recApi.jobs>>["recommendations"][number];
+
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString(undefined, {
     month: "short",
@@ -83,15 +85,7 @@ function FreelancerDashboardContent() {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [jobRecommendations, setJobRecommendations] = useState<
-    {
-      score: number;
-      reason: string;
-      matchedSkills: string[];
-      missingSkills: string[];
-      project: ProjectData;
-    }[]
-  >([]);
+  const [jobRecommendations, setJobRecommendations] = useState<JobRecommendation[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
 
@@ -315,6 +309,11 @@ function FreelancerDashboardContent() {
                               reason={item.reason}
                               matchedSkills={item.matchedSkills}
                               missingSkills={item.missingSkills}
+                              scoreBreakdown={item.scoreBreakdown}
+                              evidence={item.evidence}
+                              experienceDetails={item.experienceDetails}
+                              relevantExperienceDetails={item.relevantExperienceDetails}
+                              projectEvidenceDetails={item.projectEvidenceDetails}
                               graphPath="Freelancer - HAS_SKILL -> Skill <- REQUIRES_SKILL - Project"
                             />
                             <Group gap="xs" wrap="wrap">

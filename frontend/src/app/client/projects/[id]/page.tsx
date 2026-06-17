@@ -38,6 +38,11 @@ import { projectApi, proposalApi, recApi, type ProjectData, type ProposalData } 
 import { KbsExplanationPanel } from "@/components/kbs/KbsExplanationPanel";
 import { notifications } from "@mantine/notifications";
 
+type FreelancerRecommendation = Awaited<
+  ReturnType<typeof recApi.freelancers>
+>["recommendations"][number];
+type TeamRecommendation = Awaited<ReturnType<typeof recApi.team>>["recommendations"][number];
+
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<ProjectData | null>(null);
@@ -45,49 +50,10 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [freelancerRecommendations, setFreelancerRecommendations] = useState<
-    {
-      score: number;
-      reason: string;
-      matchedSkills: string[];
-      missingSkills: string[];
-      bestRole?: string;
-      bestRoleScore?: number;
-      freelancer: {
-        id: string;
-        name: string;
-        headline?: string;
-        experienceLevel?: string;
-        country?: string;
-        hourlyRate?: number;
-        skills: string[];
-      };
-    }[]
-  >([]);
+  const [freelancerRecommendations, setFreelancerRecommendations] = useState<FreelancerRecommendation[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
-  const [teamRecommendations, setTeamRecommendations] = useState<
-    {
-      score: number;
-      finalScore: number;
-      technicalScore: number;
-      synergyScore: number;
-      coverageScore: number;
-      reason: string;
-      coveredSkills: string[];
-      missingSkills: string[];
-      sharedEntities: string[];
-      members: {
-        userId: string;
-        name: string;
-        headline?: string;
-        experienceLevel?: string;
-        hourlyRate?: number;
-        coveredSkills: string[];
-        bestRole?: string;
-      }[];
-    }[]
-  >([]);
+  const [teamRecommendations, setTeamRecommendations] = useState<TeamRecommendation[]>([]);
   const [requiredRoles, setRequiredRoles] = useState<{ name: string; count: number }[]>([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
   const [teamsError, setTeamsError] = useState<string | null>(null);
@@ -385,6 +351,11 @@ export default function ProjectDetailPage() {
                       reason={item.reason}
                       matchedSkills={item.matchedSkills}
                       missingSkills={item.missingSkills}
+                      scoreBreakdown={item.scoreBreakdown}
+                      evidence={item.evidence}
+                      experienceDetails={item.experienceDetails}
+                      relevantExperienceDetails={item.relevantExperienceDetails}
+                      projectEvidenceDetails={item.projectEvidenceDetails}
                       graphPath="Project - REQUIRES_SKILL -> Skill <- HAS_SKILL - Freelancer"
                     />
                     <Group gap="xs" wrap="wrap">

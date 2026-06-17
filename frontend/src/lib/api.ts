@@ -115,6 +115,16 @@ export const projectApi = {
   }): Promise<{ project: ProjectData }> =>
     fetchApi("/projects", { method: "POST", body: JSON.stringify(body) }),
 
+  suggestSkills: (body: {
+    title: string;
+    description: string;
+    skills: string[];
+  }): Promise<{ skills: string[] }> =>
+    fetchApi("/projects/suggest-skills", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   update: (
     id: string,
     body: Partial<ProjectData>
@@ -221,6 +231,18 @@ export const messageApi = {
 
 // ─── Recommendations (stub — AI team feature) ──────────────────────────
 
+export type KbsScoreBreakdown = Record<string, number | undefined>;
+export type KbsEvidence = Record<string, string[] | undefined>;
+export type KbsExperienceDetail = {
+  company?: string;
+  role?: string;
+  duration?: string;
+};
+export type KbsProjectEvidenceDetail = {
+  project?: string;
+  technology?: string;
+};
+
 export const recApi = {
   jobs: (params?: { limit?: number }): Promise<{
     recommendations: {
@@ -229,6 +251,13 @@ export const recApi = {
       matchedSkills: string[];
       missingSkills: string[];
       requiredSkills: string[];
+      bestRole?: string;
+      bestRoleScore?: number;
+      scoreBreakdown?: KbsScoreBreakdown;
+      evidence?: KbsEvidence;
+      experienceDetails?: KbsExperienceDetail[];
+      relevantExperienceDetails?: KbsExperienceDetail[];
+      projectEvidenceDetails?: KbsProjectEvidenceDetail[];
       project: ProjectData;
     }[];
   }> => {
@@ -247,6 +276,11 @@ export const recApi = {
       requiredSkills: string[];
       bestRole?: string;
       bestRoleScore?: number;
+      scoreBreakdown?: KbsScoreBreakdown;
+      evidence?: KbsEvidence;
+      experienceDetails?: KbsExperienceDetail[];
+      relevantExperienceDetails?: KbsExperienceDetail[];
+      projectEvidenceDetails?: KbsProjectEvidenceDetail[];
       freelancer: {
         id: string;
         name: string;

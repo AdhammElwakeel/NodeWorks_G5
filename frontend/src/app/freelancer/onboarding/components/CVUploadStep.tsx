@@ -25,6 +25,7 @@ export interface CvData {
   name?: string;
   email?: string;
   phone?: string;
+  headline?: string;
   "years of experience"?: string;
   all_skills?: string[];
   experience?: { role: string; company: string; years: string }[];
@@ -38,12 +39,25 @@ export interface CvData {
   Publications?: { name: string; technologies?: string[] }[];
   best_role?: string;
   best_score?: number;
+  role_confidence_status?: "confident" | "needs_user_input";
+  role_confidence_threshold?: number;
   role_rankings?: {
     role: string;
     score: number;
     matched_skills?: string[];
     missing_skills?: string[];
   }[];
+}
+
+function formatExperienceItem(item: { role?: string; company?: string; years?: string }) {
+  const role = item.role?.trim();
+  const company = item.company?.trim();
+  const years = item.years?.trim();
+
+  if (role && company && years) return `${role} at ${company} (${years})`;
+  if (role && company) return `${role} at ${company}`;
+  if (role && years) return `${role} (${years})`;
+  return role || company || years || "Past experience";
 }
 
 interface CVUploadStepProps {
@@ -138,10 +152,28 @@ export function CVUploadStep({
 
               <Text fz="sm" c="var(--app-text)">
                 <strong>{cvFileName}</strong> processed successfully. The form
-                on the next step has been pre-filled with the data below.
+                on the next step will use only confident CV data.
               </Text>
 
+              {!cvData.headline && (
+                <Alert color="yellow" variant="light" icon={<AlertCircle size={16} />}>
+                  The AI could not find a clear professional headline in this CV. Please enter your headline manually in the next step.
+                </Alert>
+              )}
+
+              {cvData.role_confidence_status === "needs_user_input" && (
+                <Alert color="yellow" variant="light" icon={<AlertCircle size={16} />}>
+                  The AI could not detect a confident professional role from this CV. It will not be used as your headline.
+                </Alert>
+              )}
+
               <Group gap="xs" wrap="wrap">
+                {cvData.headline && (
+                  <Badge color="blue" variant="light" size="md">
+                    Headline: {cvData.headline}
+                  </Badge>
+                )}
+
                 {/* Best Role */}
                 {cvData.best_role && (
                   <Badge
@@ -151,6 +183,16 @@ export function CVUploadStep({
                     size="md"
                   >
                     Best Match: {cvData.best_role}
+                  </Badge>
+                )}
+                {!cvData.best_role && cvData.role_confidence_status === "needs_user_input" && (
+                  <Badge
+                    leftSection={<Brain size={12} />}
+                    color="yellow"
+                    variant="light"
+                    size="md"
+                  >
+                    Role needs manual input
                   </Badge>
                 )}
 
@@ -168,6 +210,21 @@ export function CVUploadStep({
                   </Badge>
                 )}
               </Group>
+
+              {cvData.experience && cvData.experience.length > 0 && (
+                <Card withBorder radius="md" p="sm" bg="var(--app-surface)">
+                  <Stack gap={6}>
+                    <Text fw={700} fz="sm" c="var(--app-text)">
+                      Past experience detected
+                    </Text>
+                    {cvData.experience.slice(0, 4).map((item, index) => (
+                      <Text key={`${item.role}-${item.company}-${index}`} fz="xs" c="dimmed">
+                        - {formatExperienceItem(item)}
+                      </Text>
+                    ))}
+                  </Stack>
+                </Card>
+              )}
             </Stack>
           </Card>
         )}

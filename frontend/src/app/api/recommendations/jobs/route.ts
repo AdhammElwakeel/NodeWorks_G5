@@ -93,6 +93,13 @@ export async function GET(req: NextRequest) {
           matchedSkills: item.matchedSkills || [],
           missingSkills: item.missingSkills || [],
           requiredSkills: item.requiredSkills || [],
+          bestRole: item.bestRole,
+          bestRoleScore: item.bestRoleScore,
+          scoreBreakdown: item.scoreBreakdown,
+          evidence: item.evidence,
+          experienceDetails: item.experienceDetails || [],
+          relevantExperienceDetails: item.relevantExperienceDetails || [],
+          projectEvidenceDetails: item.projectEvidenceDetails || [],
           project: serializeProject(project, proposalsCount),
         };
       })

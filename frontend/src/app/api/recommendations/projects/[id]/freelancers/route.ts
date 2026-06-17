@@ -94,6 +94,11 @@ export async function GET(
           requiredSkills: item.requiredSkills || [],
           bestRole: item.bestRole,
           bestRoleScore: item.bestRoleScore,
+          scoreBreakdown: item.scoreBreakdown,
+          evidence: item.evidence,
+          experienceDetails: item.experienceDetails || [],
+          relevantExperienceDetails: item.relevantExperienceDetails || [],
+          projectEvidenceDetails: item.projectEvidenceDetails || [],
           freelancer: {
             id: user._id.toString(),
             name: user.name,

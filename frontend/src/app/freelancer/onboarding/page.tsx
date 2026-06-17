@@ -20,20 +20,29 @@ const steps = [
 
 const CV_ANALYSIS_URL = "/api/cv/analyze";
 
-function normalizeCvAnalysis(cvData: CvData) {
+function normalizeCvAnalysis(cvData: CvData, experience: ProfileData["experience"]) {
   return {
     name: cvData.name,
     email: cvData.email,
     phone: cvData.phone,
+    headline: cvData.headline,
     yearsOfExperience: cvData["years of experience"],
     allSkills: cvData.all_skills ?? [],
-    experience: cvData.experience ?? [],
+    experience: experience
+      .map((item) => ({
+        role: item.role.trim(),
+        company: item.company.trim(),
+        years: item.years.trim(),
+      }))
+      .filter((item) => item.role || item.company || item.years),
     education: cvData.education ?? [],
     projects: cvData.projects ?? [],
     certifications: cvData.certifications ?? [],
     publications: cvData.Publications ?? [],
     bestRole: cvData.best_role,
     bestScore: cvData.best_score,
+    roleConfidenceStatus: cvData.role_confidence_status,
+    roleConfidenceThreshold: cvData.role_confidence_threshold,
     roleRankings: (cvData.role_rankings ?? []).map((ranking) => ({
       role: ranking.role,
       score: ranking.score,
@@ -63,6 +72,7 @@ export default function FreelancerOnboardingPage() {
     country: "",
     skills: [],
     bio: "",
+    experience: [],
   });
 
   const router = useRouter();
@@ -142,7 +152,7 @@ export default function FreelancerOnboardingPage() {
           country: profileData.country.trim() || undefined,
           skills: profileData.skills,
           about: profileData.bio.trim() || undefined,
-          cvAnalysis: cvData ? normalizeCvAnalysis(cvData) : undefined,
+          cvAnalysis: cvData ? normalizeCvAnalysis(cvData, profileData.experience) : undefined,
         },
       });
 
