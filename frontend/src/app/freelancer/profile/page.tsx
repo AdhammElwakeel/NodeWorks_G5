@@ -23,9 +23,11 @@ function formatDate(value: string) {
 }
 
 export default function FreelancerProfilePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileRefreshing, setProfileRefreshing] = useState(false);
+  const [profileRefreshAttempted, setProfileRefreshAttempted] = useState(false);
 
   const fp = user?.freelancerProfile;
   const profile: Profile = useMemo(() => ({
@@ -47,7 +49,7 @@ export default function FreelancerProfilePage() {
   }), [fp, user?.name]);
 
   const profileCompletion = useMemo(() => {
-    const fields = [fp?.headline, fp?.about, fp?.country, fp?.hourlyRate, fp?.experienceLevel, fp?.availability, fp?.skills?.length, fp?.portfolioLinks?.length];
+    const fields = [fp?.headline, fp?.about, fp?.country, fp?.hourlyRate, fp?.experienceLevel, fp?.availability, fp?.skills?.length];
     const filled = fields.filter((v) => v && v !== 0).length;
     return Math.round((filled / fields.length) * 100);
   }, [fp]);
@@ -58,6 +60,22 @@ export default function FreelancerProfilePage() {
       .catch(() => setProposals([]))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (
+      authLoading ||
+      !user ||
+      user.role !== "freelancer" ||
+      user.freelancerProfile ||
+      profileRefreshAttempted
+    ) {
+      return;
+    }
+
+    setProfileRefreshAttempted(true);
+    setProfileRefreshing(true);
+    refreshUser().finally(() => setProfileRefreshing(false));
+  }, [authLoading, profileRefreshAttempted, refreshUser, user]);
 
   const acceptedCount = proposals.filter((p) => p.status === "accepted").length;
   const pendingCount = proposals.filter((p) => p.status === "pending").length;
@@ -71,7 +89,13 @@ export default function FreelancerProfilePage() {
     submittedAt: formatDate(proposal.submittedAt),
   }));
 
-  if (authLoading || loading) {
+  const waitingForProfileRefresh =
+    !authLoading &&
+    user?.role === "freelancer" &&
+    !user.freelancerProfile &&
+    !profileRefreshAttempted;
+
+  if (authLoading || loading || profileRefreshing || waitingForProfileRefresh) {
     return (
       <ProtectedRoute requiredRole="freelancer">
         <Center style={{ minHeight: "100vh" }}>

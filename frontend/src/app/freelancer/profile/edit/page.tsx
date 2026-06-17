@@ -88,7 +88,30 @@ export default function EditProfilePage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const getMissingFields = () => {
+    const missing: string[] = [];
+    if (!form.name.trim()) missing.push("full name");
+    if (!form.headline.trim()) missing.push("headline");
+    if (!form.about.trim()) missing.push("about you");
+    if (!form.country.trim()) missing.push("country");
+    if (!form.hourlyRate || form.hourlyRate <= 0) missing.push("hourly rate");
+    if (!form.experienceLevel) missing.push("experience level");
+    if (!form.availability) missing.push("availability");
+    if (form.skills.length === 0) missing.push("skills");
+    return missing;
+  };
+
   const handleSave = async () => {
+    const missingFields = getMissingFields();
+    if (missingFields.length > 0) {
+      notifications.show({
+        title: "Complete required profile fields",
+        message: `Missing: ${missingFields.join(", ")}`,
+        color: "orange",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       await profileApi.update({
@@ -179,6 +202,7 @@ export default function EditProfilePage() {
               <TextInput
                 label="Full Name"
                 placeholder="Your full name"
+                required
                 value={form.name}
                 onChange={(e) => update("name", e.target.value)}
                 styles={{ label: { fontWeight: 600 } }}
@@ -186,6 +210,7 @@ export default function EditProfilePage() {
               <TextInput
                 label="Professional Headline"
                 placeholder="e.g. Full-Stack Developer specializing in SaaS"
+                required
                 value={form.headline}
                 onChange={(e) => update("headline", e.target.value)}
                 styles={{ label: { fontWeight: 600 } }}
@@ -193,6 +218,7 @@ export default function EditProfilePage() {
               <Textarea
                 label="About You"
                 placeholder="Tell clients about your expertise, experience, and what makes you great at what you do..."
+                required
                 minRows={5}
                 value={form.about}
                 onChange={(e) => update("about", e.target.value)}
@@ -207,6 +233,7 @@ export default function EditProfilePage() {
               <TextInput
                 label="Country"
                 placeholder="e.g. Egypt"
+                required
                 value={form.country}
                 onChange={(e) => update("country", e.target.value)}
                 leftSection={<MapPin size={16} color="var(--app-muted-soft)" />}
@@ -215,9 +242,10 @@ export default function EditProfilePage() {
               <NumberInput
                 label="Hourly Rate (USD)"
                 placeholder="e.g. 50"
+                required
                 value={form.hourlyRate}
-                onChange={(v) => update("hourlyRate", (v as number) || 0)}
-                min={0}
+                onChange={(v) => update("hourlyRate", typeof v === "number" ? v : 0)}
+                min={1}
                 leftSection={<DollarSign size={16} color="var(--app-muted-soft)" />}
                 styles={{ label: { fontWeight: 600 } }}
               />
@@ -231,6 +259,7 @@ export default function EditProfilePage() {
                 label="Experience Level"
                 placeholder="Select level"
                 data={EXPERIENCE_LEVELS}
+                required
                 value={form.experienceLevel}
                 onChange={(v) => update("experienceLevel", v || "")}
                 styles={{ label: { fontWeight: 600 } }}
@@ -239,6 +268,7 @@ export default function EditProfilePage() {
                 label="Availability"
                 placeholder="Select availability"
                 data={AVAILABILITY_OPTIONS}
+                required
                 value={form.availability}
                 onChange={(v) => update("availability", v || "")}
                 styles={{ label: { fontWeight: 600 } }}
@@ -252,6 +282,7 @@ export default function EditProfilePage() {
               label="Your Skills"
               placeholder="Type a skill and press Enter"
               data={SKILL_OPTIONS}
+              required
               value={form.skills}
               onChange={(v) => update("skills", v)}
               clearable

@@ -24,6 +24,9 @@ def choose_model() -> str:
     if configured_model:
         return configured_model
 
+    if ZHIPUAI_API_KEY:
+        return "glm-5.2"
+
     if OPENCODE_GO_API_KEY:
         return "missing-model"
 
@@ -32,9 +35,6 @@ def choose_model() -> str:
 
     if API_KEY:
         return "gemini-2.5-flash"
-
-    if ZHIPUAI_API_KEY:
-        return "glm-4.7-flash"
 
     return "missing-api-key"
 
@@ -46,14 +46,14 @@ def choose_provider() -> str:
     if CV_ANALYSIS_PROVIDER:
         return CV_ANALYSIS_PROVIDER
 
+    if MODEL_NAME.startswith("glm"):
+        return "glm"
+
     if OPENCODE_GO_API_KEY:
         return "opencode_go"
 
     if OPENROUTER_API_KEY and "/" in MODEL_NAME:
         return "openrouter"
-
-    if MODEL_NAME.startswith("glm"):
-        return "glm"
 
     return "gemini"
 
