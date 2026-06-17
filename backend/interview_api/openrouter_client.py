@@ -2,10 +2,23 @@
 OpenRouter client for interview question generation and grading.
 Uses the OpenAI-compatible API so no extra library is needed beyond `openai`.
 """
+
+import importlib
 import json
 import re
+from typing import cast
+
 from openai import OpenAI
-from config import INTERVIEW_MODEL, OPENCODE_GO_API_KEY, OPENCODE_GO_BASE_URL
+from openai.types.chat import ChatCompletionMessageParam
+
+config = (
+    importlib.import_module(".config", __package__)
+    if __package__
+    else importlib.import_module("config")
+)
+INTERVIEW_MODEL = cast(str, config.INTERVIEW_MODEL)
+OPENCODE_GO_API_KEY = cast(str | None, config.OPENCODE_GO_API_KEY)
+OPENCODE_GO_BASE_URL = cast(str, config.OPENCODE_GO_BASE_URL)
 
 
 def _get_client() -> OpenAI:
@@ -15,8 +28,11 @@ def _get_client() -> OpenAI:
     )
 
 
-def _call(messages: list[dict], fallback: dict) -> dict:
+def _call(
+    messages: list[ChatCompletionMessageParam], fallback: dict[str, object]
+) -> dict[str, object]:
     """Call OpenRouter and parse JSON from the response."""
+    text = ""
     try:
         client = _get_client()
         response = client.chat.completions.create(
@@ -25,18 +41,20 @@ def _call(messages: list[dict], fallback: dict) -> dict:
             temperature=0.6,
             response_format={"type": "json_object"},
         )
-        if not hasattr(response, 'choices') or not response.choices:
-            print(f"[OpenRouter] API returned no choices. Raw response: {getattr(response, '__dict__', response)}")
+        if not hasattr(response, "choices") or not response.choices:
+            print(
+                f"[OpenRouter] API returned no choices. Raw response: {getattr(response, '__dict__', response)}"
+            )
             return fallback
 
         text = response.choices[0].message.content or ""
-        return json.loads(text)
+        return cast(dict[str, object], json.loads(text))
     except json.JSONDecodeError:
         # Try to extract JSON block from plain text response
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             try:
-                return json.loads(match.group(0))
+                return cast(dict[str, object], json.loads(match.group(0)))
             except Exception:
                 pass
         print(f"[OpenRouter] JSON parse error. Raw: {text[:300]}")
@@ -46,13 +64,21 @@ def _call(messages: list[dict], fallback: dict) -> dict:
         return fallback
 
 
-def generate_question(skill: str, cv_context: str, previous_questions: list[str], difficulty: str = "medium") -> dict:
+def generate_question(
+    skill: str,
+    cv_context: str,
+    previous_questions: list[str],
+    difficulty: str = "medium",
+) -> dict[str, object]:
     """Generate a main interview question for a skill."""
     prev_str = ""
     if previous_questions:
-        prev_str = "\n\nDo NOT repeat or closely paraphrase any of these already-asked questions:\n" + "\n".join(f"- {q}" for q in previous_questions)
+        prev_str = (
+            "\n\nDo NOT repeat or closely paraphrase any of these already-asked questions:\n"
+            + "\n".join(f"- {q}" for q in previous_questions)
+        )
 
-    messages = [
+    messages: list[ChatCompletionMessageParam] = [
         {
             "role": "system",
             "content": (
@@ -72,20 +98,32 @@ def generate_question(skill: str, cv_context: str, previous_questions: list[str]
                 "1. The question must be scenario-based or practical — NOT a definition question.\n"
                 "2. The question should be answerable in 2–4 paragraphs.\n"
                 "3. It must be specific to the candidate's experience shown in the CV context.\n\n"
-                'Respond in exactly this JSON format:\n'
-                '{\n'
+                "Respond in exactly this JSON format:\n"
+                "{\n"
                 '  "question_text": "...",\n'
                 '  "focus_concept": "The core concept being tested"\n'
-                '}'
+                "}"
             ),
         },
     ]
-    return _call(messages, {"question_text": f"Tell me about a challenging project where you used {skill}.", "focus_concept": skill})
+    return _call(
+        messages,
+        {
+            "question_text": f"Tell me about a challenging project where you used {skill}.",
+            "focus_concept": skill,
+        },
+    )
 
 
-def generate_followup(skill: str, main_question: str, candidate_answer: str, followup_number: int, difficulty: str = "medium") -> dict:
+def generate_followup(
+    skill: str,
+    main_question: str,
+    candidate_answer: str,
+    followup_number: int,
+    difficulty: str = "medium",
+) -> dict[str, object]:
     """Generate a follow-up question based on the candidate's previous answer."""
-    messages = [
+    messages: list[ChatCompletionMessageParam] = [
         {
             "role": "system",
             "content": (
@@ -104,21 +142,29 @@ def generate_followup(skill: str, main_question: str, candidate_answer: str, fol
                 "1. Probes deeper into a specific detail they mentioned OR challenges a potential gap.\n"
                 "2. Is increasingly specific (follow-up 1 = clarify, 2 = challenge, 3 = edge case).\n"
                 "3. Is NOT a new topic — stay on the same concept.\n\n"
-                'Respond in exactly this JSON format:\n'
-                '{\n'
+                "Respond in exactly this JSON format:\n"
+                "{\n"
                 '  "question_text": "...",\n'
                 '  "focus_concept": "What this follow-up is testing"\n'
-                '}'
+                "}"
             ),
         },
     ]
-    return _call(messages, {"question_text": f"Can you elaborate more on how you implemented that in {skill}?", "focus_concept": f"{skill} deep-dive"})
+    return _call(
+        messages,
+        {
+            "question_text": f"Can you elaborate more on how you implemented that in {skill}?",
+            "focus_concept": f"{skill} deep-dive",
+        },
+    )
 
 
-def grade_answer(question_asked: str, user_answer: str, skill_name: str, is_followup: bool = False) -> dict:
+def grade_answer(
+    question_asked: str, user_answer: str, skill_name: str, is_followup: bool = False
+) -> dict[str, object]:
     """Grade a candidate's answer and return score + feedback."""
     q_type = "follow-up" if is_followup else "main"
-    messages = [
+    messages: list[ChatCompletionMessageParam] = [
         {
             "role": "system",
             "content": (
@@ -141,13 +187,20 @@ def grade_answer(question_asked: str, user_answer: str, skill_name: str, is_foll
                 "- Answer is a copy-paste textbook definition\n"
                 "- Answer has no personal voice or specific details\n"
                 "- Answer is completely irrelevant to the question\n\n"
-                'Respond in exactly this JSON format:\n'
-                '{\n'
+                "Respond in exactly this JSON format:\n"
+                "{\n"
                 '  "score": <0-10>,\n'
                 '  "feedback": "2-3 sentence constructive feedback",\n'
                 '  "cheating_flag": false\n'
-                '}'
+                "}"
             ),
         },
     ]
-    return _call(messages, {"score": 5, "feedback": "Could not grade automatically.", "cheating_flag": False})
+    return _call(
+        messages,
+        {
+            "score": 5,
+            "feedback": "Could not grade automatically.",
+            "cheating_flag": False,
+        },
+    )

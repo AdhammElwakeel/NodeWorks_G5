@@ -49,3 +49,9 @@ __pycache__/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#pyhton cache
+/backend/cv_api/__pycache__
+/backend/interview_api/__pycache__
+/backend/MergedCVAnalyzer-with-KBS/cv_analysis_module/__pycache__
+

@@ -5,6 +5,7 @@ export const runtime = "nodejs";
 const INTERVIEW_API_URL =
   process.env.AI_INTERVIEW_API_URL ||
   process.env.INTERVIEW_API_URL ||
+  process.env.AI_INTERVIEW_URL ||
   "http://localhost:8001";
 
 async function proxyToInterviewService(
@@ -28,7 +29,7 @@ async function proxyToInterviewService(
   const fetchOptions: RequestInit = {
     method,
     headers,
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(method === "GET" ? 30_000 : 60_000),
   };
 
   if (method !== "GET" && method !== "HEAD") {
@@ -38,16 +39,27 @@ async function proxyToInterviewService(
     }
   }
 
-  const response = await fetch(url, fetchOptions);
-  const contentTypeHeader = response.headers.get("content-type") || "";
+  try {
+    const response = await fetch(url, fetchOptions);
+    const contentTypeHeader = response.headers.get("content-type") || "";
 
-  if (contentTypeHeader.includes("application/json")) {
-    const data = await response.json().catch(() => null);
-    return NextResponse.json(data, { status: response.status });
+    if (contentTypeHeader.includes("application/json")) {
+      const data = await response
+        .json()
+        .catch(() => ({ detail: response.statusText }));
+      return NextResponse.json(data, { status: response.status });
+    }
+
+    const text = await response.text().catch(() => "");
+    return new NextResponse(text, { status: response.status });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Proxy error";
+    console.error(`[interview proxy] ${method} /${endpoint} failed:`, message);
+    return NextResponse.json(
+      { detail: `Could not reach AI Interview API: ${message}` },
+      { status: 502 },
+    );
   }
-
-  const text = await response.text().catch(() => "");
-  return new NextResponse(text, { status: response.status });
 }
 
 export async function GET(

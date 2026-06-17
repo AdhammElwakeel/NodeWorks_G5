@@ -14,8 +14,9 @@ import {
   Divider,
   Anchor,
   Checkbox,
+  SegmentedControl,
 } from "@mantine/core";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, User, Briefcase } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -39,6 +40,10 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  // Default role from query param or "freelancer"
+  const [signingInAs, setSigningInAs] = useState(
+    searchParams.get("role") === "client" ? "client" : "freelancer",
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,19 +68,15 @@ function LoginForm() {
       }
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Login failed. Please try again."
+        err instanceof Error ? err.message : "Login failed. Please try again.",
       );
     } finally {
       setLoading(false);
     }
   };
+
   return (
-    <Box
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-      }}
-    >
+    <Box style={{ minHeight: "100vh", display: "flex" }}>
       {/* Left Side - Branding */}
       <Box
         style={{
@@ -92,7 +93,6 @@ function LoginForm() {
         }}
         visibleFrom="md"
       >
-        {/* Background decoration */}
         <Box
           style={{
             position: "absolute",
@@ -115,8 +115,6 @@ function LoginForm() {
             background: "rgba(255, 255, 255, 0.05)",
           }}
         />
-
-        {/* Content */}
         <Stack
           align="center"
           gap="xl"
@@ -135,8 +133,6 @@ function LoginForm() {
               NodeWorks
             </Text>
           </Group>
-
-          {/* Tagline */}
           <Stack gap="md" align="center" maw={400} ta="center">
             <Title order={2} c="white" fw={600}>
               Connect with top talent worldwide
@@ -146,8 +142,6 @@ function LoginForm() {
               work together.
             </Text>
           </Stack>
-
-          {/* Stats */}
           <Group gap={60} mt="xl">
             <Stack gap={4} align="center">
               <Text c="white" fw={700} fz={28}>
@@ -213,7 +207,6 @@ function LoginForm() {
           bg="var(--app-surface)"
         >
           <Stack gap="lg">
-            {/* Header */}
             <Stack gap={4} ta="center">
               <Title order={2} fw={700} c="var(--app-text-strong)">
                 Welcome back
@@ -222,6 +215,33 @@ function LoginForm() {
                 Sign in to your account to continue
               </Text>
             </Stack>
+
+            {/* Role Selector */}
+            <SegmentedControl
+              fullWidth
+              value={signingInAs}
+              onChange={setSigningInAs}
+              data={[
+                {
+                  value: "freelancer",
+                  label: (
+                    <Group gap={6} justify="center" wrap="nowrap">
+                      <User size={14} />
+                      <span>Freelancer</span>
+                    </Group>
+                  ),
+                },
+                {
+                  value: "client",
+                  label: (
+                    <Group gap={6} justify="center" wrap="nowrap">
+                      <Briefcase size={14} />
+                      <span>Client</span>
+                    </Group>
+                  ),
+                },
+              ]}
+            />
 
             {/* Social Login */}
             <Stack gap="sm">
@@ -256,7 +276,6 @@ function LoginForm() {
 
             <Divider label="or continue with email" labelPosition="center" />
 
-            {/* Form */}
             <form onSubmit={handleSubmit}>
               <Stack gap="md">
                 <TextInput
@@ -316,14 +335,19 @@ function LoginForm() {
             {/* Footer */}
             <Text ta="center" fz="sm" c="dimmed">
               Don&apos;t have an account?{" "}
-              <Anchor component={Link} href="/register" fw={500} c="indigo">
-                Create one
+              <Anchor
+                component={Link}
+                href={`/register?role=${signingInAs}`}
+                fw={500}
+                c="indigo"
+              >
+                Create one as{" "}
+                {signingInAs === "client" ? "Client" : "Freelancer"}
               </Anchor>
             </Text>
           </Stack>
         </Paper>
 
-        {/* Back to home */}
         <Anchor component={Link} href="/" fz="sm" c="dimmed" mt="xl">
           ← Back to home
         </Anchor>
