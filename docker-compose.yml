@@ -10,6 +10,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-this-to-a-long-random-secret}
       AI_API_BASE_URL: http://backend:8010
       CV_ANALYSIS_API_URL: http://backend:8010/api/analyze-cv
+      AI_INTERVIEW_API_URL: http://interview:8001
       NEXT_PUBLIC_CV_ANALYSIS_API_URL: ${NEXT_PUBLIC_CV_ANALYSIS_API_URL:-http://localhost:8010/api/analyze-cv}
       NEXT_TELEMETRY_DISABLED: "1"
       WATCHPACK_POLLING: "true"
@@ -20,6 +21,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      interview:
+        condition: service_started
       mongo:
         condition: service_started
 
@@ -45,7 +48,11 @@ services:
       neo4j:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8010/health', timeout=5)\""]
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8010/health'', timeout=5)"',
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -64,11 +71,42 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 -u neo4j -p \"$$HEALTHCHECK_NEO4J_PASSWORD\" 'RETURN 1'"]
+      test:
+        [
+          "CMD-SHELL",
+          'cypher-shell -a bolt://localhost:7687 -u neo4j -p "$$HEALTHCHECK_NEO4J_PASSWORD" ''RETURN 1''',
+        ]
       interval: 10s
       timeout: 10s
       retries: 12
       start_period: 30s
+
+  interview:
+    build:
+      context: .
+      dockerfile: backend/interview_api/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      MONGODB_URI: ${DOCKER_MONGODB_URI:-mongodb://mongo:27017/nodeworks}
+      CV_ANALYSIS_PROVIDER: ${CV_ANALYSIS_PROVIDER:-opencode_go}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENCODE_GO_API_KEY: ${OPENCODE_GO_API_KEY:-}
+      OPENCODE_GO_BASE_URL: ${OPENCODE_GO_BASE_URL:-https://opencode.ai/zen/go/v1}
+    depends_on:
+      mongo:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8001/health'', timeout=5)"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   mongo:
     image: mongo:7

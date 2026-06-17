@@ -13,9 +13,21 @@ import { notifications } from "@mantine/notifications";
 type OnboardingStep = 0 | 1 | 2;
 
 const steps = [
-  { key: "cv", title: "Upload CV", description: "CV extraction and profile pre-fill" },
-  { key: "profile", title: "Complete Profile", description: "Add required freelancer details" },
-  { key: "ai", title: "AI Interview", description: "Readiness and voice interview" },
+  {
+    key: "cv",
+    title: "Upload CV",
+    description: "CV extraction and profile pre-fill",
+  },
+  {
+    key: "profile",
+    title: "Complete Profile",
+    description: "Add required freelancer details",
+  },
+  {
+    key: "ai",
+    title: "AI Interview",
+    description: "Readiness and voice interview",
+  },
 ] as const;
 
 const CV_ANALYSIS_URL = "/api/cv/analyze";
@@ -195,7 +207,7 @@ export default function FreelancerOnboardingPage() {
             onProfileChange={setProfileData}
           />
         )}
-        {step === 2 && <AIInterviewStep />}
+        {step === 2 && <AIInterviewStep cvData={cvData} />}
       </OnboardingLayout>
     </ProtectedRoute>
   );

@@ -10,7 +10,7 @@ export class ApiError extends Error {
 
 async function fetchApi(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<any> {
   const url = `${API_BASE}${endpoint}`;
 
@@ -95,7 +95,7 @@ export const projectApi = {
     skill?: string;
   }): Promise<{ projects: ProjectData[] }> => {
     const entries = Object.entries(params || {}).filter(
-      ([, v]) => v !== undefined
+      ([, v]) => v !== undefined,
     );
     const qs = entries.length
       ? "?" + new URLSearchParams(entries as [string, string][]).toString()
@@ -117,7 +117,7 @@ export const projectApi = {
 
   update: (
     id: string,
-    body: Partial<ProjectData>
+    body: Partial<ProjectData>,
   ): Promise<{ project: ProjectData }> =>
     fetchApi(`/projects/${id}`, {
       method: "PATCH",
@@ -149,7 +149,7 @@ export const proposalApi = {
     mine?: boolean;
   }): Promise<{ proposals: ProposalData[] }> => {
     const entries = Object.entries(params || {}).filter(
-      ([, v]) => v !== undefined
+      ([, v]) => v !== undefined,
     );
     const qs = entries.length
       ? "?" + new URLSearchParams(entries as [string, string][]).toString()
@@ -206,8 +206,9 @@ export const proposalApi = {
 // ─── Skills ────────────────────────────────────────────────────────────
 
 export const skillApi = {
-  list: (): Promise<{ skills: { id: string; name: string; category: string }[] }> =>
-    fetchApi("/skills"),
+  list: (): Promise<{
+    skills: { id: string; name: string; category: string }[];
+  }> => fetchApi("/skills"),
 };
 
 // ─── Messages ──────────────────────────────────────────────────────────
@@ -222,7 +223,9 @@ export const messageApi = {
 // ─── Recommendations (stub — AI team feature) ──────────────────────────
 
 export const recApi = {
-  jobs: (params?: { limit?: number }): Promise<{
+  jobs: (params?: {
+    limit?: number;
+  }): Promise<{
     recommendations: {
       score: number;
       reason: string;
@@ -237,7 +240,7 @@ export const recApi = {
   },
   freelancers: (
     projectId: string,
-    params?: { limit?: number }
+    params?: { limit?: number },
   ): Promise<{
     recommendations: {
       score: number;
@@ -267,7 +270,7 @@ export const recApi = {
   },
   team: (
     projectId: string,
-    params?: { limit?: number; maxTeamSize?: number }
+    params?: { limit?: number; maxTeamSize?: number },
   ): Promise<{
     requiredSkills: string[];
     requiredRoles: { name: string; count: number }[];
@@ -313,15 +316,17 @@ export const recApi = {
 
 export const kbsApi = {
   health: () => fetchApi("/kbs/health"),
-  syncFreelancer: (): Promise<{ kbsSync: ProjectData["kbsSync"]; result: any }> =>
-    fetchApi("/kbs/freelancer/sync", { method: "POST" }),
+  syncFreelancer: (): Promise<{
+    kbsSync: ProjectData["kbsSync"];
+    result: any;
+  }> => fetchApi("/kbs/freelancer/sync", { method: "POST" }),
   syncProject: (
-    projectId: string
+    projectId: string,
   ): Promise<{ kbsSync: ProjectData["kbsSync"]; result: any }> =>
     fetchApi(`/kbs/projects/${projectId}/sync`, { method: "POST" }),
   list: (params?: { category?: string; search?: string; mine?: boolean }) => {
     const entries = Object.entries(params || {}).filter(
-      ([, v]) => v !== undefined
+      ([, v]) => v !== undefined,
     );
     const qs = entries.length
       ? "?" + new URLSearchParams(entries as [string, string][]).toString()
@@ -355,15 +360,50 @@ export const cvApi = {
 // ─── Interviews ────────────────────────────────────────────────────────
 
 export const interviewApi = {
-  list: () => fetchApi("/interviews"),
-  create: () => fetchApi("/interviews", { method: "POST" }),
-  submit: (body: {
-    interviewId: string;
-    responses: any[];
-    scores?: any;
+  start: (body?: {
+    candidateId?: string;
+    numSkills?: number;
+    cvData?: Record<string, unknown>;
+  }) =>
+    fetchApi("/interview/start", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    }),
+  submitAnswer: (body: { sessionId: string; answer: string }) =>
+    fetchApi("/interview/submit-answer", {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: body.sessionId,
+        answer: body.answer,
+      }),
+    }),
+  reportViolation: (body: {
+    sessionId: string;
+    violationType: "tab_switch" | "paste_attempt" | string;
+  }) =>
+    fetchApi("/interview/report-violation", {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: body.sessionId,
+        violation_type: body.violationType,
+      }),
+    }),
+  getStatus: (sessionId: string) => fetchApi(`/interview/${sessionId}/status`),
+  getReport: (sessionId: string) => fetchApi(`/interview/${sessionId}/report`),
+  saveResult: (body: {
+    sessionId: string;
+    overallScore: number;
+    isVerified: boolean;
+    totalQuestions: number;
+    cheatingDetected: boolean;
+    skillScores: Array<{
+      skill: string;
+      score: number;
+      questionsAsked: number;
+    }>;
   }) =>
     fetchApi("/interviews", {
-      method: "PATCH",
+      method: "POST",
       body: JSON.stringify(body),
     }),
 };

@@ -47,6 +47,22 @@ export interface IKbsSync {
   error?: string;
 }
 
+export interface IInterviewSkillScore {
+  skill: string;
+  score: number;
+  questionsAsked: number;
+}
+
+export interface IInterviewResult {
+  sessionId: string;
+  overallScore: number;
+  isVerified: boolean;
+  totalQuestions: number;
+  cheatingDetected: boolean;
+  skillScores: IInterviewSkillScore[];
+  completedAt: Date;
+}
+
 export interface IFreelancerProfile {
   _id: string;
   userId: mongoose.Types.ObjectId;
@@ -63,6 +79,8 @@ export interface IFreelancerProfile {
   cvUploadedAt?: Date;
   cvAnalysis?: ICvAnalysis;
   kbsSync?: IKbsSync;
+  interviewResult?: IInterviewResult;
+  isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,7 +95,29 @@ const KbsSyncSchema = new mongoose.Schema<IKbsSync>(
     syncedAt: { type: Date },
     error: { type: String },
   },
-  { _id: false }
+  { _id: false },
+);
+
+const InterviewSkillScoreSchema = new mongoose.Schema<IInterviewSkillScore>(
+  {
+    skill: { type: String, required: true, trim: true },
+    score: { type: Number, required: true },
+    questionsAsked: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
+const InterviewResultSchema = new mongoose.Schema<IInterviewResult>(
+  {
+    sessionId: { type: String, required: true, trim: true },
+    overallScore: { type: Number, required: true },
+    isVerified: { type: Boolean, default: false },
+    totalQuestions: { type: Number, required: true },
+    cheatingDetected: { type: Boolean, default: false },
+    skillScores: [InterviewSkillScoreSchema],
+    completedAt: { type: Date, default: Date.now },
+  },
+  { _id: false },
 );
 
 const CvExperienceItemSchema = new mongoose.Schema<ICvExperienceItem>(
@@ -86,7 +126,7 @@ const CvExperienceItemSchema = new mongoose.Schema<ICvExperienceItem>(
     company: { type: String, trim: true },
     years: { type: String, trim: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const CvEducationItemSchema = new mongoose.Schema<ICvEducationItem>(
@@ -95,7 +135,7 @@ const CvEducationItemSchema = new mongoose.Schema<ICvEducationItem>(
     institution: { type: String, trim: true },
     technologies: [{ type: String, trim: true }],
   },
-  { _id: false }
+  { _id: false },
 );
 
 const CvProjectItemSchema = new mongoose.Schema<ICvProjectItem>(
@@ -103,7 +143,7 @@ const CvProjectItemSchema = new mongoose.Schema<ICvProjectItem>(
     name: { type: String, trim: true },
     technologies: [{ type: String, trim: true }],
   },
-  { _id: false }
+  { _id: false },
 );
 
 const CvRoleRankingSchema = new mongoose.Schema<ICvRoleRanking>(
@@ -113,7 +153,7 @@ const CvRoleRankingSchema = new mongoose.Schema<ICvRoleRanking>(
     matchedSkills: [{ type: String, trim: true }],
     missingSkills: [{ type: String, trim: true }],
   },
-  { _id: false }
+  { _id: false },
 );
 
 const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
@@ -133,7 +173,7 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
     roleRankings: [CvRoleRankingSchema],
     analyzedAt: { type: Date },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const FreelancerProfileSchema = new mongoose.Schema<IFreelancerProfile>(
@@ -160,12 +200,17 @@ const FreelancerProfileSchema = new mongoose.Schema<IFreelancerProfile>(
     cvUploadedAt: { type: Date },
     cvAnalysis: CvAnalysisSchema,
     kbsSync: { type: KbsSyncSchema, default: () => ({ status: "not_synced" }) },
+    interviewResult: InterviewResultSchema,
+    isVerified: { type: Boolean, default: false },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const FreelancerProfile =
   mongoose.models.FreelancerProfile ||
-  mongoose.model<IFreelancerProfile>("FreelancerProfile", FreelancerProfileSchema);
+  mongoose.model<IFreelancerProfile>(
+    "FreelancerProfile",
+    FreelancerProfileSchema,
+  );

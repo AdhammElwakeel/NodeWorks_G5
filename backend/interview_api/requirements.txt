@@ -1,0 +1,7 @@
+# AI Interview API – Dependencies
+# Install with: pip install -r requirements.txt
+
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+python-dotenv==1.2.1
+openai==1.51.2

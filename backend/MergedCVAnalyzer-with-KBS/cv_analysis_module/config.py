@@ -25,7 +25,7 @@ def choose_model() -> str:
         return configured_model
 
     if OPENCODE_GO_API_KEY:
-        return "missing-model"
+        return "deepseek-v4-flash"
 
     if OPENROUTER_API_KEY:
         return "nvidia/nemotron-3-super-120b-a12b:free"
