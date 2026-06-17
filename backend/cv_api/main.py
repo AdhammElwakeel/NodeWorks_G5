@@ -4,24 +4,21 @@ Wraps the MergedCVAnalyzer-with-KBS module and exposes it as a REST API.
 Endpoint: POST /api/analyze-cv
 """
 
-import sys
-import os
 import asyncio
+import sys
 from pathlib import Path
 
 # Make the sibling cv_analysis_module importable
 sys.path.insert(0, str(Path(__file__).parent.parent / "MergedCVAnalyzer-with-KBS"))
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
 
-# Load env vars from the repo root first, then the frontend env used by Next.js.
-# load_dotenv does not override existing values by default.
+# Load env vars from the single root .env file.
 ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(dotenv_path=ROOT_DIR / ".env")
-load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
 
 from cv_analysis_module import process_cv  # noqa: E402  (import after sys.path patch)
 

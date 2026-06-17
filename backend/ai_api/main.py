@@ -6,11 +6,11 @@ only when the user manually syncs a freelancer profile or project.
 """
 
 import asyncio
-from datetime import datetime, timezone
 import os
-from pathlib import Path
 import re
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
@@ -21,10 +21,8 @@ from neo4j import GraphDatabase
 from neo4j.exceptions import Neo4jError
 from pydantic import BaseModel, Field
 
-
 ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(dotenv_path=ROOT_DIR / ".env")
-load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "MergedCVAnalyzer-with-KBS"))
 from cv_analysis_module import process_cv
@@ -163,19 +161,53 @@ ROLE_KEYWORDS = [
     },
     {
         "role": "Mobile Developer",
-        "keywords": ["mobile", "flutter", "react native", "ios", "android", "swift", "kotlin"],
+        "keywords": [
+            "mobile",
+            "flutter",
+            "react native",
+            "ios",
+            "android",
+            "swift",
+            "kotlin",
+        ],
     },
     {
         "role": "DevOps Engineer",
-        "keywords": ["docker", "kubernetes", "aws", "azure", "gcp", "ci/cd", "devops", "deployment"],
+        "keywords": [
+            "docker",
+            "kubernetes",
+            "aws",
+            "azure",
+            "gcp",
+            "ci/cd",
+            "devops",
+            "deployment",
+        ],
     },
     {
         "role": "UI/UX Designer",
-        "keywords": ["ux", "ui", "figma", "wireframe", "prototype", "design", "user experience"],
+        "keywords": [
+            "ux",
+            "ui",
+            "figma",
+            "wireframe",
+            "prototype",
+            "design",
+            "user experience",
+        ],
     },
     {
         "role": "QA Engineer",
-        "keywords": ["qa", "test", "testing", "automation", "quality", "cypress", "playwright", "selenium"],
+        "keywords": [
+            "qa",
+            "test",
+            "testing",
+            "automation",
+            "quality",
+            "cypress",
+            "playwright",
+            "selenium",
+        ],
     },
 ]
 
@@ -192,7 +224,9 @@ def _derive_project_roles(
         matched_keywords = [
             keyword
             for keyword in role_definition["keywords"]
-            if re.search(rf"(?<![a-z0-9]){re.escape(keyword.lower())}(?![a-z0-9])", corpus)
+            if re.search(
+                rf"(?<![a-z0-9]){re.escape(keyword.lower())}(?![a-z0-9])", corpus
+            )
         ]
         if not matched_keywords:
             continue
@@ -256,13 +290,17 @@ class KnowledgeGraphService:
         cv_analysis = profile.get("cvAnalysis") or {}
 
         app_skills = _clean_string_list(profile.get("skills"))
-        cv_skills = _clean_string_list(_cv_value(cv_analysis, "allSkills", "all_skills"))
+        cv_skills = _clean_string_list(
+            _cv_value(cv_analysis, "allSkills", "all_skills")
+        )
         skills = _clean_string_list(app_skills + cv_skills)
 
         data = {
             "user_id": payload.userId,
-            "email": _clean_string(payload.email) or _clean_string(_cv_value(cv_analysis, "email", "email")),
-            "name": _clean_string(payload.name) or _clean_string(_cv_value(cv_analysis, "name", "name")),
+            "email": _clean_string(payload.email)
+            or _clean_string(_cv_value(cv_analysis, "email", "email")),
+            "name": _clean_string(payload.name)
+            or _clean_string(_cv_value(cv_analysis, "name", "name")),
             "headline": _clean_string(profile.get("headline")),
             "country": _clean_string(profile.get("country")),
             "experience_level": _clean_string(profile.get("experienceLevel")),
@@ -329,7 +367,9 @@ class KnowledgeGraphService:
             "teamSize": team_size,
         }
 
-    def recommend_jobs(self, payload: FreelancerJobRecommendationRequest) -> dict[str, Any]:
+    def recommend_jobs(
+        self, payload: FreelancerJobRecommendationRequest
+    ) -> dict[str, Any]:
         with self.driver.session() as session:
             records = session.execute_read(
                 self._read_job_recommendations,
@@ -359,7 +399,9 @@ class KnowledgeGraphService:
             "recommendations": records,
         }
 
-    def recommend_teams(self, payload: ProjectTeamRecommendationRequest) -> dict[str, Any]:
+    def recommend_teams(
+        self, payload: ProjectTeamRecommendationRequest
+    ) -> dict[str, Any]:
         with self.driver.session() as session:
             graph_data = session.execute_read(
                 self._read_team_candidates,
@@ -371,7 +413,9 @@ class KnowledgeGraphService:
         candidates = graph_data["candidates"]
         max_team_size = max(1, min(payload.maxTeamSize, 8))
         limit = max(1, min(payload.limit, 10))
-        teams = self._build_skill_coverage_teams(required_skills, candidates, max_team_size, limit)
+        teams = self._build_skill_coverage_teams(
+            required_skills, candidates, max_team_size, limit
+        )
 
         return {
             "status": "ok",
@@ -429,7 +473,9 @@ class KnowledgeGraphService:
             ).consume()
 
         for exp in data["experience"]:
-            company = _clean_string(exp.get("company")) if isinstance(exp, dict) else None
+            company = (
+                _clean_string(exp.get("company")) if isinstance(exp, dict) else None
+            )
             if not company:
                 continue
             tx.run(
@@ -446,11 +492,15 @@ class KnowledgeGraphService:
                 user_id=data["user_id"],
                 company=company,
                 role=_clean_string(exp.get("role")) if isinstance(exp, dict) else None,
-                duration=_clean_string(exp.get("years")) if isinstance(exp, dict) else None,
+                duration=_clean_string(exp.get("years"))
+                if isinstance(exp, dict)
+                else None,
             ).consume()
 
         for edu in data["education"]:
-            institution = _clean_string(edu.get("institution")) if isinstance(edu, dict) else None
+            institution = (
+                _clean_string(edu.get("institution")) if isinstance(edu, dict) else None
+            )
             if not institution:
                 continue
             tx.run(
@@ -464,11 +514,17 @@ class KnowledgeGraphService:
                 """,
                 user_id=data["user_id"],
                 institution=institution,
-                degree=_clean_string(edu.get("degree")) if isinstance(edu, dict) else None,
+                degree=_clean_string(edu.get("degree"))
+                if isinstance(edu, dict)
+                else None,
             ).consume()
 
         for project in data["projects"]:
-            project_name = _clean_string(project.get("name")) if isinstance(project, dict) else None
+            project_name = (
+                _clean_string(project.get("name"))
+                if isinstance(project, dict)
+                else None
+            )
             if not project_name:
                 continue
             tx.run(
@@ -746,7 +802,10 @@ class KnowledgeGraphService:
 
     @staticmethod
     def _build_skill_coverage_teams(
-        required_skills: list[str], candidates: list[dict[str, Any]], max_team_size: int, limit: int
+        required_skills: list[str],
+        candidates: list[dict[str, Any]],
+        max_team_size: int,
+        limit: int,
     ) -> list[dict[str, Any]]:
         if not required_skills or not candidates:
             return []
@@ -770,19 +829,28 @@ class KnowledgeGraphService:
 
             while len(selected) < max_team_size and covered != required_set:
                 selected_ids = {member["userId"] for member in selected}
-                remaining = [candidate for candidate in sorted_candidates if candidate["userId"] not in selected_ids]
+                remaining = [
+                    candidate
+                    for candidate in sorted_candidates
+                    if candidate["userId"] not in selected_ids
+                ]
                 if not remaining:
                     break
 
                 best_candidate = max(
                     remaining,
                     key=lambda candidate: (
-                        len((set(candidate.get("matchedSkills", [])) & required_set) - covered),
+                        len(
+                            (set(candidate.get("matchedSkills", [])) & required_set)
+                            - covered
+                        ),
                         len(set(candidate.get("matchedSkills", [])) & required_set),
                         candidate.get("bestRoleScore") or 0,
                     ),
                 )
-                new_skills = (set(best_candidate.get("matchedSkills", [])) & required_set) - covered
+                new_skills = (
+                    set(best_candidate.get("matchedSkills", [])) & required_set
+                ) - covered
                 if not new_skills:
                     break
 
@@ -808,7 +876,9 @@ class KnowledgeGraphService:
             for index, member in enumerate(selected):
                 member_entities = _shared_entity_names(member)
                 for other in selected[index + 1 :]:
-                    shared_synergy_entities.update(member_entities & _shared_entity_names(other))
+                    shared_synergy_entities.update(
+                        member_entities & _shared_entity_names(other)
+                    )
 
             synergy_score = len(shared_synergy_entities)
             final_score = round(technical_score + (synergy_score * 0.01), 2)
@@ -819,7 +889,9 @@ class KnowledgeGraphService:
                     "technicalScore": technical_score,
                     "synergyScore": synergy_score,
                     "coverageScore": coverage_score,
-                    "coveredSkills": [skill for skill in required_skills if skill in covered],
+                    "coveredSkills": [
+                        skill for skill in required_skills if skill in covered
+                    ],
                     "missingSkills": missing,
                     "sharedEntities": sorted(shared_synergy_entities),
                     "reason": (
@@ -830,7 +902,9 @@ class KnowledgeGraphService:
                         {
                             "userId": member["userId"],
                             "coveredSkills": [
-                                skill for skill in required_skills if skill in set(member.get("matchedSkills", []))
+                                skill
+                                for skill in required_skills
+                                if skill in set(member.get("matchedSkills", []))
                             ],
                             "bestRole": member.get("bestRole"),
                             "bestRoleScore": member.get("bestRoleScore"),
@@ -904,9 +978,13 @@ def kbs_health() -> dict[str, Any]:
     try:
         return {"status": "ok", "service": "neo4j", **kg.check_connection()}
     except Neo4jError as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j unavailable: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j unavailable: {exc}"
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j unavailable: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j unavailable: {exc}"
+        ) from exc
 
 
 @app.post("/kbs/freelancers/ingest")
@@ -914,9 +992,13 @@ def ingest_freelancer(payload: FreelancerIngestRequest) -> dict[str, Any]:
     try:
         return kg.ingest_freelancer(payload)
     except Neo4jError as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j sync failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j sync failed: {exc}"
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j sync failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j sync failed: {exc}"
+        ) from exc
 
 
 @app.post("/kbs/projects/ingest")
@@ -924,9 +1006,13 @@ def ingest_project(payload: ProjectIngestRequest) -> dict[str, Any]:
     try:
         return kg.ingest_project(payload)
     except Neo4jError as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j sync failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j sync failed: {exc}"
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j sync failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j sync failed: {exc}"
+        ) from exc
 
 
 @app.post("/recommendations/jobs")
@@ -934,19 +1020,29 @@ def recommend_jobs(payload: FreelancerJobRecommendationRequest) -> dict[str, Any
     try:
         return kg.recommend_jobs(payload)
     except Neo4jError as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j recommendation failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j recommendation failed: {exc}"
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j recommendation failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j recommendation failed: {exc}"
+        ) from exc
 
 
 @app.post("/recommendations/freelancers")
-def recommend_freelancers(payload: ProjectFreelancerRecommendationRequest) -> dict[str, Any]:
+def recommend_freelancers(
+    payload: ProjectFreelancerRecommendationRequest,
+) -> dict[str, Any]:
     try:
         return kg.recommend_freelancers(payload)
     except Neo4jError as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j recommendation failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j recommendation failed: {exc}"
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j recommendation failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j recommendation failed: {exc}"
+        ) from exc
 
 
 @app.post("/recommendations/teams")
@@ -954,6 +1050,10 @@ def recommend_teams(payload: ProjectTeamRecommendationRequest) -> dict[str, Any]
     try:
         return kg.recommend_teams(payload)
     except Neo4jError as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j team formation failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j team formation failed: {exc}"
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Neo4j team formation failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503, detail=f"Neo4j team formation failed: {exc}"
+        ) from exc

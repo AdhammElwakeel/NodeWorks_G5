@@ -36,14 +36,13 @@ graduation_project/
 
 ## Environment Setup
 
-Copy the example files:
+Copy the single root environment file:
 
 ```bash
 cp .env.example .env
-cp frontend/.env.example frontend/.env
 ```
 
-Update the values in both files, especially:
+Update the values in `.env`, especially:
 
 - `MONGODB_URI`
 - `JWT_SECRET`
@@ -53,7 +52,7 @@ Update the values in both files, especially:
 - `AI_API_BASE_URL`
 - `CV_ANALYSIS_API_URL`
 - `NEXT_PUBLIC_CV_ANALYSIS_API_URL`
-- One of `GEMINI_API_KEY`, `ZHIPUAI_API_KEY`, or `OPENROUTER_API_KEY`
+- `OPENCODE_GO_API_KEY`
 
 ## How to Run
 
@@ -77,7 +76,8 @@ For Opencode Go CV extraction, add your API settings to `.env`:
 CV_ANALYSIS_PROVIDER="opencode_go"
 OPENCODE_GO_API_KEY="your-key"
 OPENCODE_GO_BASE_URL="https://opencode.ai/zen/go/v1"
-CV_ANALYSIS_MODEL="deepseek-v4-flash"
+CV_ANALYSIS_MODEL="deepseek-v4-pro"
+INTERVIEW_MODEL="deepseek-v4-pro"
 ```
 
 Start the full stack:
@@ -105,7 +105,7 @@ Run MongoDB and Neo4j first, then start the backend and frontend.
 
 ### 1. Start MongoDB
 
-Use your local MongoDB service, or set `MONGODB_URI` in `frontend/.env` to a remote MongoDB database.
+Use your local MongoDB service, or set `MONGODB_URI` in the root `.env` to a remote MongoDB database.
 
 ### 2. Start Neo4j
 

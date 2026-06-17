@@ -1,20 +1,22 @@
 import os
-from pathlib import Path
-from dotenv import load_dotenv
 from datetime import date
+from pathlib import Path
 
-# Load .env variables from common project locations. Values loaded earlier win.
+from dotenv import load_dotenv
+
+# Load environment variables from the single root .env file.
 ROOT_DIR = Path(__file__).resolve().parents[3]
 load_dotenv(dotenv_path=ROOT_DIR / ".env")
-load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
-load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
 ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY") or os.getenv("GLM_API_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENCODE_GO_API_KEY = os.getenv("OPENCODE_GO_API_KEY")
-OPENCODE_GO_BASE_URL = os.getenv("OPENCODE_GO_BASE_URL")
+OPENCODE_GO_BASE_URL = (
+    os.getenv("OPENCODE_GO_BASE_URL") or "https://opencode.ai/zen/go/v1"
+)
 CV_ANALYSIS_PROVIDER = os.getenv("CV_ANALYSIS_PROVIDER", "").strip().lower()
+
 
 # ------------------------------------------------------------------
 # 🤖 MODEL CONFIGURATION
@@ -25,7 +27,7 @@ def choose_model() -> str:
         return configured_model
 
     if OPENCODE_GO_API_KEY:
-        return "deepseek-v4-flash"
+        return "deepseek-v4-pro"
 
     if OPENROUTER_API_KEY:
         return "nvidia/nemotron-3-super-120b-a12b:free"
@@ -65,55 +67,296 @@ PROVIDER_NAME = choose_provider()
 # ------------------------------------------------------------------
 TECH_ROLES = {
     # --- Specialized Frontend Engineering ---
-    "React Frontend Developer": ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Redux", "Tailwind", "REST API"],
-    "Vue Frontend Developer": ["Vue", "JavaScript", "TypeScript", "HTML", "CSS", "Vuex", "Pinia", "Tailwind"],
-    "Angular Frontend Developer": ["Angular", "TypeScript", "RxJS", "HTML", "CSS", "Jasmine", "Karma"],
-    
+    "React Frontend Developer": [
+        "React",
+        "JavaScript",
+        "TypeScript",
+        "HTML",
+        "CSS",
+        "Redux",
+        "Tailwind",
+        "REST API",
+    ],
+    "Vue Frontend Developer": [
+        "Vue",
+        "JavaScript",
+        "TypeScript",
+        "HTML",
+        "CSS",
+        "Vuex",
+        "Pinia",
+        "Tailwind",
+    ],
+    "Angular Frontend Developer": [
+        "Angular",
+        "TypeScript",
+        "RxJS",
+        "HTML",
+        "CSS",
+        "Jasmine",
+        "Karma",
+    ],
     # --- Specialized Backend Engineering ---
-    "Django Backend Engineer": ["Python", "Django", "SQL", "PostgreSQL", "REST API", "Docker", "Redis", "Celery"],
-    "FastAPI Backend Engineer": ["Python", "FastAPI", "SQL", "PostgreSQL", "REST API", "Docker", "Pydantic"],
-    "Node.js Backend Engineer": ["Node.js", "JavaScript", "Express", "MongoDB", "SQL", "REST API", "Docker"],
-    "Spring Boot Backend Engineer": ["Java", "Spring Boot", "Hibernate", "SQL", "PostgreSQL", "REST API", "Maven", "Docker"],
-    "Go Backend Engineer": ["Go", "gRPC", "SQL", "PostgreSQL", "Docker", "Kubernetes", "Microservices", "REST API"],
-    
+    "Django Backend Engineer": [
+        "Python",
+        "Django",
+        "SQL",
+        "PostgreSQL",
+        "REST API",
+        "Docker",
+        "Redis",
+        "Celery",
+    ],
+    "FastAPI Backend Engineer": [
+        "Python",
+        "FastAPI",
+        "SQL",
+        "PostgreSQL",
+        "REST API",
+        "Docker",
+        "Pydantic",
+    ],
+    "Node.js Backend Engineer": [
+        "Node.js",
+        "JavaScript",
+        "Express",
+        "MongoDB",
+        "SQL",
+        "REST API",
+        "Docker",
+    ],
+    "Spring Boot Backend Engineer": [
+        "Java",
+        "Spring Boot",
+        "Hibernate",
+        "SQL",
+        "PostgreSQL",
+        "REST API",
+        "Maven",
+        "Docker",
+    ],
+    "Go Backend Engineer": [
+        "Go",
+        "gRPC",
+        "SQL",
+        "PostgreSQL",
+        "Docker",
+        "Kubernetes",
+        "Microservices",
+        "REST API",
+    ],
     # --- Full-Stack Ecosystems ---
-    "MERN Stack Developer": ["MongoDB", "Express", "React", "Node.js", "JavaScript", "REST API", "HTML", "CSS"],
-    "Python Full-Stack Developer": ["Python", "Django", "React", "PostgreSQL", "JavaScript", "HTML", "CSS", "Docker"],
-    
+    "MERN Stack Developer": [
+        "MongoDB",
+        "Express",
+        "React",
+        "Node.js",
+        "JavaScript",
+        "REST API",
+        "HTML",
+        "CSS",
+    ],
+    "Python Full-Stack Developer": [
+        "Python",
+        "Django",
+        "React",
+        "PostgreSQL",
+        "JavaScript",
+        "HTML",
+        "CSS",
+        "Docker",
+    ],
     # --- Highly Specialized AI & Data Science ---
-    "Data Scientist": ["Python", "Pandas", "NumPy", "SQL", "Statistics", "Scikit-learn", "Jupyter", "Data Visualization"],
-    "Data Engineer": ["Python", "SQL", "Apache Spark", "Airflow", "Hadoop", "Kafka", "AWS", "Data Warehousing"],
-    "Computer Vision Engineer": ["Python", "OpenCV", "PyTorch", "TensorFlow", "Deep Learning", "Object Detection", "YOLO", "Image Processing"],
-    "NLP Engineer": ["Python", "NLP", "Hugging Face", "Transformers", "NLTK", "spaCy", "PyTorch", "Deep Learning"],
-    "MLOps Engineer": ["Python", "MLOps", "Docker", "Kubernetes", "MLflow", "CI/CD", "AWS", "GitHub Actions"],
-
+    "Data Scientist": [
+        "Python",
+        "Pandas",
+        "NumPy",
+        "SQL",
+        "Statistics",
+        "Scikit-learn",
+        "Jupyter",
+        "Data Visualization",
+    ],
+    "Data Engineer": [
+        "Python",
+        "SQL",
+        "Apache Spark",
+        "Airflow",
+        "Hadoop",
+        "Kafka",
+        "AWS",
+        "Data Warehousing",
+    ],
+    "Computer Vision Engineer": [
+        "Python",
+        "OpenCV",
+        "PyTorch",
+        "TensorFlow",
+        "Deep Learning",
+        "Object Detection",
+        "YOLO",
+        "Image Processing",
+    ],
+    "NLP Engineer": [
+        "Python",
+        "NLP",
+        "Hugging Face",
+        "Transformers",
+        "NLTK",
+        "spaCy",
+        "PyTorch",
+        "Deep Learning",
+    ],
+    "MLOps Engineer": [
+        "Python",
+        "MLOps",
+        "Docker",
+        "Kubernetes",
+        "MLflow",
+        "CI/CD",
+        "AWS",
+        "GitHub Actions",
+    ],
     # --- Generative AI & LLM Specializations ---
-    "Generative AI Engineer (Text/LLM)": ["Python", "LLM", "Prompt Engineering", "Fine-tuning", "LoRA", "RAG", "Vector Databases", "LangChain", "PyTorch"],
-    "Generative AI Engineer (Vision)": ["Python", "Stable Diffusion", "Diffusion Models", "ControlNet", "ComfyUI", "PyTorch", "Generative Adversarial Networks (GANs)", "Computer Vision"],
-    "Generative AI Engineer (Audio/Speech)": ["Python", "Text-to-Speech (TTS)", "Speech-to-Text (STT)", "Whisper", "Audio Processing", "PyTorch", "Deep Learning"],
-    
+    "Generative AI Engineer (Text/LLM)": [
+        "Python",
+        "LLM",
+        "Prompt Engineering",
+        "Fine-tuning",
+        "LoRA",
+        "RAG",
+        "Vector Databases",
+        "LangChain",
+        "PyTorch",
+    ],
+    "Generative AI Engineer (Vision)": [
+        "Python",
+        "Stable Diffusion",
+        "Diffusion Models",
+        "ControlNet",
+        "ComfyUI",
+        "PyTorch",
+        "Generative Adversarial Networks (GANs)",
+        "Computer Vision",
+    ],
+    "Generative AI Engineer (Audio/Speech)": [
+        "Python",
+        "Text-to-Speech (TTS)",
+        "Speech-to-Text (STT)",
+        "Whisper",
+        "Audio Processing",
+        "PyTorch",
+        "Deep Learning",
+    ],
     # --- Agentic AI Engineering ---
-    "AI Agent Engineer": ["Python", "LangChain", "LangGraph", "AutoGen", "Tool Calling", "RAG", "LLM", "API Integration"],
-    "Multi-Agent Systems Engineer": ["Python", "CrewAI", "AutoGen", "Multi-Agent Collaboration", "System Design", "LLM", "Semantic Routing"],
-    
+    "AI Agent Engineer": [
+        "Python",
+        "LangChain",
+        "LangGraph",
+        "AutoGen",
+        "Tool Calling",
+        "RAG",
+        "LLM",
+        "API Integration",
+    ],
+    "Multi-Agent Systems Engineer": [
+        "Python",
+        "CrewAI",
+        "AutoGen",
+        "Multi-Agent Collaboration",
+        "System Design",
+        "LLM",
+        "Semantic Routing",
+    ],
     # --- Academic & Research Roles ---
-    "AI/ML Researcher": ["Machine Learning", "Deep Learning", "PyTorch", "Publications", "Research", "Mathematics", "Statistics", "Algorithm Design"],
-    "Computer Vision Researcher": ["Computer Vision", "PyTorch", "Image Processing", "Object Detection", "Publications", "Research", "Mathematical Modeling"],
-    "NLP Researcher": ["NLP", "Transformers", "Large Language Models", "PyTorch", "Linguistics", "Publications", "Research", "Text Analysis"],
-    
+    "AI/ML Researcher": [
+        "Machine Learning",
+        "Deep Learning",
+        "PyTorch",
+        "Publications",
+        "Research",
+        "Mathematics",
+        "Statistics",
+        "Algorithm Design",
+    ],
+    "Computer Vision Researcher": [
+        "Computer Vision",
+        "PyTorch",
+        "Image Processing",
+        "Object Detection",
+        "Publications",
+        "Research",
+        "Mathematical Modeling",
+    ],
+    "NLP Researcher": [
+        "NLP",
+        "Transformers",
+        "Large Language Models",
+        "PyTorch",
+        "Linguistics",
+        "Publications",
+        "Research",
+        "Text Analysis",
+    ],
     # --- Mobile Engineering ---
     "iOS Developer": ["Swift", "iOS", "Xcode", "UIKit", "SwiftUI", "Core Data"],
-    "Android Developer": ["Kotlin", "Android", "Android Studio", "Java", "Jetpack Compose", "Room"],
-    "React Native Developer": ["React Native", "JavaScript", "TypeScript", "React", "iOS", "Android"],
+    "Android Developer": [
+        "Kotlin",
+        "Android",
+        "Android Studio",
+        "Java",
+        "Jetpack Compose",
+        "Room",
+    ],
+    "React Native Developer": [
+        "React Native",
+        "JavaScript",
+        "TypeScript",
+        "React",
+        "iOS",
+        "Android",
+    ],
     "Flutter Developer": ["Flutter", "Dart", "iOS", "Android", "Firebase"],
-    
     # --- Infrastructure & Security ---
-    "Cloud Architect (AWS)": ["AWS", "EC2", "S3", "IAM", "Terraform", "Docker", "Linux", "Serverless"],
-    "DevOps Engineer": ["Docker", "Kubernetes", "CI/CD", "Linux", "Terraform", "Jenkins", "Ansible", "Bash"],
-    "Cybersecurity Engineer": ["Security", "Penetration Testing", "Cryptography", "Linux", "Networking", "Bash", "Wireshark"],
-
+    "Cloud Architect (AWS)": [
+        "AWS",
+        "EC2",
+        "S3",
+        "IAM",
+        "Terraform",
+        "Docker",
+        "Linux",
+        "Serverless",
+    ],
+    "DevOps Engineer": [
+        "Docker",
+        "Kubernetes",
+        "CI/CD",
+        "Linux",
+        "Terraform",
+        "Jenkins",
+        "Ansible",
+        "Bash",
+    ],
+    "Cybersecurity Engineer": [
+        "Security",
+        "Penetration Testing",
+        "Cryptography",
+        "Linux",
+        "Networking",
+        "Bash",
+        "Wireshark",
+    ],
     # --- Design & Product ---
-    "UI/UX Designer": ["Figma", "Adobe XD", "Wireframing", "Prototyping", "User Research", "UI Design", "UX Design"]
+    "UI/UX Designer": [
+        "Figma",
+        "Adobe XD",
+        "Wireframing",
+        "Prototyping",
+        "User Research",
+        "UI Design",
+        "UX Design",
+    ],
 }
 # ------------------------------------------------------------------
 # 🧠 DYNAMIC SYSTEM PROMPT
@@ -124,7 +367,7 @@ for role, skills in TECH_ROLES.items():
     roles_str += f"- {role} requires: {', '.join(skills)}\n"
 
 CV_PARSER_PROMPT = f"""
-You are an expert Technical Recruiter AI. 
+You are an expert Technical Recruiter AI.
 Your job is to extract structured data from a resume.
 
 ### CRITICAL INSTRUCTION: INTELLIGENT SKILL MAPPING

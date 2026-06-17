@@ -9,9 +9,12 @@ cd backend/cv_api
 pip install --user -r requirements.txt
 ```
 
-Make sure `GEMINI_API_KEY` is set in the root `.env` file:
+Make sure your provider settings are set in the root `.env` file:
 ```
-GEMINI_API_KEY="your-key-here"
+CV_ANALYSIS_PROVIDER="opencode_go"
+OPENCODE_GO_API_KEY="your-key-here"
+OPENCODE_GO_BASE_URL="https://opencode.ai/zen/go/v1"
+CV_ANALYSIS_MODEL="deepseek-v4-pro"
 ```
 
 ## Run
