@@ -257,7 +257,7 @@ function FreelancerDashboardContent() {
                       </Text>
                       {recommendationsError && (
                         <Text c="orange" fz="xs">
-                          {recommendationsError}. You can still browse open jobs below.
+                          {recommendationsError} You can still browse open jobs below.
                         </Text>
                       )}
                     </Stack>

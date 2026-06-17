@@ -1,20 +1,22 @@
 import os
 import json
 from openai import OpenAI
-from .config import API_KEY, MODEL_NAME, CV_PARSER_PROMPT
+from .config import MODEL_NAME, CV_PARSER_PROMPT
+
+XAI_API_KEY = os.getenv("XAI_API_KEY")
 
 def get_grok_extraction(cv_text: str) -> dict:
     """
     Sends CV text to Grok (xAI) for extraction.
     Grok has real-time knowledge capabilities built-in.
     """
-    if not API_KEY:
+    if not XAI_API_KEY:
         return {"error": "Missing XAI_API_KEY in .env file"}
 
     try:
         # Initialize xAI Client (It uses the OpenAI SDK structure)
         client = OpenAI(
-            api_key=API_KEY,
+            api_key=XAI_API_KEY,
             base_url="https://api.x.ai/v1"
         )
 

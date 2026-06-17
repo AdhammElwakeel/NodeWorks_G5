@@ -11,6 +11,7 @@ import { profileApi, cvApi } from "@/lib/api";
 import { notifications } from "@mantine/notifications";
 
 type OnboardingStep = 0 | 1 | 2;
+type AnalysisDebug = Record<string, unknown> | null;
 
 const steps = [
   { key: "cv", title: "Upload CV", description: "CV extraction and profile pre-fill" },
@@ -61,6 +62,7 @@ export default function FreelancerOnboardingPage() {
   const [cvFileName, setCvFileName] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisDebug, setAnalysisDebug] = useState<AnalysisDebug>(null);
   const [cvData, setCvData] = useState<CvData | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -91,6 +93,7 @@ export default function FreelancerOnboardingPage() {
     setCvFileName(null);
     setCvData(null);
     setAnalysisError(null);
+    setAnalysisDebug(null);
     setCvFile(null);
 
     if (!file) return;
@@ -108,18 +111,44 @@ export default function FreelancerOnboardingPage() {
         body: form,
       });
 
+      const body = await res.json().catch(() => ({ error: res.statusText }));
+      setAnalysisDebug({
+        request: {
+          url: CV_ANALYSIS_URL,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        },
+        response: {
+          ok: res.ok,
+          status: res.status,
+          statusText: res.statusText,
+          body,
+        },
+      });
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err?.error ?? err?.detail ?? "CV analysis failed");
+        throw new Error(body?.error ?? body?.detail ?? "CV analysis failed");
       }
 
-      const data: CvData = await res.json();
+      const data: CvData = body;
       setCvData(data);
       setCvExtracted(true);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred.";
       setAnalysisError(message);
+      setAnalysisDebug((current) =>
+        current ?? {
+          request: {
+            url: CV_ANALYSIS_URL,
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+          },
+          error: message,
+        }
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -194,6 +223,7 @@ export default function FreelancerOnboardingPage() {
             cvFileName={cvFileName}
             isAnalyzing={isAnalyzing}
             analysisError={analysisError}
+            analysisDebug={analysisDebug}
             cvData={cvData}
             onUpload={handleCVUpload}
           />

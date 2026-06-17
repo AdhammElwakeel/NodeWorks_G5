@@ -1,64 +1,20 @@
 import os
-from pathlib import Path
 from dotenv import load_dotenv
 from datetime import date
-
-# Load .env variables from common project locations. Values loaded earlier win.
-ROOT_DIR = Path(__file__).resolve().parents[3]
-load_dotenv(dotenv_path=ROOT_DIR / ".env")
-load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
+# Load .env variables
 load_dotenv()
 
-API_KEY = os.getenv("GEMINI_API_KEY")
-ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY") or os.getenv("GLM_API_KEY")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+CV_ANALYSIS_PROVIDER = os.getenv("CV_ANALYSIS_PROVIDER", "opencode_go").strip().lower()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENCODE_GO_API_KEY = os.getenv("OPENCODE_GO_API_KEY")
-OPENCODE_GO_BASE_URL = os.getenv("OPENCODE_GO_BASE_URL")
-CV_ANALYSIS_PROVIDER = os.getenv("CV_ANALYSIS_PROVIDER", "").strip().lower()
+OPENCODE_GO_BASE_URL = os.getenv("OPENCODE_GO_BASE_URL", "https://opencode.ai/zen/go/v1")
+ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY")
 
 # ------------------------------------------------------------------
 # 🤖 MODEL CONFIGURATION
 # ------------------------------------------------------------------
-def choose_model() -> str:
-    configured_model = os.getenv("CV_ANALYSIS_MODEL")
-    if configured_model:
-        return configured_model
-
-    if OPENCODE_GO_API_KEY:
-        return "missing-model"
-
-    if OPENROUTER_API_KEY:
-        return "nvidia/nemotron-3-super-120b-a12b:free"
-
-    if API_KEY:
-        return "gemini-2.5-flash"
-
-    if ZHIPUAI_API_KEY:
-        return "glm-4.7-flash"
-
-    return "missing-api-key"
-
-
-MODEL_NAME = choose_model()
-
-
-def choose_provider() -> str:
-    if CV_ANALYSIS_PROVIDER:
-        return CV_ANALYSIS_PROVIDER
-
-    if OPENCODE_GO_API_KEY:
-        return "opencode_go"
-
-    if OPENROUTER_API_KEY and "/" in MODEL_NAME:
-        return "openrouter"
-
-    if MODEL_NAME.startswith("glm"):
-        return "glm"
-
-    return "gemini"
-
-
-PROVIDER_NAME = choose_provider()
+MODEL_NAME = os.getenv("CV_ANALYSIS_MODEL", "deepseek-v4-flash")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash")
 
 # ------------------------------------------------------------------
 # 🎯 ROLE DEFINITIONS (The Source of Truth)
@@ -117,7 +73,7 @@ TECH_ROLES = {
 }
 # ------------------------------------------------------------------
 # 🧠 DYNAMIC SYSTEM PROMPT
-# We inject the TECH_ROLES into the prompt so Gemini knows the standards.
+# We inject the TECH_ROLES into the prompt so the CV provider knows the standards.
 # ------------------------------------------------------------------
 roles_str = ""
 for role, skills in TECH_ROLES.items():
@@ -150,7 +106,6 @@ If a candidate mentions a specific tool or concept that implies a standard skill
     "name": "Full Name",
     "email": "email",
     "phone": "phone",
-    "headline": "Professional headline or title explicitly written in the CV. Use null if not clearly present.",
     "years of experience":"48 months",
     "all_skills": ["Standardized Skill 1", "Standardized Skill 2", ...],
     "experience": [

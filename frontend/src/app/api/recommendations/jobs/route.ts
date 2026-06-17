@@ -106,9 +106,10 @@ export async function GET(req: NextRequest) {
     );
 
     return NextResponse.json({ recommendations: enriched.filter(Boolean) });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load job recommendations";
     return NextResponse.json(
-      { error: error?.message || "Failed to load job recommendations" },
+      { error: message },
       { status: 500 }
     );
   }

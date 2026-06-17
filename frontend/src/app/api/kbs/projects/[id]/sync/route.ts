@@ -36,9 +36,10 @@ export async function POST(
     const result = await syncProjectToKbs(project._id.toString());
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to sync project to KBS";
     return NextResponse.json(
-      { error: error?.message || "Failed to sync project to KBS" },
+      { error: message },
       { status: 500 }
     );
   }

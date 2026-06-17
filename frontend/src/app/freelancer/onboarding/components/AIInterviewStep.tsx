@@ -2,6 +2,8 @@
 
 import {
   Card,
+  Alert,
+  Button,
   Group,
   List,
   Paper,
@@ -12,6 +14,7 @@ import {
   Title,
 } from "@mantine/core";
 import { Briefcase, Cpu } from "lucide-react";
+import { BACKEND_MISMATCH_NOTICE } from "@/lib/backend-features";
 
 export function AIInterviewStep() {
   return (
@@ -41,10 +44,18 @@ export function AIInterviewStep() {
               technical communication
             </Text>
             <Text fz="sm" c="var(--app-text)">
-              Status: Ready for your first AI interview session
+              Status: disabled until the interview backend endpoint is restored
             </Text>
           </Stack>
         </Card>
+
+        <Alert color="orange" radius="md" title="Interview action disabled">
+          {BACKEND_MISMATCH_NOTICE}
+        </Alert>
+
+        <Button disabled color="cyan" variant="filled">
+          Start AI interview
+        </Button>
 
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Card withBorder radius="md" p="md">
@@ -66,9 +77,9 @@ export function AIInterviewStep() {
               Score snapshot
             </Text>
             <List spacing={4} fz="sm" c="var(--app-text)">
-              <List.Item>Communication: 82/100</List.Item>
-              <List.Item>Technical confidence: 76/100</List.Item>
-              <List.Item>Client fit: 88/100</List.Item>
+              <List.Item>Communication: unavailable</List.Item>
+              <List.Item>Technical confidence: unavailable</List.Item>
+              <List.Item>Client fit: unavailable</List.Item>
             </List>
           </Card>
         </SimpleGrid>

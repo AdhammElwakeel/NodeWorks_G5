@@ -1,7 +1,8 @@
 "use client";
 
-import { Badge, Button, Card, Group, Stack, Text } from "@mantine/core";
+import { Alert, Badge, Button, Card, Group, Stack, Text } from "@mantine/core";
 import { AlertTriangle, CheckCircle, Clock, Database, RefreshCw } from "lucide-react";
+import { BACKEND_FEATURES, BACKEND_MISMATCH_NOTICE } from "@/lib/backend-features";
 
 export type KbsSyncStatus = "not_synced" | "synced" | "outdated" | "failed";
 
@@ -62,6 +63,7 @@ export function KbsSyncPanel({
   const status = sync?.status || "not_synced";
   const copy = STATUS_COPY[status];
   const syncedAt = sync?.syncedAt ? new Date(sync.syncedAt).toLocaleString() : null;
+  const syncDisabled = !BACKEND_FEATURES.kbsSync;
 
   return (
     <Card withBorder radius="md" bg="var(--app-surface)">
@@ -93,6 +95,11 @@ export function KbsSyncPanel({
             {sync.error}
           </Text>
         )}
+        {syncDisabled && (
+          <Alert color="orange" radius="md" title="KBS sync disabled">
+            {BACKEND_MISMATCH_NOTICE}
+          </Alert>
+        )}
 
         <Group justify="flex-end">
           <Button
@@ -101,6 +108,7 @@ export function KbsSyncPanel({
             loading={syncing}
             leftSection={<RefreshCw size={16} />}
             onClick={onSync}
+            disabled={syncDisabled}
           >
             {copy.action}
           </Button>

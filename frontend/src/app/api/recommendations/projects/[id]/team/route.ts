@@ -113,14 +113,17 @@ export async function GET(
         .filter(Boolean),
     }));
 
-    return NextResponse.json({
-      requiredSkills: result.requiredSkills || [],
-      requiredRoles: result.requiredRoles || [],
-      recommendations: enriched,
-    });
-  } catch (error: any) {
     return NextResponse.json(
-      { error: error?.message || "Failed to load team recommendations" },
+      {
+        requiredSkills: result.requiredSkills || [],
+        requiredRoles: result.requiredRoles || [],
+        recommendations: enriched,
+      }
+    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load team recommendations";
+    return NextResponse.json(
+      { error: message },
       { status: 500 }
     );
   }

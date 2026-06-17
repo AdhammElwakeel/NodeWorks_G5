@@ -1,52 +1,83 @@
 import json
+import re
 
 from openai import OpenAI
 
 from .config import CV_PARSER_PROMPT, MODEL_NAME, OPENCODE_GO_API_KEY, OPENCODE_GO_BASE_URL
 
 
-OPENCODE_GO_TIMEOUT_SECONDS = 120
+FALLBACK_PROMPT = """
+Extract resume data from the provided text. Return a non-empty JSON object only.
+If a field is unknown, use an empty string or empty list. Never return {}.
+Required shape:
+{
+  "name": "",
+  "email": "",
+  "phone": "",
+  "years of experience": "0 months",
+  "all_skills": [],
+  "experience": [{"role": "", "company": "", "years": ""}],
+  "education": [{"degree": "", "institution": "", "technologies": []}],
+  "projects": [{"name": "", "technologies": []}],
+  "certifications": [],
+  "Publications": []
+}
+"""
 
 
-def _base_url() -> str:
-    return OPENCODE_GO_BASE_URL.rstrip("/").removesuffix("/chat/completions")
+def _extract_json_object(text: str) -> dict:
+    cleaned = text.replace("```json", "```").replace("```", "").strip()
+    try:
+        parsed = json.loads(cleaned)
+        return parsed if isinstance(parsed, dict) else {}
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+        if not match:
+            return {}
+        parsed = json.loads(match.group(0))
+        return parsed if isinstance(parsed, dict) else {}
 
 
-def _model_id() -> str:
-    return MODEL_NAME.removeprefix("opencode-go/")
+def _request_extraction(client: OpenAI, cv_text: str, system_prompt: str, max_tokens: int) -> tuple[dict, str]:
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Analyze this resume content:\n\n{cv_text}"},
+        ],
+        max_tokens=max_tokens,
+        temperature=0.1,
+    )
+    content = response.choices[0].message.content or "{}"
+    return _extract_json_object(content), content
 
 
 def get_opencode_go_extraction(cv_text: str) -> dict:
-    """
-    Sends CV text to the Opencode Go AI API and returns a Python dictionary.
-
-    This assumes the Opencode Go API exposes an OpenAI-compatible chat completions
-    endpoint at OPENCODE_GO_BASE_URL, for example https://.../v1.
-    """
+    """Extract CV data using Opencode Go's OpenAI-compatible API."""
     if not OPENCODE_GO_API_KEY:
         return {"error": "Missing OPENCODE_GO_API_KEY in .env file"}
 
-    if not OPENCODE_GO_BASE_URL:
-        return {"error": "Missing OPENCODE_GO_BASE_URL in .env file"}
-
     try:
         client = OpenAI(
-            base_url=_base_url(),
             api_key=OPENCODE_GO_API_KEY,
-            timeout=OPENCODE_GO_TIMEOUT_SECONDS,
+            base_url=OPENCODE_GO_BASE_URL.rstrip("/"),
+            timeout=45,
         )
-
-        response = client.chat.completions.create(
-            model=_model_id(),
-            messages=[
-                {"role": "system", "content": CV_PARSER_PROMPT},
-                {"role": "user", "content": cv_text},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.4,
+        data, content = _request_extraction(
+            client,
+            cv_text,
+            CV_PARSER_PROMPT + "\nReturn only the JSON object. Do not return markdown, prose, or an empty object.",
+            4000,
         )
-
-        content = response.choices[0].message.content
-        return json.loads(content)
-    except Exception as e:
-        return {"error": f"Opencode Go API Error: {str(e)}"}
+        if not data:
+            data, content = _request_extraction(client, cv_text[:12000], FALLBACK_PROMPT, 2500)
+        if not data:
+            return {
+                "error": "Opencode Go returned an empty or invalid JSON response",
+                "provider": "opencode_go",
+                "model": MODEL_NAME,
+                "response_preview": content[:500],
+            }
+        return data
+    except Exception as exc:
+        return {"error": f"Opencode Go API Error: {exc}", "provider": "opencode_go", "model": MODEL_NAME}

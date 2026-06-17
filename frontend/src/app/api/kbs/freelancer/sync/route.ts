@@ -21,9 +21,10 @@ export async function POST(req: NextRequest) {
     const result = await syncFreelancerToKbs(payload.userId);
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to sync freelancer to KBS";
     return NextResponse.json(
-      { error: error?.message || "Failed to sync freelancer to KBS" },
+      { error: message },
       { status: 500 }
     );
   }

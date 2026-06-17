@@ -11,10 +11,8 @@ export async function GET() {
     const data = text ? JSON.parse(text) : {};
 
     return NextResponse.json(data, { status: response.status });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Failed to reach AI KBS API" },
-      { status: 503 }
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to reach AI KBS API";
+    return NextResponse.json({ error: message }, { status: 503 });
   }
 }

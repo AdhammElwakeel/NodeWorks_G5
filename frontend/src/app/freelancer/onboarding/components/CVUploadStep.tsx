@@ -65,6 +65,7 @@ interface CVUploadStepProps {
   cvFileName: string | null;
   isAnalyzing: boolean;
   analysisError: string | null;
+  analysisDebug: Record<string, unknown> | null;
   cvData: CvData | null;
   onUpload: (file: File | null) => void;
 }
@@ -74,6 +75,7 @@ export function CVUploadStep({
   cvFileName,
   isAnalyzing,
   analysisError,
+  analysisDebug,
   cvData,
   onUpload,
 }: CVUploadStepProps) {
@@ -104,6 +106,34 @@ export function CVUploadStep({
           styles={fieldLabelStyles}
           disabled={isAnalyzing}
         />
+
+        {analysisDebug !== null && (
+          <Card withBorder radius="md" p="sm" bg="var(--app-bg)">
+            <Stack gap={6}>
+              <Group justify="space-between">
+                <Text fw={700} fz="sm" c="var(--app-text)">
+                  CV analysis debug response
+                </Text>
+                <Badge color={analysisError ? "red" : "green"} variant="light">
+                  {analysisError ? "Error" : "OK"}
+                </Badge>
+              </Group>
+              <pre
+                style={{
+                  margin: 0,
+                  maxHeight: 320,
+                  overflow: "auto",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontSize: 12,
+                  color: "var(--app-text)",
+                }}
+              >
+                {JSON.stringify(analysisDebug, null, 2)}
+              </pre>
+            </Stack>
+          </Card>
+        )}
 
         {/* Analyzing state */}
         {isAnalyzing && (

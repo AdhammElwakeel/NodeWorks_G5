@@ -117,9 +117,10 @@ export async function GET(
       .filter(Boolean);
 
     return NextResponse.json({ recommendations: enriched });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load freelancer recommendations";
     return NextResponse.json(
-      { error: error?.message || "Failed to load freelancer recommendations" },
+      { error: message },
       { status: 500 }
     );
   }

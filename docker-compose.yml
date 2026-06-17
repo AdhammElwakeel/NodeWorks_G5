@@ -26,7 +26,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/ai_api/Dockerfile
+      dockerfile: backend/api/Dockerfile
     ports:
       - "8010:8010"
     environment:
@@ -34,14 +34,12 @@ services:
       NEO4J_USER: ${NEO4J_USER:-neo4j}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-password}
       CV_ANALYSIS_PROVIDER: ${CV_ANALYSIS_PROVIDER:-opencode_go}
-      CV_ANALYSIS_MODEL: ${CV_ANALYSIS_MODEL:-}
+      CV_ANALYSIS_MODEL: ${CV_ANALYSIS_MODEL:-deepseek-v4-flash}
       PROJECT_SKILL_SUGGESTION_MODEL: ${PROJECT_SKILL_SUGGESTION_MODEL:-}
       OPENCODE_GO_API_KEY: ${OPENCODE_GO_API_KEY:-}
-      OPENCODE_GO_BASE_URL: ${OPENCODE_GO_BASE_URL:-}
-      GLM_API_KEY: ${GLM_API_KEY:-}
+      OPENCODE_GO_BASE_URL: ${OPENCODE_GO_BASE_URL:-https://opencode.ai/zen/go/v1}
       ZHIPUAI_API_KEY: ${ZHIPUAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     depends_on:
       neo4j:
         condition: service_healthy
