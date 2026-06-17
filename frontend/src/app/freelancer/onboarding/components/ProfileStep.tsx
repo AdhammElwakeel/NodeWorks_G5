@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Button,
+  Card,
   Group,
   Paper,
   Select,
@@ -13,9 +15,11 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { UserCircle } from "lucide-react";
+import { Plus, Trash2, UserCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type CvData } from "./CVUploadStep";
+
+const MIN_ROLE_CONFIDENCE = 35;
 
 const fieldLabelStyles = {
   label: { color: "var(--app-text)", fontWeight: 600 },
@@ -42,13 +46,24 @@ function deriveExperienceLevel(raw: string | undefined): string | null {
   return "Lead";
 }
 
+function formatExperienceItem(item: { role?: string; company?: string; years?: string }) {
+  const role = item.role?.trim();
+  const company = item.company?.trim();
+  const years = item.years?.trim();
+
+  if (role && company && years) return `${role} at ${company} for ${years}`;
+  if (role && company) return `${role} at ${company}`;
+  if (role && years) return `${role} for ${years}`;
+  return role || company || years || "past experience";
+}
+
 /**
  * Build a short "About you" bio from extracted CV data.
  */
 function buildBio(cvData: CvData): string {
   const parts: string[] = [];
 
-  if (cvData.best_role) {
+  if (hasConfidentRole(cvData)) {
     parts.push(`Experienced ${cvData.best_role}`);
   }
 
@@ -62,8 +77,28 @@ function buildBio(cvData: CvData): string {
     parts.push(`specialising in ${topSkills.join(", ")}`);
   }
 
+  const pastExperience = (cvData.experience ?? [])
+    .slice(0, 2)
+    .map(formatExperienceItem)
+    .filter(Boolean);
+  if (pastExperience.length > 0) {
+    parts.push(`Past experience includes ${pastExperience.join(" and ")}`);
+  }
+
   if (parts.length === 0) return "";
   return parts.join(" ") + ".";
+}
+
+function hasConfidentRole(cvData: CvData) {
+  const bestRanking = cvData.role_rankings?.[0];
+  const matchedSkillsCount = bestRanking?.matched_skills?.length ?? 0;
+
+  return Boolean(
+    cvData.best_role &&
+      cvData.role_confidence_status !== "needs_user_input" &&
+      (cvData.best_score ?? 0) >= MIN_ROLE_CONFIDENCE &&
+      matchedSkillsCount >= 2
+  );
 }
 
 export interface ProfileData {
@@ -72,6 +107,7 @@ export interface ProfileData {
   country: string;
   skills: string[];
   bio: string;
+  experience: { role: string; company: string; years: string }[];
 }
 
 interface ProfileStepProps {
@@ -89,30 +125,68 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
   const [country, setCountry] = useState(profileData.country);
   const [skills, setSkills] = useState<string[]>(profileData.skills);
   const [bio, setBio] = useState(profileData.bio);
+  const [bioTouched, setBioTouched] = useState(Boolean(profileData.bio));
+  const [experience, setExperience] = useState(profileData.experience);
 
   // Auto-fill whenever cvData arrives (step 0 → step 1 transition)
   useEffect(() => {
     if (!cvData) return;
 
-    const newHeadline = cvData.best_role ?? headline;
+    const newHeadline = hasConfidentRole(cvData) ? cvData.best_role ?? headline : headline;
     const newLevel = deriveExperienceLevel(cvData["years of experience"]) ?? experienceLevel;
     const newSkills = cvData.all_skills && cvData.all_skills.length > 0
       ? cvData.all_skills
       : skills;
     const newBio = buildBio(cvData);
+    const newExperience = cvData.experience?.length
+      ? cvData.experience.map((item) => ({
+          role: item.role ?? "",
+          company: item.company ?? "",
+          years: item.years ?? "",
+        }))
+      : experience;
 
     setHeadline(newHeadline);
     setExperienceLevel(newLevel);
     setSkills(newSkills);
+    setExperience(newExperience);
     if (newBio) setBio(newBio);
+    setBioTouched(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cvData]);
 
+  useEffect(() => {
+    if (!cvData || bioTouched) return;
+
+    const newBio = buildBio({ ...cvData, experience });
+    if (newBio) setBio(newBio);
+  }, [bioTouched, cvData, experience]);
+
   // Propagate changes to parent whenever any field changes
   useEffect(() => {
-    onProfileChange({ headline, experienceLevel, country, skills, bio });
+    onProfileChange({ headline, experienceLevel, country, skills, bio, experience });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headline, experienceLevel, country, skills, bio]);
+  }, [headline, experienceLevel, country, skills, bio, experience]);
+
+  const updateExperience = (
+    index: number,
+    field: "role" | "company" | "years",
+    value: string
+  ) => {
+    setExperience((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const addExperience = () => {
+    setExperience((current) => [...current, { role: "", company: "", years: "" }]);
+  };
+
+  const removeExperience = (index: number) => {
+    setExperience((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  };
 
   return (
     <Paper withBorder radius="md" p="lg" bg="var(--app-surface)">
@@ -127,7 +201,9 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
             </Title>
             <Text c="var(--app-text)" fz="sm">
               {cvData
-                ? "Fields have been pre-filled from your CV — review and adjust as needed."
+                ? hasConfidentRole(cvData)
+                  ? "Fields have been pre-filled from confident CV evidence — review and adjust as needed."
+                  : "The AI could not detect a confident role. Please enter your professional headline manually."
                 : "Add key profile details before entering the platform."}
             </Text>
           </Stack>
@@ -184,13 +260,90 @@ export function ProfileStep({ cvData, profileData, onProfileChange }: ProfileSte
           }}
         />
 
+        <Card withBorder radius="md" p="md" bg="var(--app-active-bg)">
+          <Stack gap="sm">
+            <Group justify="space-between" align="flex-start" gap="sm">
+              <Stack gap={2}>
+                <Text fw={700} fz="sm" c="var(--app-text)">
+                  Past experience
+                </Text>
+                <Text fz="xs" c="dimmed">
+                  Review the CV-extracted experience. Edit anything wrong before saving; KBS recommendations will use this corrected evidence.
+                </Text>
+              </Stack>
+              <Button
+                size="xs"
+                variant="light"
+                leftSection={<Plus size={14} />}
+                onClick={addExperience}
+              >
+                Add
+              </Button>
+            </Group>
+
+            {experience.length === 0 && (
+              <Text fz="xs" c="dimmed">
+                No past experience was detected. Add it manually if it exists.
+              </Text>
+            )}
+
+            {experience.map((item, index) => (
+              <Card key={index} withBorder radius="md" p="sm" bg="var(--app-surface)">
+                <Stack gap="xs">
+                  <Group justify="space-between" align="center">
+                    <Text fz="xs" fw={700} c="var(--app-text)">
+                      Experience {index + 1}
+                    </Text>
+                    <Button
+                      size="compact-xs"
+                      color="red"
+                      variant="subtle"
+                      leftSection={<Trash2 size={12} />}
+                      onClick={() => removeExperience(index)}
+                    >
+                      Remove
+                    </Button>
+                  </Group>
+
+                  <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
+                    <TextInput
+                      label="Role"
+                      placeholder="Frontend Developer"
+                      value={item.role}
+                      onChange={(e) => updateExperience(index, "role", e.currentTarget.value)}
+                      styles={fieldLabelStyles}
+                    />
+                    <TextInput
+                      label="Company"
+                      placeholder="Company name"
+                      value={item.company}
+                      onChange={(e) => updateExperience(index, "company", e.currentTarget.value)}
+                      styles={fieldLabelStyles}
+                    />
+                    <TextInput
+                      label="Duration"
+                      placeholder="4 months"
+                      value={item.years}
+                      onChange={(e) => updateExperience(index, "years", e.currentTarget.value)}
+                      styles={fieldLabelStyles}
+                    />
+                  </SimpleGrid>
+                </Stack>
+              </Card>
+            ))}
+          </Stack>
+        </Card>
+
         <Textarea
           label="About you"
           placeholder="Tell clients what you are great at and what outcomes you deliver"
           minRows={4}
           required
           value={bio}
-          onChange={(e) => setBio(e.currentTarget.value)}
+          onChange={(e) => {
+            setBioTouched(true);
+            setBio(e.currentTarget.value);
+          }}
           styles={fieldLabelStyles}
         />
       </Stack>

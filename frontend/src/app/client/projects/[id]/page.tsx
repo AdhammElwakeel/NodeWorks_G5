@@ -53,6 +53,18 @@ export default function ProjectDetailPage() {
       missingSkills: string[];
       bestRole?: string;
       bestRoleScore?: number;
+      scoreBreakdown?: Record<string, number | undefined>;
+      evidence?: Record<string, string[] | undefined>;
+      evidenceFacts?: string[];
+      llmEvaluation?: {
+        fitScore: number;
+        confidence: "low" | "medium" | "high";
+        recommendation: "strong_fit" | "good_fit" | "possible_fit" | "not_recommended";
+        reason: string;
+        evidenceUsed: string[];
+        risks: string[];
+        clientQuestions: string[];
+      };
       freelancer: {
         id: string;
         name: string;
@@ -73,9 +85,11 @@ export default function ProjectDetailPage() {
       technicalScore: number;
       synergyScore: number;
       coverageScore: number;
+      scoreBreakdown?: Record<string, number | undefined>;
       reason: string;
       coveredSkills: string[];
       missingSkills: string[];
+      evidenceSkills?: string[];
       sharedEntities: string[];
       members: {
         userId: string;
@@ -385,7 +399,11 @@ export default function ProjectDetailPage() {
                       reason={item.reason}
                       matchedSkills={item.matchedSkills}
                       missingSkills={item.missingSkills}
-                      graphPath="Project - REQUIRES_SKILL -> Skill <- HAS_SKILL - Freelancer"
+                      scoreBreakdown={item.scoreBreakdown}
+                      evidence={item.evidence}
+                      evidenceFacts={item.evidenceFacts}
+                      llmEvaluation={item.llmEvaluation}
+                      graphPath="Project graph evidence: REQUIRES_SKILL/ROLE plus freelancer skills, role, experience, projects, certifications, publications"
                     />
                     <Group gap="xs" wrap="wrap">
                       {item.freelancer.skills.slice(0, 5).map((skill) => (
@@ -465,11 +483,13 @@ export default function ProjectDetailPage() {
                       </Group>
                     </Group>
                     <KbsExplanationPanel
-                      score={team.coverageScore}
+                      score={team.finalScore}
                       reason={team.reason}
                       matchedSkills={team.coveredSkills}
                       missingSkills={team.missingSkills}
-                      graphPath="Project skills are covered by multiple Freelancer - HAS_SKILL relationships"
+                      scoreBreakdown={team.scoreBreakdown}
+                      evidence={{ evidenceSkills: team.evidenceSkills }}
+                      graphPath="Team graph evidence: combined skill coverage, complementary roles, CV project evidence, experience, shared graph context"
                       color="teal"
                     />
                     <Group gap="xs">

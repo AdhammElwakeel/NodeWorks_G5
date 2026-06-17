@@ -81,6 +81,7 @@ export interface ProjectData {
     status: "not_synced" | "synced" | "outdated" | "failed";
     syncedAt?: string;
     error?: string;
+    graphVersion?: number;
   };
   createdAt: string;
   updatedAt: string;
@@ -221,6 +222,18 @@ export const messageApi = {
 
 // ─── Recommendations (stub — AI team feature) ──────────────────────────
 
+export type KbsScoreBreakdown = Record<string, number | undefined>;
+export type KbsEvidence = Record<string, string[] | undefined>;
+export type LlmRecommendationEvaluation = {
+  fitScore: number;
+  confidence: "low" | "medium" | "high";
+  recommendation: "strong_fit" | "good_fit" | "possible_fit" | "not_recommended";
+  reason: string;
+  evidenceUsed: string[];
+  risks: string[];
+  clientQuestions: string[];
+};
+
 export const recApi = {
   jobs: (params?: { limit?: number }): Promise<{
     recommendations: {
@@ -229,6 +242,12 @@ export const recApi = {
       matchedSkills: string[];
       missingSkills: string[];
       requiredSkills: string[];
+      bestRole?: string;
+      bestRoleScore?: number;
+      scoreBreakdown?: KbsScoreBreakdown;
+      evidence?: KbsEvidence;
+      evidenceFacts?: string[];
+      llmEvaluation?: LlmRecommendationEvaluation;
       project: ProjectData;
     }[];
   }> => {
@@ -247,6 +266,10 @@ export const recApi = {
       requiredSkills: string[];
       bestRole?: string;
       bestRoleScore?: number;
+      scoreBreakdown?: KbsScoreBreakdown;
+      evidence?: KbsEvidence;
+      evidenceFacts?: string[];
+      llmEvaluation?: LlmRecommendationEvaluation;
       freelancer: {
         id: string;
         name: string;
@@ -277,9 +300,18 @@ export const recApi = {
       technicalScore: number;
       synergyScore: number;
       coverageScore: number;
+      roleScore?: number;
+      projectEvidenceScore?: number;
+      experienceScore?: number;
+      availabilityScore?: number;
+      budgetFitScore?: number;
+      complementarityScore?: number;
+      sharedContextScore?: number;
+      scoreBreakdown?: KbsScoreBreakdown;
       reason: string;
       coveredSkills: string[];
       missingSkills: string[];
+      evidenceSkills?: string[];
       sharedEntities: string[];
       members: {
         userId: string;
@@ -289,8 +321,10 @@ export const recApi = {
         hourlyRate?: number;
         skills: string[];
         coveredSkills: string[];
+        evidenceSkills?: string[];
         bestRole?: string;
         bestRoleScore?: number;
+        roleFitScore?: number;
       }[];
     }[];
   }> => {

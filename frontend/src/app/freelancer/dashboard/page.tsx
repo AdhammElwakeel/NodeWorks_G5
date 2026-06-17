@@ -89,6 +89,18 @@ function FreelancerDashboardContent() {
       reason: string;
       matchedSkills: string[];
       missingSkills: string[];
+      scoreBreakdown?: Record<string, number | undefined>;
+      evidence?: Record<string, string[] | undefined>;
+      evidenceFacts?: string[];
+      llmEvaluation?: {
+        fitScore: number;
+        confidence: "low" | "medium" | "high";
+        recommendation: "strong_fit" | "good_fit" | "possible_fit" | "not_recommended";
+        reason: string;
+        evidenceUsed: string[];
+        risks: string[];
+        clientQuestions: string[];
+      };
       project: ProjectData;
     }[]
   >([]);
@@ -315,7 +327,11 @@ function FreelancerDashboardContent() {
                               reason={item.reason}
                               matchedSkills={item.matchedSkills}
                               missingSkills={item.missingSkills}
-                              graphPath="Freelancer - HAS_SKILL -> Skill <- REQUIRES_SKILL - Project"
+                              scoreBreakdown={item.scoreBreakdown}
+                              evidence={item.evidence}
+                              evidenceFacts={item.evidenceFacts}
+                              llmEvaluation={item.llmEvaluation}
+                              graphPath="Freelancer graph evidence: HAS_SKILL, MATCHES_ROLE, WORKED_AT, STUDIED_AT, CREATED_PROJECT, HAS_CERTIFICATION, HAS_PUBLICATION"
                             />
                             <Group gap="xs" wrap="wrap">
                               {item.matchedSkills.slice(0, 5).map((skill) => (

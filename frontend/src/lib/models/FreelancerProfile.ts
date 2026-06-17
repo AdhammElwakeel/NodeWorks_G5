@@ -37,6 +37,8 @@ export interface ICvAnalysis {
   publications?: ICvProjectItem[];
   bestRole?: string;
   bestScore?: number;
+  roleConfidenceStatus?: "confident" | "needs_user_input";
+  roleConfidenceThreshold?: number;
   roleRankings?: ICvRoleRanking[];
   analyzedAt?: Date;
 }
@@ -45,6 +47,7 @@ export interface IKbsSync {
   status: "not_synced" | "synced" | "outdated" | "failed";
   syncedAt?: Date;
   error?: string;
+  graphVersion?: number;
 }
 
 export interface IFreelancerProfile {
@@ -76,6 +79,7 @@ const KbsSyncSchema = new mongoose.Schema<IKbsSync>(
     },
     syncedAt: { type: Date },
     error: { type: String },
+    graphVersion: { type: Number, default: 0 },
   },
   { _id: false }
 );
@@ -130,6 +134,11 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
     publications: [CvProjectItemSchema],
     bestRole: { type: String, trim: true },
     bestScore: { type: Number },
+    roleConfidenceStatus: {
+      type: String,
+      enum: ["confident", "needs_user_input"],
+    },
+    roleConfidenceThreshold: { type: Number },
     roleRankings: [CvRoleRankingSchema],
     analyzedAt: { type: Date },
   },

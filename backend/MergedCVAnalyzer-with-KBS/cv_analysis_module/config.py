@@ -113,7 +113,10 @@ TECH_ROLES = {
     "Cybersecurity Engineer": ["Security", "Penetration Testing", "Cryptography", "Linux", "Networking", "Bash", "Wireshark"],
 
     # --- Design & Product ---
-    "UI/UX Designer": ["Figma", "Adobe XD", "Wireframing", "Prototyping", "User Research", "UI Design", "UX Design"]
+    "UI/UX Designer": ["Figma", "Adobe XD", "Wireframing", "Prototyping", "User Research", "UI Design", "UX Design"],
+
+    # --- Content & Marketing ---
+    "Content Creator": ["Content Writing", "Content Creation", "Content Strategy", "Social Media Marketing", "Social Media Management", "Copywriting", "Canva Design", "Video Editing"]
 }
 # ------------------------------------------------------------------
 # 🧠 DYNAMIC SYSTEM PROMPT

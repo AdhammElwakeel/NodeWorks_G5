@@ -4,6 +4,7 @@ export interface IKbsSync {
   status: "not_synced" | "synced" | "outdated" | "failed";
   syncedAt?: Date;
   error?: string;
+  graphVersion?: number;
 }
 
 export interface IProject {
@@ -29,6 +30,7 @@ const KbsSyncSchema = new mongoose.Schema<IKbsSync>(
     },
     syncedAt: { type: Date },
     error: { type: String },
+    graphVersion: { type: Number, default: 0 },
   },
   { _id: false }
 );

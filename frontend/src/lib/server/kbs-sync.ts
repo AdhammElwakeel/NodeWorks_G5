@@ -1,6 +1,7 @@
 import { FreelancerProfile, Project, User } from "@/lib/models";
 
 const AI_API_BASE_URL = process.env.AI_API_BASE_URL || "http://localhost:8010";
+const KBS_GRAPH_VERSION = 2;
 
 async function parseApiResponse(response: Response) {
   const text = await response.text();
@@ -13,8 +14,8 @@ async function parseApiResponse(response: Response) {
   }
 }
 
-function shouldSync(status?: string) {
-  return status !== "synced";
+function shouldSync(kbsSync?: { status?: string; graphVersion?: number }) {
+  return kbsSync?.status !== "synced" || kbsSync.graphVersion !== KBS_GRAPH_VERSION;
 }
 
 export async function syncFreelancerToKbs(userId: string) {
@@ -25,7 +26,7 @@ export async function syncFreelancerToKbs(userId: string) {
     throw new Error("Freelancer profile not found");
   }
 
-  if (!shouldSync(profile.kbsSync?.status)) {
+  if (!shouldSync(profile.kbsSync)) {
     return { skipped: true, kbsSync: profile.kbsSync };
   }
 
@@ -60,6 +61,7 @@ export async function syncFreelancerToKbs(userId: string) {
       status: "failed",
       syncedAt: profile.kbsSync?.syncedAt,
       error: result.detail || result.error || "KBS sync failed",
+      graphVersion: profile.kbsSync?.graphVersion,
     };
     await profile.save();
     throw new Error(profile.kbsSync.error || "KBS sync failed");
@@ -69,6 +71,7 @@ export async function syncFreelancerToKbs(userId: string) {
     status: "synced",
     syncedAt: new Date(),
     error: undefined,
+    graphVersion: KBS_GRAPH_VERSION,
   };
   await profile.save();
 
@@ -82,7 +85,7 @@ export async function syncProjectToKbs(projectId: string) {
     throw new Error("Project not found");
   }
 
-  if (!shouldSync(project.kbsSync?.status)) {
+  if (!shouldSync(project.kbsSync)) {
     return { skipped: true, kbsSync: project.kbsSync };
   }
 
@@ -111,6 +114,7 @@ export async function syncProjectToKbs(projectId: string) {
       status: "failed",
       syncedAt: project.kbsSync?.syncedAt,
       error: result.detail || result.error || "KBS sync failed",
+      graphVersion: project.kbsSync?.graphVersion,
     };
     await project.save();
     throw new Error(project.kbsSync.error || "KBS sync failed");
@@ -120,6 +124,7 @@ export async function syncProjectToKbs(projectId: string) {
     status: "synced",
     syncedAt: new Date(),
     error: undefined,
+    graphVersion: KBS_GRAPH_VERSION,
   };
   await project.save();
 

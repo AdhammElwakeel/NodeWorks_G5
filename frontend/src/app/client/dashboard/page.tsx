@@ -301,7 +301,11 @@ export default function ClientDashboardPage() {
                       reason={item.reason}
                       matchedSkills={item.matchedSkills}
                       missingSkills={item.missingSkills}
-                      graphPath="Project - REQUIRES_SKILL -> Skill <- HAS_SKILL - Freelancer"
+                      scoreBreakdown={item.scoreBreakdown}
+                      evidence={item.evidence}
+                      evidenceFacts={item.evidenceFacts}
+                      llmEvaluation={item.llmEvaluation}
+                      graphPath="Project graph evidence: REQUIRES_SKILL/ROLE plus freelancer skills, role, experience, projects, certifications, publications"
                     />
                     <Group gap="xs" wrap="wrap">
                       {item.freelancer.skills.slice(0, 5).map((skill: string) => (
@@ -353,9 +357,16 @@ export default function ClientDashboardPage() {
                         </Badge>
                       </Group>
                     </Group>
-                    <Text fz="sm" c="dimmed">
-                      {team.reason}
-                    </Text>
+                    <KbsExplanationPanel
+                      score={team.finalScore}
+                      reason={team.reason}
+                      matchedSkills={team.coveredSkills}
+                      missingSkills={team.missingSkills}
+                      scoreBreakdown={team.scoreBreakdown}
+                      evidence={{ evidenceSkills: team.evidenceSkills }}
+                      graphPath="Team graph evidence: combined skill coverage, complementary roles, CV project evidence, experience, shared graph context"
+                      color="teal"
+                    />
                     <Group gap="xs" wrap="wrap">
                       {team.members.map((member) => (
                         <Badge key={member.userId} color="teal" variant="light">

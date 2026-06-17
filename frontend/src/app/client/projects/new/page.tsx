@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -19,7 +19,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
-import { projectApi } from "@/lib/api";
+import { projectApi, skillApi } from "@/lib/api";
 
 const SKILL_OPTIONS = [
   "React",
@@ -44,19 +44,48 @@ const SKILL_OPTIONS = [
   "Webhooks",
 ];
 
+function normalizeSkills(values: string[]) {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const value of values) {
+    const skill = value.trim().replace(/\s+/g, " ");
+    const key = skill.toLowerCase();
+    if (!skill || seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(skill);
+  }
+
+  return normalized;
+}
+
 export default function CreateProjectPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState<number | "">("");
   const [skills, setSkills] = useState<string[]>([]);
+  const [skillOptions, setSkillOptions] = useState<string[]>(SKILL_OPTIONS);
   const [timeline, setTimeline] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    skillApi
+      .list()
+      .then((data) => {
+        const loadedSkills = data.skills.map((skill) => skill.name);
+        setSkillOptions(normalizeSkills([...SKILL_OPTIONS, ...loadedSkills]));
+      })
+      .catch(() => {
+        setSkillOptions(SKILL_OPTIONS);
+      });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description || !budget || skills.length === 0) return;
+    const cleanedSkills = normalizeSkills(skills);
+    if (!title || !description || !budget || cleanedSkills.length === 0) return;
 
     setSubmitting(true);
     setError(null);
@@ -65,7 +94,7 @@ export default function CreateProjectPage() {
         title,
         description,
         budget: Number(budget),
-        skills,
+        skills: cleanedSkills,
         timeline: timeline || undefined,
       });
       notifications.show({
@@ -168,12 +197,13 @@ export default function CreateProjectPage() {
 
             <TagsInput
               label="Required Skills"
-              placeholder="Type a skill and press Enter"
-              data={SKILL_OPTIONS}
+              placeholder="Type any skill and press Enter, even if it is not listed"
+              data={normalizeSkills([...skillOptions, ...skills])}
               value={skills}
-              onChange={setSkills}
+              onChange={(values) => setSkills(normalizeSkills(values))}
               clearable
               required
+              description="Choose from suggestions or add a custom skill. Custom skills are saved with the project and used by KBS recommendations."
               styles={{
                 label: { color: "var(--app-text)", fontWeight: 600 },
                 option: { color: "var(--app-text)" },

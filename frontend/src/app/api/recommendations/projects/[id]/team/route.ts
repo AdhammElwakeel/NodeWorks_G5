@@ -89,9 +89,18 @@ export async function GET(
       technicalScore: team.technicalScore,
       synergyScore: team.synergyScore,
       coverageScore: team.coverageScore,
+      roleScore: team.roleScore,
+      projectEvidenceScore: team.projectEvidenceScore,
+      experienceScore: team.experienceScore,
+      availabilityScore: team.availabilityScore,
+      budgetFitScore: team.budgetFitScore,
+      complementarityScore: team.complementarityScore,
+      sharedContextScore: team.sharedContextScore,
+      scoreBreakdown: team.scoreBreakdown,
       reason: team.reason,
       coveredSkills: team.coveredSkills || [],
       missingSkills: team.missingSkills || [],
+      evidenceSkills: team.evidenceSkills || [],
       sharedEntities: team.sharedEntities || [],
       members: team.members
         .map((member: any) => {
@@ -106,8 +115,10 @@ export async function GET(
             hourlyRate: profile.hourlyRate,
             skills: profile.skills || [],
             coveredSkills: member.coveredSkills || [],
+            evidenceSkills: member.evidenceSkills || [],
             bestRole: member.bestRole,
             bestRoleScore: member.bestRoleScore,
+            roleFitScore: member.roleFitScore,
           };
         })
         .filter(Boolean),
