@@ -7,6 +7,7 @@ only when the user manually syncs a freelancer profile or project.
 
 import asyncio
 from datetime import datetime, timezone
+import json
 import os
 from pathlib import Path
 import re
@@ -19,15 +20,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from neo4j import GraphDatabase
 from neo4j.exceptions import Neo4jError
+from openai import OpenAI
 from pydantic import BaseModel, Field
 
 
 ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(dotenv_path=ROOT_DIR / ".env")
 load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
+RECOMMENDATION_MIN_SCORE = float(os.getenv("RECOMMENDATION_MIN_SCORE", "55"))
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "MergedCVAnalyzer-with-KBS"))
 from cv_analysis_module import process_cv
+from cv_analysis_module.config import MODEL_NAME, OPENCODE_GO_API_KEY, OPENCODE_GO_BASE_URL
 
 
 class FreelancerIngestRequest(BaseModel):
@@ -69,6 +73,16 @@ class ProjectTeamRecommendationRequest(BaseModel):
     excludeUserIds: list[str] = Field(default_factory=list)
 
 
+class ProjectSkillSuggestionRequest(BaseModel):
+    title: str
+    description: str
+    skills: list[str] = Field(default_factory=list)
+
+
+class ProjectSkillSuggestionResponse(BaseModel):
+    skills: list[str]
+
+
 def _clean_string(value: Any) -> str | None:
     if value is None:
         return None
@@ -91,6 +105,82 @@ def _clean_string_list(values: Any) -> list[str]:
             seen.add(key)
             cleaned.append(text)
     return cleaned
+
+
+def _opencode_base_url() -> str:
+    return (OPENCODE_GO_BASE_URL or "").rstrip("/").removesuffix("/chat/completions")
+
+
+def _project_skill_model_id() -> str:
+    model = os.getenv("PROJECT_SKILL_SUGGESTION_MODEL") or MODEL_NAME
+    return model.removeprefix("opencode-go/")
+
+
+def _extract_json_object(text: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else {}
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if not match:
+            return {}
+        try:
+            parsed = json.loads(match.group(0))
+            return parsed if isinstance(parsed, dict) else {}
+        except json.JSONDecodeError:
+            return {}
+
+
+def suggest_project_skills_with_llm(payload: ProjectSkillSuggestionRequest) -> list[str]:
+    title = _clean_string(payload.title)
+    description = _clean_string(payload.description)
+    existing_skills = _clean_string_list(payload.skills)
+
+    if not title or not description:
+        raise ValueError("Project title and description are required")
+    if not OPENCODE_GO_API_KEY or not OPENCODE_GO_BASE_URL:
+        raise RuntimeError("Missing Opencode Go configuration")
+
+    model_id = _project_skill_model_id()
+    if model_id in {"missing-model", "missing-api-key"}:
+        raise RuntimeError("Missing PROJECT_SKILL_SUGGESTION_MODEL or CV_ANALYSIS_MODEL")
+
+    existing_lower = {skill.lower() for skill in existing_skills}
+    client = OpenAI(
+        base_url=_opencode_base_url(),
+        api_key=OPENCODE_GO_API_KEY,
+        timeout=60,
+    )
+
+    prompt = {
+        "project_title": title,
+        "project_description": description,
+        "already_selected_skills": existing_skills,
+    }
+    response = client.chat.completions.create(
+        model=model_id,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a senior technical recruiter for a freelancer marketplace. "
+                    "Infer the concrete skills a client should require from a freelancer based on "
+                    "the project title and description. Return strict JSON only with this shape: "
+                    "{\"skills\":[\"Skill\"]}. Suggest 4 to 10 concise, normalized skill names. "
+                    "Exclude skills already selected by the client. Do not include explanations."
+                ),
+            },
+            {"role": "user", "content": json.dumps(prompt)},
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.2,
+    )
+
+    content = response.choices[0].message.content or "{}"
+    data = _extract_json_object(content)
+    suggestions = _clean_string_list(data.get("skills"))[:10]
+
+    return [skill for skill in suggestions if skill.lower() not in existing_lower]
 
 
 def _cv_value(cv_analysis: dict[str, Any], camel_key: str, snake_key: str) -> Any:
@@ -599,34 +689,141 @@ class KnowledgeGraphService:
             OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(required:Skill)
             WITH f, p, collect(DISTINCT required.name) AS requiredSkills
             OPTIONAL MATCH (f)-[:HAS_SKILL]->(matched:Skill)<-[:REQUIRES_SKILL]-(p)
-            WITH p,
+            WITH f,
+                 p,
                  requiredSkills,
                  collect(DISTINCT matched.name) AS matchedSkills
-            WITH p,
+            OPTIONAL MATCH (f)-[:CREATED_CV_PROJECT]->(cvProject:CvProject)-[:USED_TECH]->(projectSkill:Skill)<-[:REQUIRES_SKILL]-(p)
+            WITH f,
+                 p,
                  requiredSkills,
                  matchedSkills,
-                 [skill IN requiredSkills WHERE NOT skill IN matchedSkills] AS missingSkills
+                 collect(DISTINCT projectSkill.name) AS projectEvidenceSkills,
+                 [detail IN collect(DISTINCT {project: cvProject.name, technology: projectSkill.name}) WHERE detail.technology IS NOT NULL] AS projectEvidenceDetails
+            OPTIONAL MATCH (p)-[:REQUIRES_ROLE]->(requiredRole:Role)
+            WITH f,
+                 p,
+                 requiredSkills,
+                 matchedSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 collect(DISTINCT requiredRole.name) AS requiredRoles
+            OPTIONAL MATCH (f)-[roleMatch:MATCHES_ROLE]->(role:Role)
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 CASE
+                   WHEN role IS NULL THEN 0.0
+                   WHEN size(requiredRoles) = 0 THEN coalesce(roleMatch.score, 0) * 0.5
+                   WHEN any(roleName IN requiredRoles WHERE toLower(role.name) CONTAINS toLower(roleName) OR toLower(roleName) CONTAINS toLower(role.name)) THEN coalesce(roleMatch.score, 70)
+                   ELSE 0.0
+                 END AS roleScore
+            OPTIONAL MATCH (f)-[worked:WORKED_AT]->(company:Company)
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 [detail IN collect(DISTINCT {company: company.name, role: worked.role, duration: worked.duration}) WHERE detail.company IS NOT NULL] AS experienceDetails
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 [skill IN requiredSkills WHERE NOT skill IN matchedSkills] AS missingSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 experienceDetails,
+                 [detail IN experienceDetails WHERE detail.role IS NOT NULL AND any(roleName IN requiredRoles WHERE toLower(detail.role) CONTAINS toLower(roleName) OR toLower(roleName) CONTAINS toLower(detail.role))] AS relevantExperienceDetails,
+                 [skill IN requiredSkills WHERE skill IN projectEvidenceSkills] AS evidenceSkills
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 missingSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 experienceDetails,
+                 relevantExperienceDetails,
+                 evidenceSkills,
+                 CASE
+                   WHEN size(requiredSkills) = 0 THEN 0.0
+                   ELSE round((toFloat(size(matchedSkills)) / size(requiredSkills)) * 1000) / 10
+                 END AS skillScore,
+                 CASE
+                   WHEN size(relevantExperienceDetails) > 0 THEN 100.0
+                   WHEN size(experienceDetails) >= 2 THEN 80.0
+                   WHEN size(experienceDetails) = 1 THEN 60.0
+                   WHEN f.yearsOfExperience IS NOT NULL THEN 35.0
+                   ELSE 0.0
+                 END AS experienceScore,
+                 CASE
+                   WHEN size(requiredSkills) = 0 THEN 0.0
+                   ELSE round((toFloat(size(evidenceSkills)) / size(requiredSkills)) * 1000) / 10
+                 END AS projectEvidenceScore
             WITH p,
                  requiredSkills,
                  matchedSkills,
                  missingSkills,
-                 CASE
-                   WHEN size(requiredSkills) = 0 THEN 0.0
-                   ELSE round((toFloat(size(matchedSkills)) / size(requiredSkills)) * 1000) / 10
-                 END AS score
-            WHERE score > 0
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 experienceDetails,
+                 relevantExperienceDetails,
+                 skillScore,
+                 experienceScore,
+                 projectEvidenceScore,
+                 round((skillScore * 0.4 + experienceScore * 0.3 + projectEvidenceScore * 0.2 + roleScore * 0.1) * 10) / 10 AS score
+            WHERE score >= $min_score
             RETURN p.projectId AS projectId,
                    score AS score,
                    matchedSkills AS matchedSkills,
                    missingSkills AS missingSkills,
                    requiredSkills AS requiredSkills,
-                   'Matched ' + toString(size(matchedSkills)) + ' of ' + toString(size(requiredSkills)) + ' required skills' AS reason
-            ORDER BY score DESC, size(matchedSkills) DESC, p.syncedAt DESC
+                   role.name AS bestRole,
+                   roleMatch.score AS bestRoleScore,
+                   {
+                     skillScore: skillScore,
+                     experienceScore: experienceScore,
+                     projectEvidenceScore: projectEvidenceScore,
+                     roleScore: round(roleScore * 10) / 10
+                   } AS scoreBreakdown,
+                   {
+                     requiredRoles: requiredRoles,
+                     projectEvidenceSkills: projectEvidenceSkills
+                   } AS evidence,
+                   projectEvidenceDetails AS projectEvidenceDetails,
+                   experienceDetails AS experienceDetails,
+                   relevantExperienceDetails AS relevantExperienceDetails,
+                   'Recommended from graph evidence: ' + toString(size(matchedSkills)) + ' required skills matched, ' + toString(size(experienceDetails)) + ' past experience records, ' + toString(size(projectEvidenceSkills)) + ' CV project skill evidence.' AS reason
+            ORDER BY score DESC, skillScore DESC, experienceScore DESC, projectEvidenceScore DESC, p.syncedAt DESC
             LIMIT $limit
             """,
             user_id=user_id,
             exclude_project_ids=exclude_project_ids,
             limit=limit,
+            min_score=RECOMMENDATION_MIN_SCORE,
         )
         return [dict(record) for record in result]
 
@@ -644,23 +841,111 @@ class KnowledgeGraphService:
             OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(required:Skill)
             WITH p, f, collect(DISTINCT required.name) AS requiredSkills
             OPTIONAL MATCH (f)-[:HAS_SKILL]->(matched:Skill)<-[:REQUIRES_SKILL]-(p)
-            WITH f,
+            WITH p,
+                 f,
                  requiredSkills,
                  collect(DISTINCT matched.name) AS matchedSkills
+            OPTIONAL MATCH (f)-[:CREATED_CV_PROJECT]->(cvProject:CvProject)-[:USED_TECH]->(projectSkill:Skill)<-[:REQUIRES_SKILL]-(p)
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 collect(DISTINCT projectSkill.name) AS projectEvidenceSkills,
+                 [detail IN collect(DISTINCT {project: cvProject.name, technology: projectSkill.name}) WHERE detail.technology IS NOT NULL] AS projectEvidenceDetails
+            OPTIONAL MATCH (p)-[:REQUIRES_ROLE]->(requiredRole:Role)
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 collect(DISTINCT requiredRole.name) AS requiredRoles
+            OPTIONAL MATCH (f)-[roleMatch:MATCHES_ROLE]->(role:Role)
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 CASE
+                   WHEN role IS NULL THEN 0.0
+                   WHEN size(requiredRoles) = 0 THEN coalesce(roleMatch.score, 0) * 0.5
+                   WHEN any(roleName IN requiredRoles WHERE toLower(role.name) CONTAINS toLower(roleName) OR toLower(roleName) CONTAINS toLower(role.name)) THEN coalesce(roleMatch.score, 70)
+                   ELSE 0.0
+                 END AS roleScore
+            OPTIONAL MATCH (f)-[worked:WORKED_AT]->(company:Company)
+            WITH p,
+                 f,
+                 requiredSkills,
+                 matchedSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 [detail IN collect(DISTINCT {company: company.name, role: worked.role, duration: worked.duration}) WHERE detail.company IS NOT NULL] AS experienceDetails
             WITH f,
                  requiredSkills,
                  matchedSkills,
-                 [skill IN requiredSkills WHERE NOT skill IN matchedSkills] AS missingSkills
+                 [skill IN requiredSkills WHERE NOT skill IN matchedSkills] AS missingSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 experienceDetails,
+                 [detail IN experienceDetails WHERE detail.role IS NOT NULL AND any(roleName IN requiredRoles WHERE toLower(detail.role) CONTAINS toLower(roleName) OR toLower(roleName) CONTAINS toLower(detail.role))] AS relevantExperienceDetails,
+                 [skill IN requiredSkills WHERE skill IN projectEvidenceSkills] AS evidenceSkills
             WITH f,
                  requiredSkills,
                  matchedSkills,
                  missingSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 experienceDetails,
+                 relevantExperienceDetails,
+                 evidenceSkills,
                  CASE
                    WHEN size(requiredSkills) = 0 THEN 0.0
                    ELSE round((toFloat(size(matchedSkills)) / size(requiredSkills)) * 1000) / 10
-                 END AS score
-            WHERE score > 0
-            OPTIONAL MATCH (f)-[roleMatch:MATCHES_ROLE]->(role:Role)
+                 END AS skillScore,
+                 CASE
+                   WHEN size(relevantExperienceDetails) > 0 THEN 100.0
+                   WHEN size(experienceDetails) >= 2 THEN 80.0
+                   WHEN size(experienceDetails) = 1 THEN 60.0
+                   WHEN f.yearsOfExperience IS NOT NULL THEN 35.0
+                   ELSE 0.0
+                 END AS experienceScore,
+                 CASE
+                   WHEN size(requiredSkills) = 0 THEN 0.0
+                   ELSE round((toFloat(size(evidenceSkills)) / size(requiredSkills)) * 1000) / 10
+                 END AS projectEvidenceScore
+            WITH f,
+                 requiredSkills,
+                 matchedSkills,
+                 missingSkills,
+                 projectEvidenceSkills,
+                 projectEvidenceDetails,
+                 requiredRoles,
+                 role,
+                 roleMatch,
+                 roleScore,
+                 experienceDetails,
+                 relevantExperienceDetails,
+                 skillScore,
+                 experienceScore,
+                 projectEvidenceScore,
+                 round((skillScore * 0.4 + experienceScore * 0.3 + projectEvidenceScore * 0.2 + roleScore * 0.1) * 10) / 10 AS score
+            WHERE score >= $min_score
             RETURN f.userId AS userId,
                    score AS score,
                    matchedSkills AS matchedSkills,
@@ -668,13 +953,27 @@ class KnowledgeGraphService:
                    requiredSkills AS requiredSkills,
                    role.name AS bestRole,
                    roleMatch.score AS bestRoleScore,
-                   'Matched ' + toString(size(matchedSkills)) + ' of ' + toString(size(requiredSkills)) + ' required skills' AS reason
-            ORDER BY score DESC, coalesce(roleMatch.score, 0) DESC, f.syncedAt DESC
+                   {
+                     skillScore: skillScore,
+                     experienceScore: experienceScore,
+                     projectEvidenceScore: projectEvidenceScore,
+                     roleScore: round(roleScore * 10) / 10
+                   } AS scoreBreakdown,
+                   {
+                     requiredRoles: requiredRoles,
+                     projectEvidenceSkills: projectEvidenceSkills
+                   } AS evidence,
+                   projectEvidenceDetails AS projectEvidenceDetails,
+                   experienceDetails AS experienceDetails,
+                   relevantExperienceDetails AS relevantExperienceDetails,
+                   'Recommended from graph evidence: ' + toString(size(matchedSkills)) + ' required skills matched, ' + toString(size(experienceDetails)) + ' past experience records, ' + toString(size(projectEvidenceSkills)) + ' CV project skill evidence.' AS reason
+            ORDER BY score DESC, skillScore DESC, experienceScore DESC, projectEvidenceScore DESC, f.syncedAt DESC
             LIMIT $limit
             """,
             project_id=project_id,
             exclude_user_ids=exclude_user_ids,
             limit=limit,
+            min_score=RECOMMENDATION_MIN_SCORE,
         )
         return [dict(record) for record in result]
 
@@ -897,6 +1196,19 @@ async def analyze_cv(file: UploadFile = File(...)):
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "ai-kbs"}
+
+
+@app.post("/projects/suggest-skills", response_model=ProjectSkillSuggestionResponse)
+async def suggest_project_skills(payload: ProjectSkillSuggestionRequest) -> dict[str, list[str]]:
+    try:
+        skills = await asyncio.to_thread(suggest_project_skills_with_llm, payload)
+        return {"skills": skills}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Project skill suggestion failed: {exc}") from exc
 
 
 @app.get("/kbs/health")

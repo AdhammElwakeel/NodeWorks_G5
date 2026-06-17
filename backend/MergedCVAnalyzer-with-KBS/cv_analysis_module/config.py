@@ -150,6 +150,7 @@ If a candidate mentions a specific tool or concept that implies a standard skill
     "name": "Full Name",
     "email": "email",
     "phone": "phone",
+    "headline": "Professional headline or title explicitly written in the CV. Use null if not clearly present.",
     "years of experience":"48 months",
     "all_skills": ["Standardized Skill 1", "Standardized Skill 2", ...],
     "experience": [

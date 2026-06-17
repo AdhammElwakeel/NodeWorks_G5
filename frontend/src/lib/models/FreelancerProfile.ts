@@ -28,6 +28,7 @@ export interface ICvAnalysis {
   name?: string;
   email?: string;
   phone?: string;
+  headline?: string;
   yearsOfExperience?: string;
   allSkills?: string[];
   experience?: ICvExperienceItem[];
@@ -37,6 +38,8 @@ export interface ICvAnalysis {
   publications?: ICvProjectItem[];
   bestRole?: string;
   bestScore?: number;
+  roleConfidenceStatus?: "confident" | "needs_user_input";
+  roleConfidenceThreshold?: number;
   roleRankings?: ICvRoleRanking[];
   analyzedAt?: Date;
 }
@@ -121,6 +124,7 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
     name: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
     phone: { type: String, trim: true },
+    headline: { type: String, trim: true },
     yearsOfExperience: { type: String, trim: true },
     allSkills: [{ type: String, trim: true }],
     experience: [CvExperienceItemSchema],
@@ -130,6 +134,11 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
     publications: [CvProjectItemSchema],
     bestRole: { type: String, trim: true },
     bestScore: { type: Number },
+    roleConfidenceStatus: {
+      type: String,
+      enum: ["confident", "needs_user_input"],
+    },
+    roleConfidenceThreshold: { type: Number },
     roleRankings: [CvRoleRankingSchema],
     analyzedAt: { type: Date },
   },
