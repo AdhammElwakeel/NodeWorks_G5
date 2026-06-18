@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Box, Group, Stack, Text } from "@mantine/core";
-import { GitBranch } from "lucide-react";
+import { Badge, Box, Group, Progress, SimpleGrid, Stack, Text, ThemeIcon } from "@mantine/core";
+import { BriefcaseBusiness, GitBranch, Network, Sparkles } from "lucide-react";
 
 function scoreColor(value: number) {
   if (value >= 80) return "green";
@@ -29,8 +29,10 @@ function formatExperience(item: { company?: string; role?: string; duration?: st
 
 export function KbsExplanationPanel({
   score,
+  reason,
   matchedSkills,
   missingSkills,
+  graphPath,
   scoreBreakdown,
   evidence,
   experienceDetails,
@@ -63,16 +65,18 @@ export function KbsExplanationPanel({
     <Box
       p="md"
       style={{
-        borderRadius: "var(--mantine-radius-lg)",
+        borderRadius: "var(--mantine-radius-xl)",
         background:
-          "linear-gradient(135deg, var(--app-bg), rgba(20, 184, 166, 0.06))",
-        border: "1px solid var(--app-border)",
+          "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(20,184,166,0.08), var(--app-bg))",
+        border: "1px solid rgba(148,163,184,0.22)",
       }}
     >
       <Stack gap="sm">
         <Group justify="space-between" align="flex-start">
           <Group gap="xs" align="flex-start">
-            <GitBranch size={14} color={`var(--mantine-color-${color}-6)`} />
+            <ThemeIcon color={color} variant="light" radius="md" size={32}>
+              <GitBranch size={16} />
+            </ThemeIcon>
             <Stack gap={1}>
               <Text fz="sm" fw={800} c="var(--app-text)">
                 {recommendationLabel(score)}
@@ -89,43 +93,72 @@ export function KbsExplanationPanel({
           )}
         </Group>
 
+        {score !== undefined && (
+          <Progress value={Math.min(score, 100)} color={scoreColor(score)} radius="xl" size="sm" />
+        )}
+
+        {reason && (
+          <Text fz="xs" c="dimmed" lineClamp={2}>
+            {reason}
+          </Text>
+        )}
+
         {(matchedSkills.length > 0 || visibleExperience.length > 0 || visibleProjectEvidence.length > 0 || requiredRoles.length > 0) && (
           <Box
-            p="xs"
+            p="sm"
             style={{
-              borderRadius: "var(--mantine-radius-md)",
-              background: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.22)",
+              borderRadius: "var(--mantine-radius-lg)",
+              background: "rgba(255,255,255,0.45)",
+              border: "1px solid rgba(148,163,184,0.18)",
             }}
           >
-            <Stack gap={5}>
-              <Text fz="xs" fw={800} c="var(--app-text)">
-                Why this candidate is recommended
+            <Stack gap="xs">
+              <Text fz="xs" fw={900} c="var(--app-text)" tt="uppercase">
+                Why this match is recommended
               </Text>
-              {matchedSkills.length > 0 && (
-                <Text fz="xs" c="dimmed">
-                  Matched required skills: {matchedSkills.join(", ")}
-                </Text>
-              )}
-              {requiredRoles.length > 0 && roleScore > 0 && (
-                <Text fz="xs" c="dimmed">
-                  Role matches project need: {requiredRoles.join(", ")}
-                </Text>
-              )}
-              {visibleExperience.map((item, index) => (
-                <Text key={`${item.company}-${item.role}-${index}`} fz="xs" c="dimmed">
-                  Past experience: {formatExperience(item)}
-                </Text>
-              ))}
-              {visibleProjectEvidence.map((item, index) => (
-                <Text key={`${item.project}-${item.technology}-${index}`} fz="xs" c="dimmed">
-                  CV project evidence: {item.project || "CV project"} used {item.technology}
-                </Text>
-              ))}
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={6}>
+                {matchedSkills.length > 0 && (
+                  <Group gap={6} wrap="nowrap" align="flex-start">
+                    <Sparkles size={14} color={`var(--mantine-color-${color}-6)`} />
+                    <Text fz="xs" c="dimmed">
+                      Matched skills: {matchedSkills.join(", ")}
+                    </Text>
+                  </Group>
+                )}
+                {requiredRoles.length > 0 && roleScore > 0 && (
+                  <Group gap={6} wrap="nowrap" align="flex-start">
+                    <Network size={14} color="var(--mantine-color-teal-6)" />
+                    <Text fz="xs" c="dimmed">
+                      Role fit: {requiredRoles.join(", ")}
+                    </Text>
+                  </Group>
+                )}
+                {visibleExperience.map((item, index) => (
+                  <Group key={`${item.company}-${item.role}-${index}`} gap={6} wrap="nowrap" align="flex-start">
+                    <BriefcaseBusiness size={14} color="var(--mantine-color-blue-6)" />
+                    <Text fz="xs" c="dimmed">
+                      Experience: {formatExperience(item)}
+                    </Text>
+                  </Group>
+                ))}
+                {visibleProjectEvidence.map((item, index) => (
+                  <Group key={`${item.project}-${item.technology}-${index}`} gap={6} wrap="nowrap" align="flex-start">
+                    <GitBranch size={14} color="var(--mantine-color-violet-6)" />
+                    <Text fz="xs" c="dimmed">
+                      CV evidence: {item.project || "CV project"} used {item.technology}
+                    </Text>
+                  </Group>
+                ))}
+              </SimpleGrid>
               {projectEvidenceSkills.length > 0 && (
-                <Text fz="xs" c="dimmed">
-                  Project evidence skills: {projectEvidenceSkills.join(", ")}
-                </Text>
+                <Group gap={4} wrap="wrap">
+                  <Text fz="xs" fw={700} c="dimmed">Evidence skills:</Text>
+                  {projectEvidenceSkills.map((skill) => (
+                    <Badge key={skill} size="xs" color="teal" variant="light">
+                      {skill}
+                    </Badge>
+                  ))}
+                </Group>
               )}
             </Stack>
           </Box>
@@ -146,6 +179,10 @@ export function KbsExplanationPanel({
             Missing: {missingSkills.join(", ")}
           </Text>
         )}
+
+        <Text fz={10} c="dimmed" opacity={0.75}>
+          Graph path: {graphPath}
+        </Text>
       </Stack>
     </Box>
   );

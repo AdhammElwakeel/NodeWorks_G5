@@ -81,17 +81,34 @@ export async function GET(req: NextRequest) {
       .populate("participants", "name email avatar")
       .lean()) as unknown as PopulatedConversation[];
 
+    const conversationsWithUnread = await Promise.all(
+      conversations.map(async (c) => {
+        const unreadCount = await Message.countDocuments({
+          conversationId: c._id,
+          receiverId: userId,
+          readAt: null,
+        });
+
+        return {
+          id: c._id.toString(),
+          participants: c.participants.map((p) => ({
+            id: p._id.toString(),
+            name: p.name,
+            avatar: p.avatar,
+          })),
+          lastMessage: c.lastMessage,
+          lastMessageAt: c.lastMessageAt,
+          unreadCount,
+        };
+      })
+    );
+
     return NextResponse.json({
-      conversations: conversations.map((c) => ({
-        id: c._id.toString(),
-        participants: c.participants.map((p) => ({
-          id: p._id.toString(),
-          name: p.name,
-          avatar: p.avatar,
-        })),
-        lastMessage: c.lastMessage,
-        lastMessageAt: c.lastMessageAt,
-      })),
+      conversations: conversationsWithUnread,
+      totalUnread: conversationsWithUnread.reduce(
+        (total, conversation) => total + conversation.unreadCount,
+        0
+      ),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to fetch messages";

@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
+  Badge,
   Box,
   Text,
   Stack,
@@ -17,12 +18,13 @@ import {
   Moon,
   Sun,
   Settings,
-  Bell,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import type { Section } from "./types";
+import { messageApi } from "@/lib/api";
 
 interface SidebarProps {
   activeSection: Section;
@@ -36,6 +38,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const { user, logout } = useAuth();
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const isDark = colorScheme === "dark";
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const displayName = user?.name || "User";
   const initials = displayName
@@ -45,15 +48,42 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  const isDashboardActive = pathname === "/freelancer/dashboard";
   const isProfileActive = pathname === "/freelancer/profile";
   const isBrowseActive = pathname === "/freelancer/jobs";
+  const isInboxActive = pathname === "/freelancer/messages";
+
+  useEffect(() => {
+    if (!user) return;
+
+    let cancelled = false;
+    const loadUnread = () => {
+      messageApi
+        .conversations()
+        .then((data) => {
+          if (!cancelled) setUnreadCount(data.totalUnread || 0);
+        })
+        .catch(() => {
+          if (!cancelled) setUnreadCount(0);
+        });
+
+    };
+
+    queueMicrotask(loadUnread);
+    window.addEventListener("messages:read", loadUnread);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("messages:read", loadUnread);
+    };
+  }, [pathname, user]);
 
   const navItems = [
     {
       icon: <Home size={20} />,
       label: "Home",
       section: "home" as Section,
-      active: activeSection === "home" && !isBrowseActive,
+      active: isDashboardActive && activeSection === "home",
     },
     {
       icon: <Briefcase size={20} />,
@@ -65,13 +95,22 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       icon: <Wallet size={20} />,
       label: "Earning",
       section: "earnings" as Section,
-      active: activeSection === "earnings" && !isBrowseActive,
+      active: isDashboardActive && activeSection === "earnings",
+    },
+    {
+      icon: <MessageSquare size={20} />,
+      label: "Inbox",
+      section: "inbox" as Section,
+      active: isInboxActive,
+      badge: unreadCount,
     },
   ];
 
   const handleNavClick = (section: Section) => {
     if (section === "browse") {
       router.push("/freelancer/jobs");
+    } else if (section === "inbox") {
+      router.push("/freelancer/messages");
     } else if (pathname === "/freelancer/dashboard") {
       onSectionChange(section);
     } else {
@@ -95,16 +134,20 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const navIconLeft = RAIL_CENTER_X - SIDE_PADDING - NAV_ICON_SIZE / 2;
   const sidebarWidth = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
 
+  const unreadLabel = unreadCount > 9 ? "9+" : String(unreadCount);
+
   const bottomItem = ({
     icon,
     label,
     onClick,
     active = false,
+    badge = 0,
   }: {
     icon: ReactNode;
     label: string;
     onClick?: () => void;
     active?: boolean;
+    badge?: number;
   }) => (
     <Box
       onClick={onClick}
@@ -143,14 +186,44 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
           width: 28,
           height: 28,
           flexShrink: 0,
+          position: "relative",
         }}
       >
         {icon}
+        {!isExpanded && badge > 0 && (
+          <Box
+            style={{
+              position: "absolute",
+              top: -7,
+              right: -9,
+              minWidth: 18,
+              height: 18,
+              padding: "0 5px",
+              borderRadius: 999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "linear-gradient(135deg, #ef4444, #f97316)",
+              color: "white",
+              fontSize: 10,
+              fontWeight: 800,
+              lineHeight: 1,
+              boxShadow: "0 0 0 3px var(--app-sidebar), 0 8px 18px rgba(239,68,68,0.35)",
+            }}
+          >
+            {badge > 9 ? "9+" : badge}
+          </Box>
+        )}
       </Box>
       {isExpanded && (
         <Text fz="sm" fw={active ? 600 : 500} style={{ flex: 1 }}>
           {label}
         </Text>
+      )}
+      {isExpanded && badge > 0 && (
+        <Badge size="xs" color="red" variant="filled" style={{ flexShrink: 0 }}>
+          {badge > 9 ? "9+" : badge}
+        </Badge>
       )}
     </Box>
   );
@@ -270,9 +343,34 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                 flexShrink: 0,
                 color: item.active ? "#06b6d4" : "inherit",
                 transition: "color 0.2s",
+                position: "relative",
               }}
             >
               {item.icon}
+              {!isExpanded && (item.badge || 0) > 0 && (
+                <Box
+                  style={{
+                    position: "absolute",
+                    top: -7,
+                    right: -9,
+                    minWidth: 18,
+                    height: 18,
+                    padding: "0 5px",
+                    borderRadius: 999,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "linear-gradient(135deg, #ef4444, #f97316)",
+                    color: "white",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    lineHeight: 1,
+                    boxShadow: "0 0 0 3px var(--app-sidebar), 0 8px 18px rgba(239,68,68,0.35)",
+                  }}
+                >
+                  {unreadLabel}
+                </Box>
+              )}
             </Box>
             {isExpanded && (
               <Text
@@ -286,6 +384,11 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                 {item.label}
               </Text>
             )}
+            {isExpanded && (item.badge || 0) > 0 && (
+              <Badge size="xs" color="red" variant="filled" style={{ flexShrink: 0 }}>
+                {unreadLabel}
+              </Badge>
+            )}
           </Box>
         ))}
       </Stack>
@@ -295,7 +398,6 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
         <Divider color="var(--app-border-subtle)" mb="sm" />
 
         <Stack gap="xs" align="flex-start">
-          {bottomItem({ icon: <Bell size={20} />, label: "Notifications" })}
           {bottomItem({ icon: <Settings size={20} />, label: "Settings" })}
           {bottomItem({
             icon: isDark ? <Sun size={20} /> : <Moon size={20} />,

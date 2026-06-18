@@ -214,7 +214,9 @@ export default function CreateProjectPage() {
               label="Description"
               placeholder="Describe what you need, requirements, deliverables..."
               required
-              minRows={4}
+              autosize
+              minRows={8}
+              maxRows={18}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               styles={{

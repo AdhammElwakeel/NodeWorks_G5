@@ -18,6 +18,7 @@ import {
   Button,
   Loader,
   Pagination,
+  Progress,
   ThemeIcon,
 } from "@mantine/core";
 import {
@@ -326,29 +327,55 @@ function FreelancerDashboardContent() {
                       </Center>
                     </Card>
                   ) : (
-                    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+                    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
                       {jobRecommendations.slice(0, 4).map((item) => (
-                        <Card key={item.project.id} withBorder radius="lg" shadow="sm" bg="var(--app-surface)">
-                          <Stack gap="sm">
-                            <Group justify="space-between" align="flex-start">
-                              <Badge color="violet" variant="filled" radius="sm">
-                                {item.score}% match
-                              </Badge>
-                              <Group gap={4}>
-                                <CircleDollarSign
-                                  size={14}
-                                  strokeWidth={1.8}
-                                  color="var(--mantine-color-cyan-6)"
-                                />
-                                <Text fw={700} fz="sm" c="var(--app-text)">
-                                  ${item.project.budget.toLocaleString()}
-                                </Text>
+                        <Card
+                          key={item.project.id}
+                          withBorder
+                          radius="xl"
+                          shadow="sm"
+                          p="lg"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(99,102,241,0.10), rgba(6,182,212,0.08), var(--app-surface))",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <Stack gap="md">
+                            <Group justify="space-between" align="flex-start" wrap="nowrap">
+                              <Group gap="sm" align="flex-start" wrap="nowrap" style={{ minWidth: 0 }}>
+                                <ThemeIcon size={46} radius="xl" color="violet" variant="light">
+                                  <BadgeCheck size={22} />
+                                </ThemeIcon>
+                                <Stack gap={4} style={{ minWidth: 0 }}>
+                                  <Group gap="xs" wrap="wrap">
+                                    <Badge color="violet" variant="filled" radius="md">
+                                      {item.score}% individual match
+                                    </Badge>
+                                    <Badge color="cyan" variant="light" radius="md">
+                                      Graph matched
+                                    </Badge>
+                                  </Group>
+                                  <Text fw={900} fz="lg" c="var(--app-text)" lineClamp={2}>
+                                    {item.project.title}
+                                  </Text>
+                                </Stack>
                               </Group>
+                              <Card withBorder radius="lg" p="xs" bg="rgba(255,255,255,0.55)" style={{ flexShrink: 0 }}>
+                                <Group gap={4} wrap="nowrap">
+                                  <CircleDollarSign
+                                    size={16}
+                                    strokeWidth={1.8}
+                                    color="var(--mantine-color-green-6)"
+                                  />
+                                  <Text fw={900} fz="sm" c="var(--app-text)">
+                                    ${item.project.budget.toLocaleString()}
+                                  </Text>
+                                </Group>
+                              </Card>
                             </Group>
-                            <Text fw={800} fz="lg" c="var(--app-text)" lineClamp={2}>
-                              {item.project.title}
-                            </Text>
-                            <Text fz="sm" c="dimmed" lineClamp={2}>
+                            <Progress value={item.score} color={item.score >= 80 ? "green" : "violet"} radius="xl" />
+                            <Text fz="sm" c="dimmed" lineClamp={3}>
                               {item.project.description}
                             </Text>
                             <KbsExplanationPanel
@@ -365,7 +392,7 @@ function FreelancerDashboardContent() {
                             />
                             <Group gap="xs" wrap="wrap">
                               {item.matchedSkills.slice(0, 5).map((skill) => (
-                                <Badge key={skill} size="sm" color="cyan" variant="light">
+                                <Badge key={skill} size="sm" color="cyan" variant="light" radius="xl">
                                   {skill}
                                 </Badge>
                               ))}

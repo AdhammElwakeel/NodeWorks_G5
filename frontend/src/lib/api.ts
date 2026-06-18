@@ -68,6 +68,35 @@ export const profileApi = {
     }),
 };
 
+// ─── Freelancers ───────────────────────────────────────────────────────
+
+export interface PublicFreelancerData {
+  id: string;
+  name: string;
+  email?: string;
+  avatar?: string | null;
+  headline?: string;
+  experienceLevel?: string;
+  country?: string;
+  skills: string[];
+  about?: string;
+  hourlyRate?: number;
+  availability?: string;
+  portfolioLinks?: string[];
+  cvAnalysis?: {
+    yearsOfExperience?: string;
+    experience?: { role?: string; company?: string; years?: string }[];
+    projects?: { name?: string; technologies?: string[] }[];
+    bestRole?: string;
+    bestScore?: number;
+  };
+}
+
+export const freelancerApi = {
+  get: (id: string): Promise<{ freelancer: PublicFreelancerData }> =>
+    fetchApi(`/freelancers/${id}`),
+};
+
 // ─── Projects ──────────────────────────────────────────────────────────
 
 export interface ProjectData {
@@ -77,6 +106,7 @@ export interface ProjectData {
   description: string;
   budget: number;
   skills: string[];
+  hiringMode?: "individual" | "team";
   status: "open" | "closed" | "in-progress";
   timeline?: string;
   kbsSync?: {
@@ -113,6 +143,7 @@ export const projectApi = {
     description: string;
     budget: number;
     skills: string[];
+    hiringMode?: "individual" | "team";
     timeline?: string;
   }): Promise<{ project: ProjectData }> =>
     fetchApi("/projects", { method: "POST", body: JSON.stringify(body) }),
@@ -225,10 +256,33 @@ export const skillApi = {
 
 // ─── Messages ──────────────────────────────────────────────────────────
 
+export interface ConversationSummary {
+  id: string;
+  participants: { id: string; name: string; avatar?: string | null }[];
+  lastMessage?: string;
+  lastMessageAt?: string;
+  unreadCount?: number;
+}
+
+export interface MessageData {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  readAt?: string | null;
+  createdAt: string;
+}
+
 export const messageApi = {
-  conversations: () => fetchApi("/messages"),
-  getThread: (withUserId: string) => fetchApi(`/messages?with=${withUserId}`),
-  send: (body: { receiverId: string; content: string }) =>
+  conversations: (): Promise<{
+    conversations: ConversationSummary[];
+    totalUnread?: number;
+  }> => fetchApi("/messages"),
+  getThread: (withUserId: string): Promise<{ messages: MessageData[] }> =>
+    fetchApi(`/messages?with=${withUserId}`),
+  send: (body: { receiverId: string; content: string }): Promise<{
+    message: MessageData;
+  }> =>
     fetchApi("/messages", { method: "POST", body: JSON.stringify(body) }),
 };
 

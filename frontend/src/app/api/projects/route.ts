@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
           description: p.description,
           budget: p.budget,
           skills: p.skills || [],
+          hiringMode: p.hiringMode || "individual",
           status: p.status,
           timeline: p.timeline,
           kbsSync: p.kbsSync,
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, description, budget, skills, timeline } = body;
+    const { title, description, budget, skills, hiringMode, timeline } = body;
 
     if (!title || !description || !budget) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest) {
       description,
       budget,
       skills: skills || [],
+      hiringMode: hiringMode === "team" ? "team" : "individual",
       timeline: timeline || undefined,
       status: "open",
       kbsSync: { status: "not_synced" },
@@ -128,6 +130,7 @@ export async function POST(req: NextRequest) {
           description: project.description,
           budget: project.budget,
           skills: project.skills || [],
+          hiringMode: project.hiringMode || "individual",
           status: project.status,
           timeline: project.timeline,
           kbsSync,

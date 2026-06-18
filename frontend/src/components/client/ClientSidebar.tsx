@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Box, Text, Stack, Group, Avatar, Divider } from "@mantine/core";
-import { LayoutDashboard, FolderOpen, PlusCircle, ChevronRight, LogOut, Building2 } from "lucide-react";
+import { LayoutDashboard, FolderOpen, PlusCircle, MessageSquare, ChevronRight, LogOut, Building2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -75,7 +75,20 @@ export function ClientSidebar() {
     { icon: <LayoutDashboard size={20} />, label: "Dashboard", href: "/client/dashboard" },
     { icon: <FolderOpen size={20} />, label: "My Projects", href: "/client/projects" },
     { icon: <PlusCircle size={20} />, label: "Create Project", href: "/client/projects/new" },
+    { icon: <MessageSquare size={20} />, label: "Inbox", href: "/client/messages" },
   ];
+
+  function isNavActive(href: string) {
+    if (href === "/client/projects") {
+      return pathname === href || (pathname.startsWith("/client/projects/") && pathname !== "/client/projects/new");
+    }
+
+    if (href === "/client/projects/new") {
+      return pathname === href;
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   return (
     <Box
@@ -107,7 +120,7 @@ export function ClientSidebar() {
           Menu
         </Text>
         {navItems.map((item) => (
-          <NavItem key={item.href} {...item} active={pathname === item.href} />
+          <NavItem key={item.href} {...item} active={isNavActive(item.href)} />
         ))}
       </Stack>
 
