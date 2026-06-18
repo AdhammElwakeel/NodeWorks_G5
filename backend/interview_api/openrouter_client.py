@@ -204,3 +204,56 @@ def grade_answer(
             "cheating_flag": False,
         },
     )
+
+
+def grade_english(user_answer: str) -> dict[str, object]:
+    """Assess English quality of an answer: grammar, clarity, vocabulary, coherence."""
+    messages: list[ChatCompletionMessageParam] = [
+        {
+            "role": "system",
+            "content": (
+                "You are an English-language assessor for technical interviews. "
+                "Score the candidate's written English on a scale of 0–10. "
+                "Respond ONLY with valid JSON."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Assess the English quality of this answer:\n\n{user_answer}\n\n"
+                "Grade based on:\n"
+                "- Grammar and sentence structure (30%)\n"
+                "- Clarity and readability (25%)\n"
+                "- Vocabulary and terminology (25%)\n"
+                "- Coherence and flow (20%)\n\n"
+                "Respond in exactly this JSON format:\n"
+                "{\n"
+                '  "score": <0-10>,\n'
+                '  "feedback": "1-2 sentence note on English quality"\n'
+                "}"
+            ),
+        },
+    ]
+    return _call(
+        messages,
+        {"score": 7, "feedback": "Could not assess English automatically."},
+    )
+
+
+def demo_grade(result: str) -> dict[str, object]:
+    """Build a fixed grade for demo bypass (no LLM call). result='right'|'wrong'."""
+    if result == "right":
+        return {
+            "score": 10,
+            "feedback": "Demo: marked as correct.",
+            "cheating_flag": False,
+            "english_score": 9,
+            "english_feedback": "Demo: strong English.",
+        }
+    return {
+        "score": 2,
+        "feedback": "Demo: marked as incorrect.",
+        "cheating_flag": False,
+        "english_score": 4,
+        "english_feedback": "Demo: weak English.",
+    }

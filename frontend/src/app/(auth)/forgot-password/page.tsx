@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Button,
   Title,
@@ -66,7 +67,7 @@ export default function ForgotPasswordPage() {
         <Stack align="center" gap="xl" style={{ position: "relative", zIndex: 1 }}>
           {/* Logo */}
           <Group gap="sm" align="center" wrap="nowrap">
-            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+            <Image src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
             <Text fw={700} fz={32} c="white" lh={1}>
               NodeWorks
             </Text>
@@ -125,7 +126,7 @@ export default function ForgotPasswordPage() {
       >
         {/* Mobile Logo */}
         <Group gap="xs" align="center" mb="xl" hiddenFrom="md" wrap="nowrap">
-          <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+          <Image src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
           <Text fw={700} fz="xl" c="var(--app-text-strong)" lh={1}>
             NodeWorks
           </Text>

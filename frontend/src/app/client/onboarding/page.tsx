@@ -153,7 +153,7 @@ export default function ClientOnboardingPage() {
             </Title>
           </Group>
           <Text c="dimmed" fz="sm">
-            Welcome to NodeWorks Client. Let's find you some talent.
+            Welcome to NodeWorks Client. Let&apos;s find you some talent.
           </Text>
         </Stack>
 
@@ -255,7 +255,7 @@ export default function ClientOnboardingPage() {
               </Avatar>
               <Stack gap="xs" ta="center">
                 <Title order={4} c="var(--app-text-strong)">
-                  You're all set!
+                  You&apos;re all set!
                 </Title>
                 <Text c="dimmed" fz="sm" maw={360}>
                   Your client profile is ready. You can now post projects and find the perfect freelancers for your needs.

@@ -15,7 +15,7 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { ArrowLeft, ArrowRight, Check, Loader } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 
 interface StepDef {
@@ -167,6 +167,7 @@ export function OnboardingLayout({
                 variant="gradient"
                 gradient={{ from: "teal", to: "cyan", deg: 110 }}
                 loading={loading}
+                disabled={!canContinue}
               >
                 Enter freelancer dashboard
               </Button>

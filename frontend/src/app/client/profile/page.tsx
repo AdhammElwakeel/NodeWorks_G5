@@ -82,7 +82,14 @@ export default function ClientProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    const cp = (user as any).clientProfile || {};
+    const cp = (user.clientProfile ?? {}) as {
+      companyName?: string;
+      industry?: string;
+      companySize?: string;
+      description?: string;
+      website?: string;
+      location?: string;
+    };
     const p = {
       companyName: cp.companyName || user.name || "",
       industry: cp.industry || "",

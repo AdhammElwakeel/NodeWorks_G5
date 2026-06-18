@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type ReactNode } from "react";
 import {
   Box,
@@ -193,7 +194,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
             cursor: "pointer",
           }}
         >
-          <img
+          <Image
             src="/logo.svg"
             alt="NodeWorks"
             width={34}

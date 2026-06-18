@@ -13,6 +13,18 @@ interface FreelancerProfileData {
   availability?: string;
   portfolioLinks?: string[];
   createdAt?: string;
+  cvAnalysis?: Record<string, unknown>;
+  interviewResult?: {
+    overallScore: number;
+    isVerified: boolean;
+    englishScore?: number;
+    penalty?: number;
+    strongSkills?: string[];
+    badgeTier?: "gold" | "silver" | "bronze" | null;
+    skillScores?: { skill: string; score: number }[];
+    completedAt?: string;
+  } | null;
+  isVerified?: boolean;
 }
 
 interface ClientProfileData {

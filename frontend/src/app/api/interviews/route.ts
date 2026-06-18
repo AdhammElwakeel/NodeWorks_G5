@@ -13,7 +13,7 @@ async function getCurrentUser(req: NextRequest) {
   return payload;
 }
 
-// POST /api/interviews - Save interview results
+// POST /api/interviews - Save interview results (latest + push previous to history)
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
@@ -27,10 +27,17 @@ export async function POST(req: NextRequest) {
     const {
       sessionId,
       overallScore,
+      rawScore,
       isVerified,
       totalQuestions,
       cheatingDetected,
       skillScores,
+      englishScore,
+      penalty,
+      penaltyBreakdown,
+      strongSkills,
+      badgeTier,
+      violations,
     } = body;
 
     if (!sessionId || overallScore === undefined) {
@@ -40,23 +47,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update freelancer profile with interview results
+    const newResult = {
+      sessionId,
+      overallScore,
+      rawScore,
+      isVerified: isVerified ?? false,
+      totalQuestions,
+      cheatingDetected: cheatingDetected ?? false,
+      skillScores: skillScores ?? [],
+      completedAt: new Date(),
+      englishScore,
+      penalty,
+      penaltyBreakdown,
+      strongSkills: strongSkills ?? [],
+      badgeTier: badgeTier ?? null,
+      violations: violations ?? 0,
+    };
+
+    // Push the existing interviewResult (if any) into history, then set the new one.
+    const existing = await FreelancerProfile.findOne({ userId: user.userId }).select("interviewResult");
+
+    const updateOps: Record<string, unknown> = {
+      $set: {
+        interviewResult: newResult,
+        isVerified: isVerified ?? false,
+      },
+    };
+
+    if (existing?.interviewResult) {
+      updateOps.$push = { interviewHistory: existing.interviewResult };
+    }
+
     const result = await FreelancerProfile.findOneAndUpdate(
       { userId: user.userId },
-      {
-        $set: {
-          interviewResult: {
-            sessionId,
-            overallScore,
-            isVerified: isVerified ?? false,
-            totalQuestions,
-            cheatingDetected: cheatingDetected ?? false,
-            skillScores: skillScores ?? [],
-            completedAt: new Date(),
-          },
-          isVerified: isVerified ?? false,
-        },
-      },
+      updateOps,
       { upsert: true, new: true },
     );
 
@@ -88,11 +112,12 @@ export async function GET(req: NextRequest) {
     const profile = await FreelancerProfile.findOne({ userId: user.userId });
 
     if (!profile) {
-      return NextResponse.json({ interviewResult: null });
+      return NextResponse.json({ interviewResult: null, interviewHistory: [] });
     }
 
     return NextResponse.json({
       interviewResult: profile.interviewResult || null,
+      interviewHistory: profile.interviewHistory || [],
       isVerified: profile.isVerified || false,
     });
   } catch (error: unknown) {

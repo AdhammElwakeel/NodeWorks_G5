@@ -1,7 +1,10 @@
 from .config import TECH_ROLES
 import re
 
-REQUIRED_YEARS_OF_EPERIENCE=5
+MIN_ROLE_CONFIDENCE = 35.0
+MIN_MATCHED_ROLE_SKILLS = 2
+
+
 def calculate_role_scores(cv_data: dict) -> dict:
     """
     Takes the AI extracted data and calculates matches for specific job roles.
@@ -11,12 +14,6 @@ def calculate_role_scores(cv_data: dict) -> dict:
 
     # 1. Get skills (Gemini has already normalized them now!)
     extracted_skills = cv_data.get("all_skills", [])
-    years_of_experience = cv_data.get("years of experience") or ""
-    matches = re.findall(r'\d+', str(years_of_experience))
-    raw_months = int(matches[0]) if matches else 0
-    # If the string contains "year", treat the number as years → convert to months
-    years = (raw_months * 12 if re.search(r'year', str(years_of_experience), re.I) else raw_months) / 12
-    years = max(years, 0)  # Safety clamp
     # Convert to lowercase set for fast matching
     user_skills_lower = {s.lower() for s in extracted_skills}
     
@@ -38,10 +35,6 @@ def calculate_role_scores(cv_data: dict) -> dict:
         # Calculate Percentage Score
         total_reqs = len(required_skills)
         score = match_count / total_reqs if total_reqs > 0 else 0
-        # Apply experience multiplier — skip if years is unknown (defaults to neutral 1.0)
-        if years > 0:
-            score *= min(REQUIRED_YEARS_OF_EPERIENCE, years) / REQUIRED_YEARS_OF_EPERIENCE
-        # else: unknown experience → don't penalize, leave score as-is
         rankings.append({
             "role": role,
             "score": round(score * 100, 1), # Percentage
@@ -51,10 +44,19 @@ def calculate_role_scores(cv_data: dict) -> dict:
     
     # Sort by highest score
     rankings.sort(key=lambda x: x['score'], reverse=True)
-    
+
     # Add rankings to the original data
-    cv_data["best_role"] = rankings[0]['role']
-    cv_data["best_score"] = rankings[0]['score']
+    best_ranking = rankings[0] if rankings else None
+    has_confident_role = (
+        best_ranking is not None
+        and best_ranking["score"] >= MIN_ROLE_CONFIDENCE
+        and len(best_ranking.get("matched_skills", [])) >= MIN_MATCHED_ROLE_SKILLS
+    )
+
+    cv_data["best_role"] = best_ranking['role'] if has_confident_role else None
+    cv_data["best_score"] = best_ranking['score'] if best_ranking else 0
+    cv_data["role_confidence_threshold"] = MIN_ROLE_CONFIDENCE
+    cv_data["role_confidence_status"] = "confident" if has_confident_role else "needs_user_input"
     cv_data["role_rankings"] = rankings
     
     return cv_data

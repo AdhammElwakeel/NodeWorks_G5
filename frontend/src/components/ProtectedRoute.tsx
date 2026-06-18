@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Loader, Center, Box } from "@mantine/core";
+import { Loader, Center } from "@mantine/core";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

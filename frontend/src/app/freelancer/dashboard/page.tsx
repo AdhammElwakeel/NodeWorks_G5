@@ -17,6 +17,8 @@ import {
   Select,
   Button,
   Loader,
+  Pagination,
+  ThemeIcon,
 } from "@mantine/core";
 import {
   BadgeCheck,
@@ -28,8 +30,10 @@ import {
   SearchX,
   SendHorizontal,
   UsersRound,
+  Cpu,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Link from "next/link";
 import {
   Sidebar,
   EarningsSection,
@@ -43,6 +47,10 @@ import {
 } from "@/components/freelancer/dashboard/data";
 import type { Section } from "@/components/freelancer/dashboard/types";
 import type { ProjectData, ProposalData } from "@/lib/api";
+
+type JobRecommendation = Awaited<ReturnType<typeof recApi.jobs>>["recommendations"][number];
+
+const OPEN_JOBS_PER_PAGE = 6;
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString(undefined, {
@@ -83,17 +91,10 @@ function FreelancerDashboardContent() {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [jobRecommendations, setJobRecommendations] = useState<
-    {
-      score: number;
-      reason: string;
-      matchedSkills: string[];
-      missingSkills: string[];
-      project: ProjectData;
-    }[]
-  >([]);
+  const [jobRecommendations, setJobRecommendations] = useState<JobRecommendation[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
+  const [openJobsPage, setOpenJobsPage] = useState(1);
 
   useEffect(() => {
     Promise.all([
@@ -184,6 +185,15 @@ function FreelancerDashboardContent() {
     () => filteredRecommended,
     [filteredRecommended]
   );
+  const openJobsPageCount = Math.max(
+    1,
+    Math.ceil(displayedRecommended.length / OPEN_JOBS_PER_PAGE)
+  );
+  const currentOpenJobsPage = Math.min(openJobsPage, openJobsPageCount);
+  const paginatedOpenJobs = useMemo(() => {
+    const start = (currentOpenJobsPage - 1) * OPEN_JOBS_PER_PAGE;
+    return displayedRecommended.slice(start, start + OPEN_JOBS_PER_PAGE);
+  }, [currentOpenJobsPage, displayedRecommended]);
   const recommendationStatusLabel = recommendationsLoading
     ? "Preparing matches"
     : recommendedFromKbs
@@ -234,6 +244,37 @@ function FreelancerDashboardContent() {
                     Welcome aboard!
                   </Text>
                 </Stack>
+
+                {/* AI Interview card */}
+                <Card withBorder radius="lg" p="lg" bg="var(--app-surface)">
+                  <Group justify="space-between" align="center" wrap="nowrap">
+                    <Group gap="md" wrap="nowrap">
+                      <ThemeIcon size={44} radius="md" color="cyan" variant="light">
+                        <Cpu size={22} />
+                      </ThemeIcon>
+                      <Stack gap={2}>
+                        <Text fw={700} c="var(--app-text)">
+                          AI Technical Interview
+                        </Text>
+                        <Text fz="sm" c="dimmed">
+                          {user?.freelancerProfile?.interviewResult?.isVerified
+                            ? `Verified · ${user.freelancerProfile.interviewResult.overallScore}% — retake anytime`
+                            : "Earn a verified badge and showcase your strongest skills"}
+                        </Text>
+                      </Stack>
+                    </Group>
+                    <Button
+                      component={Link}
+                      href="/freelancer/interview"
+                      variant="gradient"
+                      gradient={{ from: "cyan", to: "indigo", deg: 135 }}
+                      radius="md"
+                      leftSection={<Cpu size={16} />}
+                    >
+                      {user?.freelancerProfile?.interviewResult ? "Retake" : "Start Test"}
+                    </Button>
+                  </Group>
+                </Card>
 
                 {/* Best Matches */}
                 <Stack gap="md">
@@ -315,6 +356,11 @@ function FreelancerDashboardContent() {
                               reason={item.reason}
                               matchedSkills={item.matchedSkills}
                               missingSkills={item.missingSkills}
+                              scoreBreakdown={item.scoreBreakdown}
+                              evidence={item.evidence}
+                              experienceDetails={item.experienceDetails}
+                              relevantExperienceDetails={item.relevantExperienceDetails}
+                              projectEvidenceDetails={item.projectEvidenceDetails}
                               graphPath="Freelancer - HAS_SKILL -> Skill <- REQUIRES_SKILL - Project"
                             />
                             <Group gap="xs" wrap="wrap">
@@ -358,7 +404,10 @@ function FreelancerDashboardContent() {
                       placeholder="Search jobs by title or keyword..."
                       leftSection={<Search size={16} color="var(--app-muted-soft)" />}
                       value={search}
-                      onChange={(e) => setSearch(e.target.value)}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setOpenJobsPage(1);
+                      }}
                       style={{ flex: 1, minWidth: 250 }}
                       radius="xl"
                       size="md"
@@ -374,7 +423,10 @@ function FreelancerDashboardContent() {
                       placeholder="Filter by skill"
                       data={allJobSkills}
                       value={skillFilter}
-                      onChange={setSkillFilter}
+                      onChange={(value) => {
+                        setSkillFilter(value);
+                        setOpenJobsPage(1);
+                      }}
                       clearable
                       leftSection={<Filter size={16} color="var(--app-muted-soft)" />}
                       style={{ minWidth: 180 }}
@@ -522,12 +574,13 @@ function FreelancerDashboardContent() {
                       </Center>
                     </Card>
                   ) : (
+                    <>
                     <SimpleGrid
                       cols={{ base: 1, sm: 2, lg: 3 }}
                       spacing="md"
-                      style={{ alignItems: "start" }}
+                      style={{ alignItems: "stretch" }}
                     >
-                      {displayedRecommended.map((job) => {
+                      {paginatedOpenJobs.map((job) => {
                         const recommendation = recommendationByProjectId.get(job.id);
                         return (
                         <Card
@@ -535,9 +588,12 @@ function FreelancerDashboardContent() {
                           withBorder
                           radius="md"
                           shadow="sm"
-                          style={{
-                            transition: "all 0.2s ease",
-                          }}
+                           style={{
+                             transition: "all 0.2s ease",
+                             height: "100%",
+                             display: "flex",
+                             flexDirection: "column",
+                           }}
                           onMouseEnter={(e) => {
                             (e.currentTarget as HTMLElement).style.transform =
                               "translateY(-4px)";
@@ -551,7 +607,7 @@ function FreelancerDashboardContent() {
                               "none";
                           }}
                         >
-                          <Stack gap="sm">
+                          <Stack gap="sm" style={{ height: "100%" }}>
                             <Group justify="space-between" align="flex-start">
                               <Badge
                                 color={recommendation ? "violet" : "green"}
@@ -574,24 +630,25 @@ function FreelancerDashboardContent() {
                                 </Text>
                               </Group>
                             </Group>
-                            <Text
-                              fw={700}
-                              c="var(--app-text)"
-                              lineClamp={2}
-                              fz="lg"
-                            >
-                              {job.title || "Untitled project"}
-                            </Text>
-                            {job.description ? (
-                              <Text fz="sm" c="dimmed" lineClamp={3}>
-                                {job.description}
-                              </Text>
-                            ) : (
-                              <Text fz="sm" c="dimmed" fs="italic">
-                                No project description provided yet.
-                              </Text>
-                            )}
-                            <Group gap="xs" wrap="wrap">
+                             <Text
+                               fw={700}
+                               c="var(--app-text)"
+                               lineClamp={2}
+                               fz="lg"
+                               style={{ minHeight: 52 }}
+                             >
+                               {job.title || "Untitled project"}
+                             </Text>
+                             {job.description ? (
+                               <Text fz="sm" c="dimmed" lineClamp={3} style={{ minHeight: 66 }}>
+                                 {job.description}
+                               </Text>
+                             ) : (
+                               <Text fz="sm" c="dimmed" fs="italic" style={{ minHeight: 66 }}>
+                                 No project description provided yet.
+                               </Text>
+                             )}
+                             <Group gap="xs" wrap="wrap" align="flex-start" style={{ minHeight: 58 }}>
                               {job.skills.length > 0 ? (
                                 <>
                                   {job.skills.slice(0, 4).map((s: string) => (
@@ -627,7 +684,7 @@ function FreelancerDashboardContent() {
                                 </Badge>
                               )}
                             </Group>
-                            <Divider />
+                             <Divider style={{ marginTop: "auto" }} />
                             <Group gap="md" wrap="wrap">
                               <Group gap={4} wrap="nowrap">
                                 <CalendarDays
@@ -668,6 +725,18 @@ function FreelancerDashboardContent() {
                         );
                       })}
                     </SimpleGrid>
+                    {displayedRecommended.length > OPEN_JOBS_PER_PAGE && (
+                      <Group justify="center" mt="sm">
+                        <Pagination
+                          value={currentOpenJobsPage}
+                          onChange={setOpenJobsPage}
+                          total={openJobsPageCount}
+                          color="cyan"
+                          radius="md"
+                        />
+                      </Group>
+                    )}
+                    </>
                   )}
                 </Stack>
               </Stack>

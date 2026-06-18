@@ -51,27 +51,27 @@ export async function GET(req: NextRequest) {
     const projectsWithCount = await Promise.all(
       projects.map(async (p) => {
         const count = await Proposal.countDocuments({ projectId: p._id });
-        const obj = p as Record<string, any>;
         return {
-          id: obj._id.toString(),
-          clientId: obj.clientId.toString(),
-          title: obj.title,
-          description: obj.description,
-          budget: obj.budget,
-          skills: obj.skills || [],
-          status: obj.status,
-          timeline: obj.timeline,
-          kbsSync: obj.kbsSync,
-          createdAt: obj.createdAt,
-          updatedAt: obj.updatedAt,
+          id: p._id.toString(),
+          clientId: p.clientId.toString(),
+          title: p.title,
+          description: p.description,
+          budget: p.budget,
+          skills: p.skills || [],
+          status: p.status,
+          timeline: p.timeline,
+          kbsSync: p.kbsSync,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
           proposalsCount: count,
         };
       })
     );
 
     return NextResponse.json({ projects: projectsWithCount });
-  } catch (error: any) {
-    console.error("Projects GET error:", error?.message || error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch projects";
+    console.error("Projects GET error:", message);
     return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
   }
 }
@@ -113,8 +113,8 @@ export async function POST(req: NextRequest) {
     try {
       const sync = await syncProjectToKbs(project._id.toString());
       kbsSync = sync.kbsSync;
-    } catch (syncError: any) {
-      console.warn("Project auto KBS sync failed:", syncError?.message || syncError);
+    } catch (syncError) {
+      console.warn("Project auto KBS sync failed:", syncError instanceof Error ? syncError.message : syncError);
       const refreshedProject = await Project.findById(project._id).lean();
       kbsSync = refreshedProject?.kbsSync || kbsSync;
     }
@@ -138,8 +138,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    console.error("Projects POST error:", error?.message || error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to create project";
+    console.error("Projects POST error:", message);
     return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
   }
 }

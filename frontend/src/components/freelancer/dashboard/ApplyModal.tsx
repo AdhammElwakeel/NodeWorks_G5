@@ -45,8 +45,8 @@ export function ApplyModal({ opened, onClose, job, onSubmit }: ApplyModalProps) 
       setProposedRate("");
       setEstimatedDuration("");
       onClose();
-    } catch (err: any) {
-      setError(err?.message || "Failed to submit. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
     } finally {
       setSubmitting(false);
     }

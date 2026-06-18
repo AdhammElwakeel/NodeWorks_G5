@@ -44,12 +44,10 @@ export async function GET(req: NextRequest) {
         }),
       },
     });
-  } catch (error: any) {
-    console.error("Profile GET error:", error?.message || error);
-    return NextResponse.json(
-      { error: error?.message || "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    console.error("Profile GET error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -93,8 +91,8 @@ export async function PATCH(req: NextRequest) {
 
         try {
           await syncFreelancerToKbs(user._id.toString());
-        } catch (syncError: any) {
-          console.warn("Freelancer auto KBS sync failed:", syncError?.message || syncError);
+        } catch (syncError) {
+          console.warn("Freelancer auto KBS sync failed:", syncError instanceof Error ? syncError.message : syncError);
         }
       } else if (user.role === "client") {
         await ClientProfile.findOneAndUpdate(
@@ -114,11 +112,9 @@ export async function PATCH(req: NextRequest) {
         avatar: user.avatar,
       },
     });
-  } catch (error: any) {
-    console.error("Profile PATCH error:", error?.message || error);
-    return NextResponse.json(
-      { error: error?.message || "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    console.error("Profile PATCH error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

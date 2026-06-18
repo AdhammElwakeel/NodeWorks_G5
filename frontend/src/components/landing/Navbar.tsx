@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Group, Button, Container, Text, Box } from "@mantine/core";
 import Link from "next/link";
 
@@ -21,7 +22,7 @@ export function Navbar() {
         <Group justify="space-between" align="center">
           {/* Logo */}
           <Group gap="xs" align="center" wrap="nowrap">
-            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+            <Image src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
             <Text fw={700} fz="xl" c="var(--app-text-strong)" lh={1}>
               NodeWorks
             </Text>

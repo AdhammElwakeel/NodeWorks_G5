@@ -40,13 +40,14 @@ export async function GET(
         status: project.status,
         timeline: project.timeline,
         kbsSync: project.kbsSync,
-        createdAt: (project as any).createdAt,
-        updatedAt: (project as any).updatedAt,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
         proposalsCount,
       },
     });
-  } catch (error: any) {
-    console.error("Project GET error:", error?.message || error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch project";
+    console.error("Project GET error:", message);
     return NextResponse.json({ error: "Failed to fetch project" }, { status: 500 });
   }
 }
@@ -118,8 +119,8 @@ export async function PATCH(
     if (recommendationDataChanged) {
       try {
         await syncProjectToKbs(project._id.toString());
-      } catch (syncError: any) {
-        console.warn("Project auto KBS sync failed:", syncError?.message || syncError);
+      } catch (syncError) {
+        console.warn("Project auto KBS sync failed:", syncError instanceof Error ? syncError.message : syncError);
       }
     }
 
@@ -140,8 +141,9 @@ export async function PATCH(
         updatedAt: updatedProject?.updatedAt || project.updatedAt,
       },
     });
-  } catch (error: any) {
-    console.error("Project PATCH error:", error?.message || error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update project";
+    console.error("Project PATCH error:", message);
     return NextResponse.json({ error: "Failed to update project" }, { status: 500 });
   }
 }

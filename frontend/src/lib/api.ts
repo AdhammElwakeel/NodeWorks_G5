@@ -1,3 +1,5 @@
+import type { User } from "./auth-context";
+
 const API_BASE = "/api";
 
 export class ApiError extends Error {
@@ -8,10 +10,10 @@ export class ApiError extends Error {
   }
 }
 
-async function fetchApi(
+async function fetchApi<T = unknown>(
   endpoint: string,
   options: RequestInit = {},
-): Promise<any> {
+): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
 
   const res = await fetch(url, {
@@ -29,7 +31,7 @@ async function fetchApi(
     throw new ApiError(data?.error || `HTTP ${res.status}`, res.status);
   }
 
-  return data;
+  return data as T;
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────
@@ -40,25 +42,25 @@ export const authApi = {
     password: string;
     name: string;
     role: "freelancer" | "client";
-  }) =>
+  }): Promise<{ user: User }> =>
     fetchApi("/auth/register", {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  login: (body: { email: string; password: string }) =>
+  login: (body: { email: string; password: string }): Promise<{ user: User }> =>
     fetchApi("/auth/login", { method: "POST", body: JSON.stringify(body) }),
-  me: () => fetchApi("/auth/me"),
+  me: (): Promise<{ user: User }> => fetchApi("/auth/me"),
   logout: () => fetchApi("/auth/logout", { method: "POST" }),
 };
 
 // ─── Profile ───────────────────────────────────────────────────────────
 
 export const profileApi = {
-  get: () => fetchApi("/users/profile"),
+  get: (): Promise<{ user: User }> => fetchApi("/users/profile"),
   update: (body: {
     name?: string;
     avatar?: string;
-    profile?: Record<string, any>;
+    profile?: Record<string, unknown>;
   }) =>
     fetchApi("/users/profile", {
       method: "PATCH",
@@ -114,6 +116,16 @@ export const projectApi = {
     timeline?: string;
   }): Promise<{ project: ProjectData }> =>
     fetchApi("/projects", { method: "POST", body: JSON.stringify(body) }),
+
+  suggestSkills: (body: {
+    title: string;
+    description: string;
+    skills: string[];
+  }): Promise<{ skills: string[] }> =>
+    fetchApi("/projects/suggest-skills", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   update: (
     id: string,
@@ -222,6 +234,18 @@ export const messageApi = {
 
 // ─── Recommendations (stub — AI team feature) ──────────────────────────
 
+export type KbsScoreBreakdown = Record<string, number | undefined>;
+export type KbsEvidence = Record<string, string[] | undefined>;
+export type KbsExperienceDetail = {
+  company?: string;
+  role?: string;
+  duration?: string;
+};
+export type KbsProjectEvidenceDetail = {
+  project?: string;
+  technology?: string;
+};
+
 export const recApi = {
   jobs: (params?: {
     limit?: number;
@@ -232,6 +256,13 @@ export const recApi = {
       matchedSkills: string[];
       missingSkills: string[];
       requiredSkills: string[];
+      bestRole?: string;
+      bestRoleScore?: number;
+      scoreBreakdown?: KbsScoreBreakdown;
+      evidence?: KbsEvidence;
+      experienceDetails?: KbsExperienceDetail[];
+      relevantExperienceDetails?: KbsExperienceDetail[];
+      projectEvidenceDetails?: KbsProjectEvidenceDetail[];
       project: ProjectData;
     }[];
   }> => {
@@ -250,6 +281,11 @@ export const recApi = {
       requiredSkills: string[];
       bestRole?: string;
       bestRoleScore?: number;
+      scoreBreakdown?: KbsScoreBreakdown;
+      evidence?: KbsEvidence;
+      experienceDetails?: KbsExperienceDetail[];
+      relevantExperienceDetails?: KbsExperienceDetail[];
+      projectEvidenceDetails?: KbsProjectEvidenceDetail[];
       freelancer: {
         id: string;
         name: string;
@@ -318,11 +354,11 @@ export const kbsApi = {
   health: () => fetchApi("/kbs/health"),
   syncFreelancer: (): Promise<{
     kbsSync: ProjectData["kbsSync"];
-    result: any;
+    result: unknown;
   }> => fetchApi("/kbs/freelancer/sync", { method: "POST" }),
   syncProject: (
     projectId: string,
-  ): Promise<{ kbsSync: ProjectData["kbsSync"]; result: any }> =>
+  ): Promise<{ kbsSync: ProjectData["kbsSync"]; result: unknown }> =>
     fetchApi(`/kbs/projects/${projectId}/sync`, { method: "POST" }),
   list: (params?: { category?: string; search?: string; mine?: boolean }) => {
     const entries = Object.entries(params || {}).filter(
@@ -334,7 +370,7 @@ export const kbsApi = {
     return fetchApi(`/kbs${qs}`);
   },
   getBySlug: (slug: string) => fetchApi(`/kbs?slug=${slug}`),
-  create: (body: any) =>
+  create: (body: Record<string, unknown>) =>
     fetchApi("/kbs", { method: "POST", body: JSON.stringify(body) }),
 };
 
@@ -369,12 +405,17 @@ export const interviewApi = {
       method: "POST",
       body: JSON.stringify(body ?? {}),
     }),
-  submitAnswer: (body: { sessionId: string; answer: string }) =>
+  submitAnswer: (body: {
+    sessionId: string;
+    answer: string;
+    demoResult?: "right" | "wrong";
+  }) =>
     fetchApi("/interview/submit-answer", {
       method: "POST",
       body: JSON.stringify({
         session_id: body.sessionId,
         answer: body.answer,
+        demo_result: body.demoResult ?? null,
       }),
     }),
   reportViolation: (body: {
@@ -393,6 +434,7 @@ export const interviewApi = {
   saveResult: (body: {
     sessionId: string;
     overallScore: number;
+    rawScore?: number;
     isVerified: boolean;
     totalQuestions: number;
     cheatingDetected: boolean;
@@ -401,6 +443,12 @@ export const interviewApi = {
       score: number;
       questionsAsked: number;
     }>;
+    englishScore?: number;
+    penalty?: number;
+    penaltyBreakdown?: { violations: number; cheatFlags: number; total: number };
+    strongSkills?: string[];
+    badgeTier?: "gold" | "silver" | "bronze" | null;
+    violations?: number;
   }) =>
     fetchApi("/interviews", {
       method: "POST",

@@ -3,6 +3,28 @@ import { connectDB } from "@/lib/db";
 import { Message, Conversation } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
 
+interface LeanMessageDoc {
+  _id: { toString(): string };
+  senderId: { toString(): string };
+  receiverId: { toString(): string };
+  content: string;
+  readAt?: Date | string | null;
+  createdAt: Date | string;
+}
+
+interface PopulatedParticipant {
+  _id: { toString(): string };
+  name: string | null;
+  avatar: string | null;
+}
+
+interface PopulatedConversation {
+  _id: { toString(): string };
+  participants: PopulatedParticipant[];
+  lastMessage?: string;
+  lastMessageAt?: Date | string;
+}
+
 // GET /api/messages — list conversations or get thread
 // ?with=userId → get conversation with that user
 export async function GET(req: NextRequest) {
@@ -29,9 +51,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ messages: [] });
       }
 
-      const messages = await Message.find({ conversationId: conversation._id })
+      const messages = (await Message.find({ conversationId: conversation._id })
         .sort({ createdAt: 1 })
-        .lean();
+        .lean()) as unknown as LeanMessageDoc[];
 
       // Mark as read
       await Message.updateMany(
@@ -40,7 +62,7 @@ export async function GET(req: NextRequest) {
       );
 
       return NextResponse.json({
-        messages: messages.map((m: any) => ({
+        messages: messages.map((m) => ({
           id: m._id.toString(),
           senderId: m.senderId.toString(),
           receiverId: m.receiverId.toString(),
@@ -52,17 +74,17 @@ export async function GET(req: NextRequest) {
     }
 
     // List all conversations
-    const conversations = await Conversation.find({
+    const conversations = (await Conversation.find({
       participants: userId,
     })
       .sort({ lastMessageAt: -1 })
       .populate("participants", "name email avatar")
-      .lean();
+      .lean()) as unknown as PopulatedConversation[];
 
     return NextResponse.json({
-      conversations: conversations.map((c: any) => ({
+      conversations: conversations.map((c) => ({
         id: c._id.toString(),
-        participants: c.participants.map((p: any) => ({
+        participants: c.participants.map((p) => ({
           id: p._id.toString(),
           name: p.name,
           avatar: p.avatar,
@@ -71,8 +93,9 @@ export async function GET(req: NextRequest) {
         lastMessageAt: c.lastMessageAt,
       })),
     });
-  } catch (error: any) {
-    console.error("Messages GET error:", error?.message || error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch messages";
+    console.error("Messages GET error:", message);
     return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
   }
 }
@@ -132,8 +155,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    console.error("Messages POST error:", error?.message || error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to send message";
+    console.error("Messages POST error:", message);
     return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
   }
 }

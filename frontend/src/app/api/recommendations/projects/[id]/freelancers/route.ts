@@ -6,12 +6,52 @@ import { syncProjectToKbs } from "@/lib/server/kbs-sync";
 
 const AI_API_BASE_URL = process.env.AI_API_BASE_URL || "http://localhost:8010";
 
-async function parseApiResponse(response: Response) {
+interface FreelancerRecommendationItem {
+  userId: string;
+  score: number;
+  reason: string;
+  matchedSkills?: string[];
+  missingSkills?: string[];
+  requiredSkills?: string[];
+  bestRole?: string;
+  bestRoleScore?: number;
+  scoreBreakdown?: Record<string, number | undefined>;
+  evidence?: Record<string, string[] | undefined>;
+  experienceDetails?: unknown[];
+  relevantExperienceDetails?: unknown[];
+  projectEvidenceDetails?: unknown[];
+}
+
+interface AiApiResponse {
+  recommendations?: FreelancerRecommendationItem[];
+  detail?: string;
+  error?: string;
+}
+
+interface LeanUser {
+  _id: { toString(): string };
+  name: string | null;
+  email: string;
+  avatar: string | null;
+}
+
+interface LeanFreelancerProfile {
+  userId: { toString(): string };
+  headline?: string;
+  experienceLevel?: string;
+  country?: string;
+  hourlyRate?: number;
+  availability?: string;
+  skills?: string[];
+  kbsSync?: { status: string; syncedAt?: string; error?: string };
+}
+
+async function parseApiResponse(response: Response): Promise<AiApiResponse> {
   const text = await response.text();
   if (!text) return {};
 
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as AiApiResponse;
   } catch {
     return { detail: text };
   }
@@ -53,7 +93,7 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const limit = Number(searchParams.get("limit") || 10);
     const proposals = await Proposal.find({ projectId: id }).select("freelancerId").lean();
-    const excludeUserIds = proposals.map((proposal: any) => proposal.freelancerId.toString());
+    const excludeUserIds = proposals.map((proposal) => proposal.freelancerId.toString());
 
     const response = await fetch(`${AI_API_BASE_URL}/recommendations/freelancers`, {
       method: "POST",
@@ -70,18 +110,18 @@ export async function GET(
     }
 
     const recommendations = result.recommendations || [];
-    const userIds = recommendations.map((item: any) => item.userId);
+    const userIds = recommendations.map((item) => item.userId);
     const [users, profiles] = await Promise.all([
       User.find({ _id: { $in: userIds } }).lean(),
       FreelancerProfile.find({ userId: { $in: userIds } }).lean(),
     ]);
-    const userById = new Map(users.map((user: any) => [user._id.toString(), user]));
+    const userById = new Map((users as unknown as LeanUser[]).map((user) => [user._id.toString(), user]));
     const profileByUserId = new Map(
-      profiles.map((profile: any) => [profile.userId.toString(), profile])
+      (profiles as unknown as LeanFreelancerProfile[]).map((profile) => [profile.userId.toString(), profile])
     );
 
     const enriched = recommendations
-      .map((item: any) => {
+      .map((item) => {
         const user = userById.get(item.userId);
         const profile = profileByUserId.get(item.userId);
         if (!user || !profile) return null;
@@ -94,6 +134,11 @@ export async function GET(
           requiredSkills: item.requiredSkills || [],
           bestRole: item.bestRole,
           bestRoleScore: item.bestRoleScore,
+          scoreBreakdown: item.scoreBreakdown,
+          evidence: item.evidence,
+          experienceDetails: item.experienceDetails || [],
+          relevantExperienceDetails: item.relevantExperienceDetails || [],
+          projectEvidenceDetails: item.projectEvidenceDetails || [],
           freelancer: {
             id: user._id.toString(),
             name: user.name,
@@ -112,10 +157,8 @@ export async function GET(
       .filter(Boolean);
 
     return NextResponse.json({ recommendations: enriched });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Failed to load freelancer recommendations" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load freelancer recommendations";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

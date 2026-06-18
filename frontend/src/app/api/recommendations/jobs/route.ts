@@ -6,18 +6,54 @@ import { syncFreelancerToKbs } from "@/lib/server/kbs-sync";
 
 const AI_API_BASE_URL = process.env.AI_API_BASE_URL || "http://localhost:8010";
 
-async function parseApiResponse(response: Response) {
+interface LeanProject {
+  _id: { toString(): string };
+  clientId: { toString(): string };
+  title: string;
+  description: string;
+  budget: number;
+  skills: string[];
+  status: string;
+  timeline?: string;
+  kbsSync?: { status: string; syncedAt?: string; error?: string };
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+interface JobRecommendationItem {
+  projectId: string;
+  score: number;
+  reason: string;
+  matchedSkills?: string[];
+  missingSkills?: string[];
+  requiredSkills?: string[];
+  bestRole?: string;
+  bestRoleScore?: number;
+  scoreBreakdown?: Record<string, number | undefined>;
+  evidence?: Record<string, string[] | undefined>;
+  experienceDetails?: unknown[];
+  relevantExperienceDetails?: unknown[];
+  projectEvidenceDetails?: unknown[];
+}
+
+interface AiApiResponse {
+  recommendations?: JobRecommendationItem[];
+  detail?: string;
+  error?: string;
+}
+
+async function parseApiResponse(response: Response): Promise<AiApiResponse> {
   const text = await response.text();
   if (!text) return {};
 
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as AiApiResponse;
   } catch {
     return { detail: text };
   }
 }
 
-function serializeProject(project: any, proposalsCount: number) {
+function serializeProject(project: LeanProject, proposalsCount: number) {
   return {
     id: project._id.toString(),
     clientId: project.clientId.toString(),
@@ -61,7 +97,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const limit = Number(searchParams.get("limit") || 10);
     const applied = await Proposal.find({ freelancerId: payload.userId }).select("projectId").lean();
-    const excludeProjectIds = applied.map((proposal: any) => proposal.projectId.toString());
+    const excludeProjectIds = applied.map((proposal) => proposal.projectId.toString());
 
     const response = await fetch(`${AI_API_BASE_URL}/recommendations/jobs`, {
       method: "POST",
@@ -78,12 +114,12 @@ export async function GET(req: NextRequest) {
     }
 
     const recommendations = result.recommendations || [];
-    const projectIds = recommendations.map((item: any) => item.projectId);
-    const projects = await Project.find({ _id: { $in: projectIds }, status: "open" }).lean();
-    const projectById = new Map(projects.map((project: any) => [project._id.toString(), project]));
+    const projectIds = recommendations.map((item) => item.projectId);
+    const projects = (await Project.find({ _id: { $in: projectIds }, status: "open" }).lean()) as unknown as LeanProject[];
+    const projectById = new Map(projects.map((project) => [project._id.toString(), project]));
 
     const enriched = await Promise.all(
-      recommendations.map(async (item: any) => {
+      recommendations.map(async (item) => {
         const project = projectById.get(item.projectId);
         if (!project) return null;
         const proposalsCount = await Proposal.countDocuments({ projectId: project._id });
@@ -93,16 +129,21 @@ export async function GET(req: NextRequest) {
           matchedSkills: item.matchedSkills || [],
           missingSkills: item.missingSkills || [],
           requiredSkills: item.requiredSkills || [],
+          bestRole: item.bestRole,
+          bestRoleScore: item.bestRoleScore,
+          scoreBreakdown: item.scoreBreakdown,
+          evidence: item.evidence,
+          experienceDetails: item.experienceDetails || [],
+          relevantExperienceDetails: item.relevantExperienceDetails || [],
+          projectEvidenceDetails: item.projectEvidenceDetails || [],
           project: serializeProject(project, proposalsCount),
         };
       })
     );
 
     return NextResponse.json({ recommendations: enriched.filter(Boolean) });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Failed to load job recommendations" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load job recommendations";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Container, Box, Group, Text } from "@mantine/core";
 
 export function Footer() {
@@ -14,7 +15,7 @@ export function Footer() {
         <Group justify="space-between" align="center" wrap="wrap" gap="md">
           {/* Logo */}
           <Group gap="xs" align="center" wrap="nowrap">
-            <img src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
+            <Image src="/logo.svg" alt="NodeWorks" width={34} height={34} style={{ display: "block" }} />
             <Text fw={600} fz="md" c="var(--app-text-strong)" lh={1}>
               NodeWorks
             </Text>

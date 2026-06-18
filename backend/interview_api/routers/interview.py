@@ -7,10 +7,16 @@ from database import (
     create_session, load_session, update_session,
     complete_session, add_question_to_session,
 )
-from openrouter_client import generate_question, generate_followup, grade_answer
+from openrouter_client import generate_question, generate_followup, grade_answer, grade_english, demo_grade
 from config import NUM_SKILLS, FOLLOW_UPS_PER_SKILL, DIFFICULTY, VERIFICATION_THRESHOLD
 
 router = APIRouter(prefix="/api/interview", tags=["interview"])
+
+# ── Penalty configuration ────────────────────────────────────────────────────
+PENALTY_PER_VIOLATION = 5      # points deducted per proctoring violation
+PENALTY_PER_CHEAT_FLAG = 10    # points deducted per LLM-flagged suspicious answer
+PENALTY_CAP = 30               # total penalty cannot exceed this
+STRONG_SKILL_THRESHOLD = 65    # skill score >= this counts as a "strong skill"
 
 # ── Pydantic Models ────────────────────────────────────────────────────────────
 
@@ -23,6 +29,7 @@ class StartInterviewRequest(BaseModel):
 class AnswerRequest(BaseModel):
     session_id: str
     answer: str
+    demo_result: Optional[str] = None  # "right" | "wrong" — bypass LLM for demos
 
 
 class ViolationRequest(BaseModel):
@@ -204,19 +211,27 @@ async def submit_answer(request: AnswerRequest):
     if not current_q:
         raise HTTPException(status_code=400, detail="No pending question found")
 
-    # Grade the answer
-    grade = grade_answer(
-        question_asked=current_q["question_text"],
-        user_answer=request.answer,
-        skill_name=current_q["skill_name"],
-        is_followup=current_q.get("is_followup", False),
-    )
+    # Grade the answer (real LLM, or demo bypass)
+    if request.demo_result in ("right", "wrong"):
+        grade = demo_grade(request.demo_result)
+    else:
+        grade = grade_answer(
+            question_asked=current_q["question_text"],
+            user_answer=request.answer,
+            skill_name=current_q["skill_name"],
+            is_followup=current_q.get("is_followup", False),
+        )
+        english = grade_english(request.answer)
+        grade["english_score"] = english.get("score", 7)
+        grade["english_feedback"] = english.get("feedback", "")
 
     # Update the question record in-place
     current_q["user_answer"] = request.answer
     current_q["score"] = grade.get("score", 5)
     current_q["feedback"] = grade.get("feedback", "")
     current_q["cheating_flag"] = grade.get("cheating_flag", False)
+    current_q["english_score"] = grade.get("english_score", 7)
+    current_q["english_feedback"] = grade.get("english_feedback", "")
     update_session(request.session_id, {"questions": questions})
 
     # Re-load to get fresh state
@@ -284,8 +299,19 @@ async def get_report(session_id: str):
 
 # ── Report Generator ───────────────────────────────────────────────────────────
 
+def _badge_tier(score: float) -> Optional[str]:
+    if score >= 85:
+        return "gold"
+    if score >= 70:
+        return "silver"
+    if score >= 65:
+        return "bronze"
+    return None
+
+
 def _generate_report(session: dict) -> dict:
     questions = session.get("questions", [])
+    violations = session.get("violations", 0)
     if not questions:
         return {
             "session_id": session["session_id"],
@@ -295,9 +321,17 @@ def _generate_report(session: dict) -> dict:
             "skill_scores": [],
             "total_questions": 0,
             "cheating_detected": False,
+            "violations": violations,
+            "english_score": 0,
+            "penalty": 0,
+            "penalty_breakdown": {"violations": 0, "cheat_flags": 0, "total": 0},
+            "strong_skills": [],
+            "badge_tier": None,
         }
 
     skill_map: dict[str, list[float]] = {}
+    english_scores: list[float] = []
+    cheat_flag_count = 0
     cheating_detected = False
 
     for q in questions:
@@ -306,8 +340,11 @@ def _generate_report(session: dict) -> dict:
         skill = q.get("skill_name", "Unknown")
         score = q.get("score", 0) or 0
         skill_map.setdefault(skill, []).append(float(score))
+        if q.get("english_score") is not None:
+            english_scores.append(float(q.get("english_score", 0)))
         if q.get("cheating_flag"):
             cheating_detected = True
+            cheat_flag_count += 1
 
     skill_scores = []
     all_scores: list[float] = []
@@ -317,15 +354,39 @@ def _generate_report(session: dict) -> dict:
         skill_scores.append({"skill": skill, "score": pct, "questions_asked": len(scores)})
         all_scores.extend(scores)
 
-    overall = round((sum(all_scores) / len(all_scores) * 10) if all_scores else 0, 1)
-    is_verified = overall >= VERIFICATION_THRESHOLD and not cheating_detected
+    raw_overall = round((sum(all_scores) / len(all_scores) * 10) if all_scores else 0, 1)
+
+    # ── Penalty system ────────────────────────────────────────────────────────
+    violation_penalty = violations * PENALTY_PER_VIOLATION
+    cheat_penalty = cheat_flag_count * PENALTY_PER_CHEAT_FLAG
+    total_penalty = min(violation_penalty + cheat_penalty, PENALTY_CAP)
+    final_overall = max(0, round(raw_overall - total_penalty, 1))
+
+    # ── English score (percentage) ────────────────────────────────────────────
+    english_pct = round((sum(english_scores) / len(english_scores) * 10) if english_scores else 0, 1)
+
+    # ── Strong skills (verified) ──────────────────────────────────────────────
+    strong_skills = [s["skill"] for s in skill_scores if s["score"] >= STRONG_SKILL_THRESHOLD]
+
+    is_verified = final_overall >= VERIFICATION_THRESHOLD and not cheating_detected
 
     return {
         "session_id": session["session_id"],
         "candidate_id": session["candidate_id"],
-        "overall_score": overall,
+        "overall_score": final_overall,
+        "raw_score": raw_overall,
         "is_verified": is_verified,
         "skill_scores": skill_scores,
         "total_questions": len(questions),
         "cheating_detected": cheating_detected,
+        "violations": violations,
+        "english_score": english_pct,
+        "penalty": total_penalty,
+        "penalty_breakdown": {
+            "violations": violation_penalty,
+            "cheat_flags": cheat_penalty,
+            "total": total_penalty,
+        },
+        "strong_skills": strong_skills,
+        "badge_tier": _badge_tier(final_overall),
     }

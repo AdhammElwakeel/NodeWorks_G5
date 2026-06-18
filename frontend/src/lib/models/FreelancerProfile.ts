@@ -28,6 +28,7 @@ export interface ICvAnalysis {
   name?: string;
   email?: string;
   phone?: string;
+  headline?: string;
   yearsOfExperience?: string;
   allSkills?: string[];
   experience?: ICvExperienceItem[];
@@ -37,6 +38,8 @@ export interface ICvAnalysis {
   publications?: ICvProjectItem[];
   bestRole?: string;
   bestScore?: number;
+  roleConfidenceStatus?: "confident" | "needs_user_input";
+  roleConfidenceThreshold?: number;
   roleRankings?: ICvRoleRanking[];
   analyzedAt?: Date;
 }
@@ -53,14 +56,29 @@ export interface IInterviewSkillScore {
   questionsAsked: number;
 }
 
+export type InterviewBadgeTier = "gold" | "silver" | "bronze";
+
+export interface IInterviewPenaltyBreakdown {
+  violations: number;
+  cheatFlags: number;
+  total: number;
+}
+
 export interface IInterviewResult {
   sessionId: string;
   overallScore: number;
+  rawScore?: number;
   isVerified: boolean;
   totalQuestions: number;
   cheatingDetected: boolean;
   skillScores: IInterviewSkillScore[];
   completedAt: Date;
+  englishScore?: number;
+  penalty?: number;
+  penaltyBreakdown?: IInterviewPenaltyBreakdown;
+  strongSkills?: string[];
+  badgeTier?: InterviewBadgeTier | null;
+  violations?: number;
 }
 
 export interface IFreelancerProfile {
@@ -80,6 +98,7 @@ export interface IFreelancerProfile {
   cvAnalysis?: ICvAnalysis;
   kbsSync?: IKbsSync;
   interviewResult?: IInterviewResult;
+  interviewHistory?: IInterviewResult[];
   isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -111,11 +130,25 @@ const InterviewResultSchema = new mongoose.Schema<IInterviewResult>(
   {
     sessionId: { type: String, required: true, trim: true },
     overallScore: { type: Number, required: true },
+    rawScore: { type: Number },
     isVerified: { type: Boolean, default: false },
     totalQuestions: { type: Number, required: true },
     cheatingDetected: { type: Boolean, default: false },
     skillScores: [InterviewSkillScoreSchema],
     completedAt: { type: Date, default: Date.now },
+    englishScore: { type: Number },
+    penalty: { type: Number },
+    penaltyBreakdown: {
+      violations: { type: Number, default: 0 },
+      cheatFlags: { type: Number, default: 0 },
+      total: { type: Number, default: 0 },
+    },
+    strongSkills: [{ type: String, trim: true }],
+    badgeTier: {
+      type: String,
+      enum: ["gold", "silver", "bronze", null],
+    },
+    violations: { type: Number, default: 0 },
   },
   { _id: false },
 );
@@ -161,6 +194,7 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
     name: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
     phone: { type: String, trim: true },
+    headline: { type: String, trim: true },
     yearsOfExperience: { type: String, trim: true },
     allSkills: [{ type: String, trim: true }],
     experience: [CvExperienceItemSchema],
@@ -170,6 +204,11 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
     publications: [CvProjectItemSchema],
     bestRole: { type: String, trim: true },
     bestScore: { type: Number },
+    roleConfidenceStatus: {
+      type: String,
+      enum: ["confident", "needs_user_input"],
+    },
+    roleConfidenceThreshold: { type: Number },
     roleRankings: [CvRoleRankingSchema],
     analyzedAt: { type: Date },
   },
@@ -201,6 +240,7 @@ const FreelancerProfileSchema = new mongoose.Schema<IFreelancerProfile>(
     cvAnalysis: CvAnalysisSchema,
     kbsSync: { type: KbsSyncSchema, default: () => ({ status: "not_synced" }) },
     interviewResult: InterviewResultSchema,
+    interviewHistory: [InterviewResultSchema],
     isVerified: { type: Boolean, default: false },
   },
   {

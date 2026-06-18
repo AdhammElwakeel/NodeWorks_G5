@@ -301,6 +301,11 @@ export default function ClientDashboardPage() {
                       reason={item.reason}
                       matchedSkills={item.matchedSkills}
                       missingSkills={item.missingSkills}
+                      scoreBreakdown={item.scoreBreakdown}
+                      evidence={item.evidence}
+                      experienceDetails={item.experienceDetails}
+                      relevantExperienceDetails={item.relevantExperienceDetails}
+                      projectEvidenceDetails={item.projectEvidenceDetails}
                       graphPath="Project - REQUIRES_SKILL -> Skill <- HAS_SKILL - Freelancer"
                     />
                     <Group gap="xs" wrap="wrap">

@@ -36,6 +36,11 @@ import {
   GraduationCap,
   FolderOpen,
   Award,
+  Trophy,
+  ShieldCheck,
+  Cpu,
+  Languages,
+  RefreshCw,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -73,6 +78,8 @@ export default function FreelancerProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profileRefreshing, setProfileRefreshing] = useState(false);
+  const [profileRefreshAttempted, setProfileRefreshAttempted] = useState(false);
 
   // CV re-upload state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -145,6 +152,22 @@ export default function FreelancerProfilePage() {
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  useEffect(() => {
+    if (
+      authLoading ||
+      !user ||
+      user.role !== "freelancer" ||
+      user.freelancerProfile ||
+      profileRefreshAttempted
+    ) {
+      return;
+    }
+
+    setProfileRefreshAttempted(true);
+    setProfileRefreshing(true);
+    refreshUser().finally(() => setProfileRefreshing(false));
+  }, [authLoading, profileRefreshAttempted, refreshUser, user]);
 
   // Re-upload CV and auto-fill fields
   const handleCVReUpload = async (file: File | null) => {
@@ -255,7 +278,13 @@ export default function FreelancerProfilePage() {
     }
   };
 
-  if (authLoading || loading) {
+  const waitingForProfileRefresh =
+    !authLoading &&
+    user?.role === "freelancer" &&
+    !user.freelancerProfile &&
+    !profileRefreshAttempted;
+
+  if (authLoading || loading || profileRefreshing || waitingForProfileRefresh) {
     return (
       <ProtectedRoute requiredRole="freelancer">
         <Center style={{ minHeight: "100vh" }}>
@@ -311,6 +340,125 @@ export default function FreelancerProfilePage() {
               Save Changes
             </Button>
           </Group>
+
+          {/* ── Interview Badge Section ────────────────────────── */}
+          {(() => {
+            const ir = user?.freelancerProfile?.interviewResult ?? null;
+            const tierMeta: Record<string, { label: string; color: string; icon: string }> = {
+              gold: { label: "Gold", color: "#f59e0b", icon: "🥇" },
+              silver: { label: "Silver", color: "#94a3b8", icon: "🥈" },
+              bronze: { label: "Bronze", color: "#b45309", icon: "🥉" },
+            };
+            const tier = ir?.badgeTier ? tierMeta[ir.badgeTier] : null;
+            return (
+              <Card withBorder radius="md" bg="white" mb="md">
+                <Group justify="space-between" align="flex-start" mb="sm">
+                  <Group gap="xs">
+                    <Trophy size={18} color="#4f46e5" />
+                    <Text fw={600} c="dark.9">
+                      AI Interview Badge
+                    </Text>
+                  </Group>
+                  {ir ? (
+                    <Badge
+                      color={ir.isVerified ? "teal" : "gray"}
+                      variant="light"
+                      leftSection={<ShieldCheck size={12} />}
+                    >
+                      {ir.isVerified ? "Verified" : "Not verified"}
+                    </Badge>
+                  ) : (
+                    <Badge color="cyan" variant="light">
+                      Not taken
+                    </Badge>
+                  )}
+                </Group>
+
+                {ir ? (
+                  <Stack gap="sm">
+                    <Group gap="md" align="center">
+                      {/* Medallion */}
+                      <Box
+                        style={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: "50%",
+                          background: tier
+                            ? `linear-gradient(135deg, ${tier.color}, ${tier.color}cc)`
+                            : "linear-gradient(135deg, #94a3b8, #64748b)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexDirection: "column",
+                          color: "#fff",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Trophy size={22} />
+                        <Text fw={800} fz={8} ta="center">
+                          {tier ? `${tier.icon} ${tier.label}` : "—"}
+                        </Text>
+                      </Box>
+                      <Stack gap={2}>
+                        <Text fw={700} fz="xl" c="dark.9">
+                          {ir.overallScore}% overall
+                        </Text>
+                        <Group gap="xs">
+                          <Badge size="xs" color="indigo" variant="light" leftSection={<Cpu size={10} />}>
+                            {ir.overallScore}% technical
+                          </Badge>
+                          <Badge size="xs" color="cyan" variant="light" leftSection={<Languages size={10} />}>
+                            {ir.englishScore ?? 0}% english
+                          </Badge>
+                        </Group>
+                      </Stack>
+                    </Group>
+
+                    {ir.strongSkills && ir.strongSkills.length > 0 && (
+                      <Group gap="xs">
+                        <Text fz="xs" c="dimmed">
+                          Strong skills:
+                        </Text>
+                        {ir.strongSkills.slice(0, 6).map((skill) => (
+                          <Badge key={skill} size="xs" color="teal" variant="light">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </Group>
+                    )}
+
+                    <Button
+                      component={Link}
+                      href="/freelancer/interview"
+                      variant="light"
+                      size="sm"
+                      leftSection={<RefreshCw size={14} />}
+                    >
+                      Retake Interview
+                    </Button>
+                  </Stack>
+                ) : (
+                  <Stack gap="sm">
+                    <Text fz="sm" c="dimmed">
+                      Take the AI technical interview to earn a verified badge and
+                      showcase your strongest skills to clients.
+                    </Text>
+                    <Button
+                      component={Link}
+                      href="/freelancer/interview"
+                      variant="gradient"
+                      gradient={{ from: "cyan", to: "indigo", deg: 135 }}
+                      size="sm"
+                      leftSection={<Cpu size={14} />}
+                      style={{ alignSelf: "flex-start" }}
+                    >
+                      Take AI Interview
+                    </Button>
+                  </Stack>
+                )}
+              </Card>
+            );
+          })()}
 
           {/* ── CV Re-Upload Section ────────────────────────────── */}
           <Card withBorder radius="md" bg="white" mb="md">

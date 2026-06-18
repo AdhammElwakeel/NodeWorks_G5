@@ -6,12 +6,53 @@ import { syncProjectToKbs } from "@/lib/server/kbs-sync";
 
 const AI_API_BASE_URL = process.env.AI_API_BASE_URL || "http://localhost:8010";
 
-async function parseApiResponse(response: Response) {
+interface TeamMember {
+  userId: string;
+  coveredSkills?: string[];
+  bestRole?: string;
+  bestRoleScore?: number;
+}
+
+interface TeamRecommendationItem {
+  score: number;
+  finalScore: number;
+  technicalScore: number;
+  synergyScore: number;
+  coverageScore: number;
+  reason: string;
+  coveredSkills?: string[];
+  missingSkills?: string[];
+  sharedEntities?: string[];
+  members: TeamMember[];
+}
+
+interface AiApiResponse {
+  recommendations?: TeamRecommendationItem[];
+  requiredSkills?: string[];
+  requiredRoles?: { name: string; count: number }[];
+  detail?: string;
+  error?: string;
+}
+
+interface LeanUser {
+  _id: { toString(): string };
+  name: string | null;
+}
+
+interface LeanFreelancerProfile {
+  userId: { toString(): string };
+  headline?: string;
+  experienceLevel?: string;
+  hourlyRate?: number;
+  skills?: string[];
+}
+
+async function parseApiResponse(response: Response): Promise<AiApiResponse> {
   const text = await response.text();
   if (!text) return {};
 
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as AiApiResponse;
   } catch {
     return { detail: text };
   }
@@ -54,7 +95,7 @@ export async function GET(
     const limit = Number(searchParams.get("limit") || 3);
     const maxTeamSize = Number(searchParams.get("maxTeamSize") || 4);
     const proposals = await Proposal.find({ projectId: id }).select("freelancerId").lean();
-    const excludeUserIds = proposals.map((proposal: any) => proposal.freelancerId.toString());
+    const excludeUserIds = proposals.map((proposal) => proposal.freelancerId.toString());
 
     const response = await fetch(`${AI_API_BASE_URL}/recommendations/teams`, {
       method: "POST",
@@ -72,18 +113,18 @@ export async function GET(
 
     const teams = result.recommendations || [];
     const userIds = Array.from(
-      new Set(teams.flatMap((team: any) => team.members.map((member: any) => member.userId)))
+      new Set(teams.flatMap((team) => team.members.map((member) => member.userId)))
     );
     const [users, profiles] = await Promise.all([
       User.find({ _id: { $in: userIds } }).lean(),
       FreelancerProfile.find({ userId: { $in: userIds } }).lean(),
     ]);
-    const userById = new Map(users.map((user: any) => [user._id.toString(), user]));
+    const userById = new Map((users as unknown as LeanUser[]).map((user) => [user._id.toString(), user]));
     const profileByUserId = new Map(
-      profiles.map((profile: any) => [profile.userId.toString(), profile])
+      (profiles as unknown as LeanFreelancerProfile[]).map((profile) => [profile.userId.toString(), profile])
     );
 
-    const enriched = teams.map((team: any) => ({
+    const enriched = teams.map((team) => ({
       score: team.score,
       finalScore: team.finalScore,
       technicalScore: team.technicalScore,
@@ -94,7 +135,7 @@ export async function GET(
       missingSkills: team.missingSkills || [],
       sharedEntities: team.sharedEntities || [],
       members: team.members
-        .map((member: any) => {
+        .map((member) => {
           const user = userById.get(member.userId);
           const profile = profileByUserId.get(member.userId);
           if (!user || !profile) return null;
@@ -118,10 +159,8 @@ export async function GET(
       requiredRoles: result.requiredRoles || [],
       recommendations: enriched,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Failed to load team recommendations" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load team recommendations";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
