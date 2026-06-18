@@ -50,6 +50,31 @@ export interface IKbsSync {
   error?: string;
 }
 
+export interface IInterviewSkillScore {
+  skill: string;
+  score: number;
+  questions_asked?: number;
+}
+
+export interface IAiInterviewReport {
+  session_id: string;
+  candidate_id?: string;
+  overall_score: number;
+  raw_score?: number;
+  is_verified: boolean;
+  skill_scores: IInterviewSkillScore[];
+  total_questions: number;
+  cheating_detected?: boolean;
+  violations?: number;
+  violation_types?: string[];
+  violation_reasons?: { type: string; reason: string; occurred_at: Date }[];
+  english_score?: number;
+  penalty?: number;
+  strong_skills?: string[];
+  badge_tier?: "gold" | "silver" | "bronze" | null;
+  completed_at?: Date;
+}
+
 export interface IFreelancerProfile {
   _id: string;
   userId: mongoose.Types.ObjectId;
@@ -65,6 +90,7 @@ export interface IFreelancerProfile {
   cvStoragePath?: string;
   cvUploadedAt?: Date;
   cvAnalysis?: ICvAnalysis;
+  aiInterviewReport?: IAiInterviewReport;
   kbsSync?: IKbsSync;
   createdAt: Date;
   updatedAt: Date;
@@ -145,6 +171,44 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
   { _id: false }
 );
 
+const InterviewSkillScoreSchema = new mongoose.Schema<IInterviewSkillScore>(
+  {
+    skill: { type: String, required: true, trim: true },
+    score: { type: Number, required: true, min: 0, max: 100 },
+    questions_asked: { type: Number, min: 0 },
+  },
+  { _id: false }
+);
+
+const AiInterviewReportSchema = new mongoose.Schema<IAiInterviewReport>(
+  {
+    session_id: { type: String, required: true, trim: true },
+    candidate_id: { type: String, trim: true },
+    overall_score: { type: Number, required: true, min: 0, max: 100 },
+    raw_score: { type: Number, min: 0, max: 100 },
+    is_verified: { type: Boolean, required: true },
+    skill_scores: [InterviewSkillScoreSchema],
+    total_questions: { type: Number, required: true, min: 0 },
+    cheating_detected: { type: Boolean },
+    violations: { type: Number, min: 0 },
+    violation_types: [{ type: String, trim: true }],
+    violation_reasons: [
+      {
+        type: { type: String, trim: true },
+        reason: { type: String, trim: true },
+        occurred_at: { type: Date },
+        _id: false,
+      },
+    ],
+    english_score: { type: Number, min: 0, max: 100 },
+    penalty: { type: Number, min: 0, max: 100 },
+    strong_skills: [{ type: String, trim: true }],
+    badge_tier: { type: String, enum: ["gold", "silver", "bronze", null] },
+    completed_at: { type: Date },
+  },
+  { _id: false }
+);
+
 const FreelancerProfileSchema = new mongoose.Schema<IFreelancerProfile>(
   {
     userId: {
@@ -168,6 +232,7 @@ const FreelancerProfileSchema = new mongoose.Schema<IFreelancerProfile>(
     cvStoragePath: { type: String, trim: true },
     cvUploadedAt: { type: Date },
     cvAnalysis: CvAnalysisSchema,
+    aiInterviewReport: AiInterviewReportSchema,
     kbsSync: { type: KbsSyncSchema, default: () => ({ status: "not_synced" }) },
   },
   {

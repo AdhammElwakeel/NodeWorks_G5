@@ -12,6 +12,9 @@ interface FreelancerProfileData {
   hourlyRate?: number;
   availability?: string;
   portfolioLinks?: string[];
+  cvFileName?: string;
+  cvAnalysis?: Record<string, unknown> | null;
+  aiInterviewReport?: Record<string, unknown> | null;
   createdAt?: string;
 }
 
