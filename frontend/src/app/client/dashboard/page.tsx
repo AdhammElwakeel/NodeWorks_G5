@@ -18,13 +18,15 @@ import {
   Tabs,
   ThemeIcon,
 } from "@mantine/core";
-import { Plus, FolderOpen, CheckCircle, Clock, Sparkles, User, Users, Mail, ArrowUpRight } from "lucide-react";
+import { Plus, FolderOpen, CheckCircle, Clock, Sparkles, User, Users, Mail, ArrowUpRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/client/PageHeader";
 import { StatusBadge } from "@/components/client/StatusBadge";
 import { SkillsTags } from "@/components/client/SkillsTags";
+import { ConfirmModal } from "@/components/client/ConfirmModal";
 import { projectApi, recApi, type ProjectData } from "@/lib/api";
 import { KbsExplanationPanel } from "@/components/kbs/KbsExplanationPanel";
+import { notifications } from "@mantine/notifications";
 
 type FreelancerRecommendation = Awaited<
   ReturnType<typeof recApi.freelancers>
@@ -42,6 +44,8 @@ export default function ClientDashboardPage() {
   const [requiredRoles, setRequiredRoles] = useState<{ name: string; count: number }[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProjectData | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     projectApi
@@ -124,6 +128,33 @@ export default function ClientDashboardPage() {
   const projectOptions = projects
     .filter((project) => project.status === "open")
     .map((project) => ({ value: project.id, label: project.title }));
+
+  async function handleDeleteClosedProject() {
+    if (!deleteTarget) return;
+
+    setDeleting(true);
+    try {
+      await projectApi.remove(deleteTarget.id);
+      setProjects((current) => current.filter((project) => project.id !== deleteTarget.id));
+      if (selectedProjectId === deleteTarget.id) {
+        setSelectedProjectId(null);
+      }
+      notifications.show({
+        title: "Project deleted",
+        message: `"${deleteTarget.title}" was removed from your dashboard.`,
+        color: "green",
+      });
+      setDeleteTarget(null);
+    } catch (error: unknown) {
+      notifications.show({
+        title: "Delete failed",
+        message: error instanceof Error ? error.message : "Failed to delete project.",
+        color: "red",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <Box>
@@ -562,20 +593,37 @@ export default function ClientDashboardPage() {
               withBorder
               radius="md"
               bg="var(--app-surface)"
-              component={Link}
-              href={`/client/projects/${project.id}`}
-              style={{ textDecoration: "none" }}
             >
               <Group justify="space-between" align="flex-start" mb="xs">
-                <Box>
-                  <Text fw={600} c="var(--app-text)" fz="md">
+                <Box style={{ minWidth: 0, flex: 1 }}>
+                  <Text
+                    component={Link}
+                    href={`/client/projects/${project.id}`}
+                    fw={600}
+                    c="var(--app-text)"
+                    fz="md"
+                    style={{ textDecoration: "none" }}
+                  >
                     {project.title}
                   </Text>
                   <Text c="dimmed" fz="sm" lineClamp={1} mt={2}>
                     {project.description}
                   </Text>
                 </Box>
-                <StatusBadge status={project.status} />
+                <Group gap="xs" style={{ flexShrink: 0 }}>
+                  <StatusBadge status={project.status} />
+                  {project.status === "closed" && (
+                    <Button
+                      size="xs"
+                      variant="light"
+                      color="red"
+                      leftSection={<Trash2 size={13} />}
+                      onClick={() => setDeleteTarget(project)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Group>
               </Group>
               <Group gap="xs">
                 <Badge variant="light" color="cyan" size="xs">
@@ -592,6 +640,17 @@ export default function ClientDashboardPage() {
           ))}
         </Stack>
       )}
+
+      <ConfirmModal
+        opened={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteClosedProject}
+        title="Delete Closed Project"
+        description={`Delete "${deleteTarget?.title || "this project"}" permanently? This will also remove its proposals from your dashboard.`}
+        confirmLabel="Delete Project"
+        confirmColor="red"
+        loading={deleting}
+      />
     </Box>
   );
 }

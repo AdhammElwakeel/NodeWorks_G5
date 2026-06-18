@@ -153,3 +153,50 @@ export async function PATCH(
     return NextResponse.json({ error: "Failed to update project" }, { status: 500 });
   }
 }
+
+// DELETE /api/projects/[id] — delete a closed project owned by the current client
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectDB();
+
+    const token = req.cookies.get("token")?.value;
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const payload = await verifyToken(token);
+    if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    if (payload.role !== "client") {
+      return NextResponse.json({ error: "Only clients can delete projects" }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const project = await Project.findById(id);
+
+    if (!project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    if (project.clientId.toString() !== payload.userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (project.status !== "closed") {
+      return NextResponse.json(
+        { error: "Only closed projects can be deleted" },
+        { status: 400 }
+      );
+    }
+
+    const { Proposal } = await import("@/lib/models/Proposal");
+    await Proposal.deleteMany({ projectId: project._id });
+    await project.deleteOne();
+
+    return NextResponse.json({ status: "deleted", projectId: id });
+  } catch (error: unknown) {
+    console.error("Project DELETE error:", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "Failed to delete project" }, { status: 500 });
+  }
+}

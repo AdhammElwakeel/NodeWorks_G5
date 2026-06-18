@@ -164,6 +164,9 @@ export const projectApi = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+
+  remove: (id: string): Promise<{ status: string; projectId: string }> =>
+    fetchApi(`/projects/${id}`, { method: "DELETE" }),
 };
 
 // ─── Proposals ─────────────────────────────────────────────────────────
