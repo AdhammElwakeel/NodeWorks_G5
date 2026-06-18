@@ -66,6 +66,35 @@ export const profileApi = {
     }),
 };
 
+// ─── Freelancers ───────────────────────────────────────────────────────
+
+export interface PublicFreelancerData {
+  id: string;
+  name: string;
+  email?: string;
+  avatar?: string | null;
+  headline?: string;
+  experienceLevel?: string;
+  country?: string;
+  skills: string[];
+  about?: string;
+  hourlyRate?: number;
+  availability?: string;
+  portfolioLinks?: string[];
+  cvAnalysis?: {
+    yearsOfExperience?: string;
+    experience?: { role?: string; company?: string; years?: string }[];
+    projects?: { name?: string; technologies?: string[] }[];
+    bestRole?: string;
+    bestScore?: number;
+  };
+}
+
+export const freelancerApi = {
+  get: (id: string): Promise<{ freelancer: PublicFreelancerData }> =>
+    fetchApi(`/freelancers/${id}`),
+};
+
 // ─── Projects ──────────────────────────────────────────────────────────
 
 export interface ProjectData {
@@ -75,6 +104,7 @@ export interface ProjectData {
   description: string;
   budget: number;
   skills: string[];
+  hiringMode?: "individual" | "team";
   status: "open" | "closed" | "in-progress";
   timeline?: string;
   kbsSync?: {
@@ -111,6 +141,7 @@ export const projectApi = {
     description: string;
     budget: number;
     skills: string[];
+    hiringMode?: "individual" | "team";
     timeline?: string;
   }): Promise<{ project: ProjectData }> =>
     fetchApi("/projects", { method: "POST", body: JSON.stringify(body) }),

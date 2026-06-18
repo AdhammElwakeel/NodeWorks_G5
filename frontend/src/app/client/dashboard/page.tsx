@@ -14,9 +14,11 @@ import {
   Select,
   Avatar,
   Center,
-  Divider,
+  Progress,
+  Tabs,
+  ThemeIcon,
 } from "@mantine/core";
-import { Plus, FolderOpen, CheckCircle, Clock, Sparkles, User, Users } from "lucide-react";
+import { Plus, FolderOpen, CheckCircle, Clock, Sparkles, User, Users, Mail, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/client/PageHeader";
 import { StatusBadge } from "@/components/client/StatusBadge";
@@ -209,23 +211,22 @@ export default function ClientDashboardPage() {
         </Card>
       </SimpleGrid>
 
-      {/* Recommended Freelancers */}
-      <Card withBorder radius="lg" bg="var(--app-surface)" mb="xl" p="lg">
-        <Stack gap="md">
+      <Card withBorder radius="xl" bg="var(--app-surface)" mb="xl" p="lg">
+        <Stack gap="lg">
           <Group justify="space-between" align="flex-start">
             <Stack gap={4}>
               <Group gap="xs">
-                <Sparkles size={20} color="var(--mantine-color-violet-6)" />
-                <Text fw={800} fz="xl" c="var(--app-text)">
-                  Recommended Freelancers
+                <Sparkles size={22} color="var(--mantine-color-violet-6)" />
+                <Text fw={900} fz="xl" c="var(--app-text)">
+                  Recommended hiring paths
                 </Text>
               </Group>
               <Text c="dimmed" fz="sm">
-                Select a project and get graph-ranked freelancers and team options automatically.
+                Select a project, then compare individual freelancers against the best generated team.
               </Text>
             </Stack>
-            <Badge color="violet" variant="light">
-              RecSys + KBS
+            <Badge color="teal" variant="light" size="lg">
+              KBS + RecSys
             </Badge>
           </Group>
 
@@ -241,7 +242,7 @@ export default function ClientDashboardPage() {
           ) : (
             <Card withBorder radius="md" bg="var(--app-bg)" py="lg">
               <Text ta="center" c="dimmed" fz="sm">
-                Create an open project to see freelancer recommendations.
+                Create an open project to see recommendations.
               </Text>
             </Card>
           )}
@@ -269,109 +270,261 @@ export default function ClientDashboardPage() {
             <Text c="orange" fz="sm">
               {recommendationsError}. Your projects are still available below.
             </Text>
-          ) : selectedProjectId && freelancerRecommendations.length === 0 ? (
-            <Text c="dimmed" fz="sm">
-              No synced freelancers match this project yet.
-            </Text>
-          ) : freelancerRecommendations.length > 0 ? (
-            <SimpleGrid cols={{ base: 1, lg: 2 }}>
-              {freelancerRecommendations.slice(0, 4).map((item) => (
-                <Card key={item.freelancer.id} withBorder radius="md" bg="var(--app-bg)">
-                  <Stack gap="sm">
-                    <Group justify="space-between" align="flex-start">
-                      <Group gap="sm">
-                        <Avatar size={44} radius="xl" color="violet" src={item.freelancer.avatar || undefined}>
-                          <User size={22} />
-                        </Avatar>
-                        <Stack gap={2}>
-                          <Text fw={700} c="var(--app-text)">
-                            {item.freelancer.name}
-                          </Text>
-                          <Text fz="sm" c="dimmed" lineClamp={1}>
-                            {item.freelancer.headline || item.bestRole || "Freelancer"}
-                          </Text>
-                        </Stack>
-                      </Group>
-                      <Badge color="violet" variant="filled">
-                        {item.score}% match
-                      </Badge>
-                    </Group>
-                    <KbsExplanationPanel
-                      score={item.score}
-                      reason={item.reason}
-                      matchedSkills={item.matchedSkills}
-                      missingSkills={item.missingSkills}
-                      scoreBreakdown={item.scoreBreakdown}
-                      evidence={item.evidence}
-                      experienceDetails={item.experienceDetails}
-                      relevantExperienceDetails={item.relevantExperienceDetails}
-                      projectEvidenceDetails={item.projectEvidenceDetails}
-                      graphPath="Project - REQUIRES_SKILL -> Skill <- HAS_SKILL - Freelancer"
-                    />
-                    <Group gap="xs" wrap="wrap">
-                      {item.freelancer.skills.slice(0, 5).map((skill: string) => (
-                        <Badge key={skill} size="sm" color="cyan" variant="light">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </Group>
-                    <Group gap="xs">
-                      {item.freelancer.hourlyRate && (
-                        <Badge size="sm" color="green" variant="light">
-                          ${item.freelancer.hourlyRate}/hr
-                        </Badge>
-                      )}
-                      {item.bestRole && (
-                        <Badge size="sm" color="violet" variant="light">
-                          {item.bestRole}
-                        </Badge>
-                      )}
-                    </Group>
-                  </Stack>
-                </Card>
-              ))}
-            </SimpleGrid>
-          ) : null}
+          ) : (
+            <Tabs
+              defaultValue="individual"
+              color="teal"
+              radius="lg"
+              styles={{
+                list: { border: 0, gap: 8 },
+                tab: {
+                  borderRadius: 14,
+                  border: "1px solid var(--app-border)",
+                  fontWeight: 800,
+                  padding: "12px 16px",
+                },
+              }}
+            >
+              <Tabs.List grow>
+                <Tabs.Tab value="individual" leftSection={<User size={16} />}>
+                  <Group gap={8} justify="center" wrap="nowrap">
+                    <Text fz="sm" fw={800}>Individual Freelancers</Text>
+                    <Badge size="xs" color="violet" variant="filled" radius="xl">
+                      {freelancerRecommendations.length}
+                    </Badge>
+                  </Group>
+                </Tabs.Tab>
+                <Tabs.Tab value="team" leftSection={<Users size={16} />}>
+                  <Group gap={8} justify="center" wrap="nowrap">
+                    <Text fz="sm" fw={800}>Best Team</Text>
+                    <Badge size="xs" color="teal" variant="filled" radius="xl">
+                      {teamRecommendations.length}
+                    </Badge>
+                  </Group>
+                </Tabs.Tab>
+              </Tabs.List>
 
-          {teamRecommendations.length > 0 && (
-            <Stack gap="sm">
-              <Divider />
-              <Group gap="xs">
-                <Users size={18} color="var(--mantine-color-teal-6)" />
-                <Text fw={700} c="var(--app-text)">
-                  Suggested Teams
-                </Text>
-              </Group>
-              {teamRecommendations.map((team, index) => (
-                <Card key={`${team.finalScore}-${index}`} withBorder radius="md" bg="var(--app-bg)">
-                  <Stack gap="sm">
-                    <Group justify="space-between">
-                      <Text fw={700} c="var(--app-text)">
-                        Team Option {index + 1}
-                      </Text>
-                      <Group gap="xs">
-                        <Badge color="teal" variant="light">
-                          Final {team.finalScore}
-                        </Badge>
-                        <Badge color="cyan" variant="light">
-                          {team.coverageScore}% coverage
-                        </Badge>
-                      </Group>
-                    </Group>
-                    <Text fz="sm" c="dimmed">
-                      {team.reason}
-                    </Text>
-                    <Group gap="xs" wrap="wrap">
-                      {team.members.map((member) => (
-                        <Badge key={member.userId} color="teal" variant="light">
-                          {member.name}: {member.coveredSkills.slice(0, 2).join(", ")}
-                        </Badge>
-                      ))}
-                    </Group>
+              <Tabs.Panel value="individual" pt="md">
+                {selectedProjectId && freelancerRecommendations.length === 0 ? (
+                  <Text c="dimmed" fz="sm">
+                    No synced freelancers match this project yet.
+                  </Text>
+                ) : (
+                  <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="lg">
+                    {freelancerRecommendations.slice(0, 4).map((item) => (
+                      <Card
+                        key={item.freelancer.id}
+                        withBorder
+                        radius="xl"
+                        p="lg"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, rgba(139,92,246,0.10), rgba(6,182,212,0.08), var(--app-bg))",
+                        }}
+                      >
+                        <Stack gap="md">
+                          <Group justify="space-between" align="flex-start" wrap="nowrap">
+                            <Group gap="sm" align="flex-start" wrap="nowrap" style={{ minWidth: 0 }}>
+                              <Avatar size={58} radius="xl" color="violet" src={item.freelancer.avatar || undefined}>
+                                <User size={28} />
+                              </Avatar>
+                              <Stack gap={4} style={{ minWidth: 0 }}>
+                                <Group gap="xs" wrap="wrap">
+                                  <Badge color="violet" variant="filled" radius="md">
+                                    {item.score}% individual match
+                                  </Badge>
+                                  {item.freelancer.hourlyRate !== undefined && (
+                                    <Badge color="green" variant="light" radius="md">
+                                      ${item.freelancer.hourlyRate}/hr
+                                    </Badge>
+                                  )}
+                                </Group>
+                                <Text fw={900} c="var(--app-text)" lineClamp={1}>
+                                  {item.freelancer.name}
+                                </Text>
+                                <Text fz="sm" c="dimmed" lineClamp={1}>
+                                  {item.freelancer.headline || item.bestRole || "Freelance specialist"}
+                                </Text>
+                              </Stack>
+                            </Group>
+                          </Group>
+
+                          <Progress value={item.score} color={item.score >= 80 ? "green" : "violet"} radius="xl" />
+
+                          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xs">
+                            <Card withBorder radius="lg" p="sm" bg="rgba(255,255,255,0.48)">
+                              <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Match</Text>
+                              <Text fw={900} fz="xl" c="var(--app-text)">{item.score}%</Text>
+                              <Text fz="xs" c="dimmed">Individual fit</Text>
+                            </Card>
+                            <Card withBorder radius="lg" p="sm" bg="rgba(255,255,255,0.48)">
+                              <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Rate</Text>
+                              <Text fw={900} fz="xl" c="var(--app-text)">
+                                {item.freelancer.hourlyRate !== undefined ? `$${item.freelancer.hourlyRate}/hr` : "Open"}
+                              </Text>
+                              <Text fz="xs" c="dimmed">Candidate pricing</Text>
+                            </Card>
+                            <Card withBorder radius="lg" p="sm" bg="rgba(255,255,255,0.48)">
+                              <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Covered</Text>
+                              <Text fw={900} fz="xl" c="var(--app-text)">{item.matchedSkills.length}</Text>
+                              <Text fz="xs" c="dimmed">Required skills</Text>
+                            </Card>
+                          </SimpleGrid>
+
+                          <KbsExplanationPanel
+                            score={item.score}
+                            reason={item.reason}
+                            matchedSkills={item.matchedSkills}
+                            missingSkills={item.missingSkills}
+                            scoreBreakdown={item.scoreBreakdown}
+                            evidence={item.evidence}
+                            experienceDetails={item.experienceDetails}
+                            relevantExperienceDetails={item.relevantExperienceDetails}
+                            projectEvidenceDetails={item.projectEvidenceDetails}
+                            graphPath="Project - REQUIRES_SKILL -> Skill <- HAS_SKILL - Freelancer"
+                          />
+
+                          <Group gap="xs" wrap="wrap">
+                            {item.freelancer.experienceLevel && (
+                              <Badge size="sm" color="gray" variant="light" radius="xl">
+                                {item.freelancer.experienceLevel}
+                              </Badge>
+                            )}
+                            {item.bestRole && (
+                              <Badge size="sm" color="violet" variant="light" radius="xl">
+                                {item.bestRole}
+                              </Badge>
+                            )}
+                            {item.freelancer.skills.slice(0, 5).map((skill: string) => (
+                              <Badge key={skill} size="sm" color="cyan" variant="light" radius="xl">
+                                {skill}
+                              </Badge>
+                            ))}
+                          </Group>
+
+                          <Group grow gap="xs">
+                            <Button
+                              component={Link}
+                              href={`/client/freelancers/${item.freelancer.id}`}
+                              variant="light"
+                              color="gray"
+                              rightSection={<ArrowUpRight size={15} />}
+                            >
+                              View Profile
+                            </Button>
+                            <Button
+                              component={Link}
+                              href={`/client/messages?with=${item.freelancer.id}`}
+                              color="violet"
+                              leftSection={<Mail size={15} />}
+                            >
+                              Message
+                            </Button>
+                          </Group>
+                        </Stack>
+                      </Card>
+                    ))}
+                  </SimpleGrid>
+                )}
+              </Tabs.Panel>
+
+              <Tabs.Panel value="team" pt="md">
+                {selectedProjectId && teamRecommendations.length === 0 ? (
+                  <Text c="dimmed" fz="sm">
+                    No team can cover this project yet.
+                  </Text>
+                ) : (
+                  <Stack gap="md">
+                    {teamRecommendations.map((team, index) => (
+                      <Card
+                        key={`${team.finalScore}-${index}`}
+                        withBorder
+                        radius="xl"
+                        bg="var(--app-bg)"
+                        style={{ background: "linear-gradient(135deg, rgba(20,184,166,0.08), var(--app-bg))" }}
+                      >
+                        <Stack gap="md">
+                          <Group justify="space-between" align="flex-start">
+                            <Group gap="sm" align="flex-start">
+                              <ThemeIcon size={44} radius="xl" color="teal" variant="light">
+                                <Users size={22} />
+                              </ThemeIcon>
+                              <Box>
+                                <Text fw={800} c="var(--app-text)">
+                                  Team Option {index + 1}
+                                </Text>
+                                <Text fz="sm" c="dimmed">
+                                  {team.members.length} candidates · {team.coveredSkills.length} covered skills
+                                </Text>
+                              </Box>
+                            </Group>
+                            <Group gap="xs">
+                              <Badge color="teal" variant="filled">
+                                Final {team.finalScore}
+                              </Badge>
+                              <Badge color="cyan" variant="light">
+                                {team.coverageScore}% coverage
+                              </Badge>
+                            </Group>
+                          </Group>
+                          <Progress value={team.coverageScore} color="teal" radius="xl" />
+                          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="sm">
+                            {team.members.map((member) => (
+                              <Card key={member.userId} withBorder radius="lg" p="sm" bg="var(--app-surface)">
+                                <Stack gap="xs">
+                                  <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                    <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+                                      <Avatar size={40} radius="xl" color="teal">
+                                        <User size={20} />
+                                      </Avatar>
+                                      <Box style={{ minWidth: 0 }}>
+                                        <Text fw={700} fz="sm" c="var(--app-text)" lineClamp={1}>{member.name}</Text>
+                                        <Text fz="xs" c="dimmed" lineClamp={1}>{member.headline || member.bestRole || "Freelancer"}</Text>
+                                      </Box>
+                                    </Group>
+                                    {member.hourlyRate !== undefined && (
+                                      <Badge size="xs" color="green" variant="light" style={{ flexShrink: 0 }}>
+                                        ${member.hourlyRate}/hr
+                                      </Badge>
+                                    )}
+                                  </Group>
+                                  <Group gap={6} wrap="wrap">
+                                    {member.coveredSkills.slice(0, 3).map((skill) => (
+                                      <Badge key={skill} size="xs" color="teal" variant="light">{skill}</Badge>
+                                    ))}
+                                  </Group>
+                                  <Group grow gap="xs">
+                                    <Button
+                                      component={Link}
+                                      href={`/client/freelancers/${member.userId}`}
+                                      size="xs"
+                                      variant="light"
+                                      color="gray"
+                                      rightSection={<ArrowUpRight size={13} />}
+                                    >
+                                      Profile
+                                    </Button>
+                                    <Button
+                                      component={Link}
+                                      href={`/client/messages?with=${member.userId}`}
+                                      size="xs"
+                                      color="teal"
+                                      leftSection={<Mail size={13} />}
+                                    >
+                                      Message
+                                    </Button>
+                                  </Group>
+                                </Stack>
+                              </Card>
+                            ))}
+                          </SimpleGrid>
+                        </Stack>
+                      </Card>
+                    ))}
                   </Stack>
-                </Card>
-              ))}
-            </Stack>
+                )}
+              </Tabs.Panel>
+            </Tabs>
           )}
         </Stack>
       </Card>

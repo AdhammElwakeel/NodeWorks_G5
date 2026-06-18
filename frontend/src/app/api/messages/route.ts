@@ -3,6 +3,28 @@ import { connectDB } from "@/lib/db";
 import { Message, Conversation } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
 
+type LeanMessage = {
+  _id: { toString: () => string };
+  senderId: { toString: () => string };
+  receiverId: { toString: () => string };
+  content: string;
+  readAt?: Date | null;
+  createdAt: Date;
+};
+
+type PopulatedParticipant = {
+  _id: { toString: () => string };
+  name?: string;
+  avatar?: string | null;
+};
+
+type LeanConversation = {
+  _id: { toString: () => string };
+  participants: PopulatedParticipant[];
+  lastMessage?: string;
+  lastMessageAt?: Date;
+};
+
 // GET /api/messages — list conversations or get thread
 // ?with=userId → get conversation with that user
 export async function GET(req: NextRequest) {
@@ -40,7 +62,7 @@ export async function GET(req: NextRequest) {
       );
 
       return NextResponse.json({
-        messages: messages.map((m: any) => ({
+        messages: (messages as LeanMessage[]).map((m) => ({
           id: m._id.toString(),
           senderId: m.senderId.toString(),
           receiverId: m.receiverId.toString(),
@@ -59,20 +81,37 @@ export async function GET(req: NextRequest) {
       .populate("participants", "name email avatar")
       .lean();
 
+    const conversationsWithUnread = await Promise.all(
+      (conversations as LeanConversation[]).map(async (c) => {
+        const unreadCount = await Message.countDocuments({
+          conversationId: c._id,
+          receiverId: userId,
+          readAt: null,
+        });
+
+        return {
+          id: c._id.toString(),
+          participants: c.participants.map((p) => ({
+            id: p._id.toString(),
+            name: p.name,
+            avatar: p.avatar,
+          })),
+          lastMessage: c.lastMessage,
+          lastMessageAt: c.lastMessageAt,
+          unreadCount,
+        };
+      })
+    );
+
     return NextResponse.json({
-      conversations: conversations.map((c: any) => ({
-        id: c._id.toString(),
-        participants: c.participants.map((p: any) => ({
-          id: p._id.toString(),
-          name: p.name,
-          avatar: p.avatar,
-        })),
-        lastMessage: c.lastMessage,
-        lastMessageAt: c.lastMessageAt,
-      })),
+      conversations: conversationsWithUnread,
+      totalUnread: conversationsWithUnread.reduce(
+        (total, conversation) => total + conversation.unreadCount,
+        0
+      ),
     });
-  } catch (error: any) {
-    console.error("Messages GET error:", error?.message || error);
+  } catch (error: unknown) {
+    console.error("Messages GET error:", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
   }
 }
@@ -132,8 +171,8 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    console.error("Messages POST error:", error?.message || error);
+  } catch (error: unknown) {
+    console.error("Messages POST error:", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
   }
 }
