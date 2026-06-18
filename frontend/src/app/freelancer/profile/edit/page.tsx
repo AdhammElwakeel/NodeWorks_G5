@@ -11,12 +11,14 @@ import {
   Text,
   TextInput,
   Textarea,
+  FileInput,
   NumberInput,
   Select,
   TagsInput,
   Title,
   Loader,
   Center,
+  Alert,
 } from "@mantine/core";
 import {
   User,
@@ -25,15 +27,21 @@ import {
   MapPin,
   DollarSign,
   Globe,
+  FileText,
+  BrainCircuit,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/auth-context";
-import { profileApi } from "@/lib/api";
+import { cvApi, profileApi, type InterviewReportData } from "@/lib/api";
 import { notifications } from "@mantine/notifications";
 import Link from "next/link";
+import { AIInterviewStep } from "../../onboarding/components/AIInterviewStep";
+import type { CvData } from "../../onboarding/components/CVUploadStep";
+import type { ProfileData } from "../../onboarding/components/ProfileStep";
 
 const EXPERIENCE_LEVELS = ["Junior", "Mid-level", "Senior", "Lead"];
 const AVAILABILITY_OPTIONS = ["Full-time", "Part-time", "As needed", "Not available"];
+const CV_ANALYSIS_URL = "/api/cv/analyze";
 
 const SKILL_OPTIONS = [
   "React", "Next.js", "Node.js", "TypeScript", "JavaScript",
@@ -49,11 +57,61 @@ const SKILL_OPTIONS = [
   "DevOps", "Linux", "Shell Scripting",
 ];
 
+function normalizeCvAnalysis(cvData: CvData) {
+  return {
+    name: cvData.name,
+    email: cvData.email,
+    phone: cvData.phone,
+    headline: cvData.headline,
+    yearsOfExperience: cvData["years of experience"],
+    allSkills: cvData.all_skills ?? [],
+    experience: cvData.experience ?? [],
+    education: cvData.education ?? [],
+    projects: cvData.projects ?? [],
+    certifications: cvData.certifications ?? [],
+    publications: cvData.Publications ?? [],
+    bestRole: cvData.best_role,
+    bestScore: cvData.best_score,
+    roleConfidenceStatus: cvData.role_confidence_status,
+    roleConfidenceThreshold: cvData.role_confidence_threshold,
+    roleRankings: (cvData.role_rankings ?? []).map((ranking) => ({
+      role: ranking.role,
+      score: ranking.score,
+      matchedSkills: ranking.matched_skills ?? [],
+      missingSkills: ranking.missing_skills ?? [],
+    })),
+    analyzedAt: new Date().toISOString(),
+  };
+}
+
+function cvAnalysisToCvData(value: Record<string, unknown> | null | undefined): CvData | null {
+  if (!value) return null;
+
+  return {
+    name: typeof value.name === "string" ? value.name : undefined,
+    email: typeof value.email === "string" ? value.email : undefined,
+    phone: typeof value.phone === "string" ? value.phone : undefined,
+    headline: typeof value.headline === "string" ? value.headline : undefined,
+    "years of experience": typeof value.yearsOfExperience === "string" ? value.yearsOfExperience : undefined,
+    all_skills: Array.isArray(value.allSkills) ? value.allSkills.filter((item): item is string => typeof item === "string") : [],
+    experience: Array.isArray(value.experience) ? (value.experience as CvData["experience"]) : [],
+    education: Array.isArray(value.education) ? (value.education as CvData["education"]) : [],
+    projects: Array.isArray(value.projects) ? (value.projects as CvData["projects"]) : [],
+    certifications: Array.isArray(value.certifications) ? (value.certifications as CvData["certifications"]) : [],
+    best_role: typeof value.bestRole === "string" ? value.bestRole : undefined,
+    best_score: typeof value.bestScore === "number" ? value.bestScore : undefined,
+  };
+}
+
 export default function EditProfilePage() {
   const { user, refreshUser } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cvUpdating, setCvUpdating] = useState(false);
+  const [retakeOpen, setRetakeOpen] = useState(false);
+  const [cvData, setCvData] = useState<CvData | null>(null);
+  const [interviewReport, setInterviewReport] = useState<InterviewReportData | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -69,19 +127,23 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    const fp = (user as any).freelancerProfile || {};
-    setForm({
-      name: user.name || "",
-      headline: fp.headline || user.name || "",
-      about: fp.about || "",
-      country: fp.country || "",
-      hourlyRate: fp.hourlyRate || 0,
-      experienceLevel: fp.experienceLevel || "",
-      availability: fp.availability || "",
-      skills: fp.skills || [],
-      portfolioLinks: fp.portfolioLinks || [],
+    const fp = user.freelancerProfile || {};
+    queueMicrotask(() => {
+      setForm({
+        name: user.name || "",
+        headline: fp.headline || user.name || "",
+        about: fp.about || "",
+        country: fp.country || "",
+        hourlyRate: fp.hourlyRate || 0,
+        experienceLevel: fp.experienceLevel || "",
+        availability: fp.availability || "",
+        skills: fp.skills || [],
+        portfolioLinks: fp.portfolioLinks || [],
+      });
+      setCvData(cvAnalysisToCvData(fp.cvAnalysis));
+      setInterviewReport((fp.aiInterviewReport as InterviewReportData | null | undefined) ?? null);
+      setLoading(false);
     });
-    setLoading(false);
   }, [user]);
 
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
@@ -92,7 +154,6 @@ export default function EditProfilePage() {
     const missing: string[] = [];
     if (!form.name.trim()) missing.push("full name");
     if (!form.headline.trim()) missing.push("headline");
-    if (!form.about.trim()) missing.push("about you");
     if (!form.country.trim()) missing.push("country");
     if (!form.hourlyRate || form.hourlyRate <= 0) missing.push("hourly rate");
     if (!form.experienceLevel) missing.push("experience level");
@@ -143,6 +204,84 @@ export default function EditProfilePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCvReupload = async (file: File | null) => {
+    if (!file) return;
+
+    setCvUpdating(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(CV_ANALYSIS_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || data?.detail || "CV analysis failed");
+      }
+
+      const extracted: CvData = await response.json();
+      const nextSkills = extracted.all_skills?.length ? extracted.all_skills : form.skills;
+      const nextHeadline = extracted.headline || form.headline;
+      const cvAnalysis = normalizeCvAnalysis(extracted);
+
+      await cvApi.upload(file);
+      await profileApi.update({
+        profile: {
+          headline: nextHeadline,
+          skills: nextSkills,
+          cvAnalysis,
+        },
+      });
+
+      update("headline", nextHeadline);
+      update("skills", nextSkills);
+      setCvData(extracted);
+      await refreshUser();
+
+      notifications.show({
+        title: "CV updated",
+        message: "Your CV contents and profile skills were refreshed.",
+        color: "green",
+      });
+    } catch (error: unknown) {
+      notifications.show({
+        title: "CV update failed",
+        message: error instanceof Error ? error.message : "Please try again.",
+        color: "red",
+      });
+    } finally {
+      setCvUpdating(false);
+    }
+  };
+
+  const profileDataForInterview: ProfileData = {
+    headline: form.headline,
+    experienceLevel: form.experienceLevel || null,
+    country: form.country,
+    hourlyRate: form.hourlyRate,
+    availability: form.availability || null,
+    skills: form.skills,
+    portfolioLinks: form.portfolioLinks,
+    bio: form.about,
+    experience: cvData?.experience ?? [],
+  };
+
+  const handleRetakeComplete = async (report: InterviewReportData) => {
+    setInterviewReport(report);
+    await profileApi.update({
+      profile: { aiInterviewReport: report },
+    });
+    await refreshUser();
+    notifications.show({
+      title: "AI interview updated",
+      message: "Your latest interview report was saved to your profile.",
+      color: "green",
+    });
   };
 
   if (loading) {
@@ -218,7 +357,6 @@ export default function EditProfilePage() {
               <Textarea
                 label="About You"
                 placeholder="Tell clients about your expertise, experience, and what makes you great at what you do..."
-                required
                 minRows={5}
                 value={form.about}
                 onChange={(e) => update("about", e.target.value)}
@@ -291,6 +429,78 @@ export default function EditProfilePage() {
                 pill: { backgroundColor: "var(--mantine-color-cyan-6)", color: "white" },
               }}
             />
+          </Card>
+
+          <Card withBorder radius="md" bg="var(--app-surface)" mb="md">
+            <Group justify="space-between" align="flex-start" mb="md">
+              <Group gap="xs">
+                <FileText size={18} color="#4f46e5" />
+                <Text fw={600} c="var(--app-text)">CV Contents</Text>
+              </Group>
+              {user?.freelancerProfile?.cvFileName && (
+                <Text fz="xs" c="dimmed">
+                  Current: {user.freelancerProfile.cvFileName}
+                </Text>
+              )}
+            </Group>
+            <Stack gap="sm">
+              <Text fz="sm" c="var(--app-text)">
+                Reupload your CV to refresh extracted skills, headline, projects, and experience evidence.
+              </Text>
+              <FileInput
+                label="Reupload CV"
+                placeholder="Select a PDF CV"
+                accept=".pdf,application/pdf"
+                onChange={handleCvReupload}
+                disabled={cvUpdating}
+                styles={{ label: { fontWeight: 600 } }}
+              />
+              {cvData?.all_skills && cvData.all_skills.length > 0 && (
+                <Alert color="cyan" radius="md">
+                  Latest extracted skills: {cvData.all_skills.slice(0, 8).join(", ")}
+                </Alert>
+              )}
+            </Stack>
+          </Card>
+
+          <Card withBorder radius="md" bg="var(--app-surface)" mb="md">
+            <Group justify="space-between" align="flex-start" mb="md">
+              <Group gap="xs">
+                <BrainCircuit size={18} color="#0891b2" />
+                <Text fw={600} c="var(--app-text)">AI Interview</Text>
+              </Group>
+              {interviewReport && (
+                <Text fz="xs" c="dimmed">
+                  Latest score: {interviewReport.overall_score}%
+                </Text>
+              )}
+            </Group>
+            <Stack gap="sm">
+              <Text fz="sm" c="var(--app-text)">
+                Retake the AI interview to update your verification score using your current profile skills.
+              </Text>
+              <Button
+                variant="light"
+                color="cyan"
+                leftSection={<BrainCircuit size={16} />}
+                onClick={() => setRetakeOpen((current) => !current)}
+              >
+                {retakeOpen ? "Hide AI test" : "Retake AI test"}
+              </Button>
+              {form.skills.length === 0 && (
+                <Alert color="orange" radius="md">
+                  Add at least one skill before retaking the AI interview.
+                </Alert>
+              )}
+              {retakeOpen && (
+                <AIInterviewStep
+                  cvData={cvData}
+                  profileData={profileDataForInterview}
+                  report={null}
+                  onComplete={handleRetakeComplete}
+                />
+              )}
+            </Stack>
           </Card>
 
           <Card withBorder radius="md" bg="var(--app-surface)" mb="xl">

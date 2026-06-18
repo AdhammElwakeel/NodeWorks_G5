@@ -10,9 +10,12 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import random
 import re
 import sys
+import threading
 from typing import Any
+import uuid
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -81,6 +84,38 @@ class ProjectSkillSuggestionRequest(BaseModel):
 
 class ProjectSkillSuggestionResponse(BaseModel):
     skills: list[str]
+
+
+class StartInterviewRequest(BaseModel):
+    candidate_id: str | None = None
+    num_skills: int = 3
+    cv_data: dict[str, Any] = Field(default_factory=dict)
+
+
+class AnswerInterviewRequest(BaseModel):
+    session_id: str
+    answer: str
+    demo_result: str | None = None
+
+
+class InterviewViolationRequest(BaseModel):
+    session_id: str
+    violation_type: str
+    reason: str | None = None
+
+
+INTERVIEW_NUM_SKILLS = int(os.getenv("INTERVIEW_NUM_SKILLS", "3"))
+INTERVIEW_FOLLOW_UPS_PER_SKILL = int(os.getenv("INTERVIEW_FOLLOW_UPS_PER_SKILL", "3"))
+INTERVIEW_DIFFICULTY = os.getenv("INTERVIEW_DIFFICULTY", "easy")
+INTERVIEW_VERIFICATION_THRESHOLD = float(os.getenv("INTERVIEW_VERIFICATION_THRESHOLD", "65"))
+INTERVIEW_STRONG_SKILL_THRESHOLD = 65
+INTERVIEW_PENALTY_PER_VIOLATION = 5
+INTERVIEW_PENALTY_PER_CHEAT_FLAG = 10
+INTERVIEW_PENALTY_CAP = 30
+INTERVIEW_MAX_VIOLATIONS = 6
+INTERVIEW_DATA_DIR = Path(__file__).parent / "data" / "interviews"
+_interview_locks: dict[str, threading.Lock] = {}
+_interview_locks_lock = threading.Lock()
 
 
 def _clean_string(value: Any) -> str | None:
@@ -181,6 +216,464 @@ def suggest_project_skills_with_llm(payload: ProjectSkillSuggestionRequest) -> l
     suggestions = _clean_string_list(data.get("skills"))[:10]
 
     return [skill for skill in suggestions if skill.lower() not in existing_lower]
+
+
+def _interview_model_id() -> str:
+    model = os.getenv("INTERVIEW_MODEL") or MODEL_NAME
+    return model.removeprefix("opencode-go/")
+
+
+def _interview_lock(session_id: str) -> threading.Lock:
+    with _interview_locks_lock:
+        lock = _interview_locks.get(session_id)
+        if lock is None:
+            lock = threading.Lock()
+            _interview_locks[session_id] = lock
+        return lock
+
+
+def _interview_session_path(session_id: str) -> Path:
+    return INTERVIEW_DATA_DIR / f"session_{session_id}.json"
+
+
+def _save_interview_session(session: dict[str, Any]) -> None:
+    INTERVIEW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    session_id = str(session["session_id"])
+    path = _interview_session_path(session_id)
+    tmp_path = path.with_suffix(".json.tmp")
+    lock = _interview_lock(session_id)
+    with lock:
+        tmp_path.write_text(json.dumps(session, indent=2), encoding="utf-8")
+        tmp_path.replace(path)
+
+
+def _load_interview_session(session_id: str) -> dict[str, Any] | None:
+    path = _interview_session_path(session_id)
+    lock = _interview_lock(session_id)
+    with lock:
+        if not path.exists():
+            return None
+        return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _update_interview_session(session_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+    path = _interview_session_path(session_id)
+    lock = _interview_lock(session_id)
+    with lock:
+        if not path.exists():
+            return None
+        session = json.loads(path.read_text(encoding="utf-8"))
+        session.update(updates)
+        tmp_path = path.with_suffix(".json.tmp")
+        tmp_path.write_text(json.dumps(session, indent=2), encoding="utf-8")
+        tmp_path.replace(path)
+        return session
+
+
+def _create_interview_session(candidate_id: str, skills_to_test: list[str], cv_data: dict[str, Any]) -> dict[str, Any]:
+    session = {
+        "session_id": uuid.uuid4().hex[:10],
+        "candidate_id": candidate_id,
+        "status": "in_progress",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "completed_at": None,
+        "skills_to_test": skills_to_test,
+        "questions": [],
+        "violations": 0,
+        "violation_types": [],
+        "cv_data": cv_data,
+    }
+    _save_interview_session(session)
+    return session
+
+
+def _add_interview_question(session_id: str, question: dict[str, Any]) -> None:
+    session = _load_interview_session(session_id)
+    if not session:
+        return
+    session.setdefault("questions", []).append(question)
+    _save_interview_session(session)
+
+
+def _complete_interview_session(session_id: str) -> dict[str, Any] | None:
+    return _update_interview_session(
+        session_id,
+        {
+            "status": "completed",
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+def _call_interview_llm(
+    messages: list[dict[str, str]], temperature: float = 0.4
+) -> dict[str, Any]:
+    if not OPENCODE_GO_API_KEY or not OPENCODE_GO_BASE_URL:
+        raise RuntimeError("Missing interview LLM configuration")
+
+    try:
+        client = OpenAI(
+            base_url=_opencode_base_url(),
+            api_key=OPENCODE_GO_API_KEY,
+            timeout=60,
+        )
+        response = client.chat.completions.create(
+            model=_interview_model_id(),
+            messages=messages,
+            response_format={"type": "json_object"},
+            temperature=temperature,
+        )
+        content = response.choices[0].message.content or "{}"
+        data = _extract_json_object(content)
+        if not data:
+            raise RuntimeError("Interview LLM returned empty or invalid JSON")
+        return data
+    except Exception as exc:
+        raise RuntimeError(f"Interview LLM request failed: {exc}") from exc
+
+
+def _cv_collection(cv_data: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = cv_data.get(key)
+    return value if isinstance(value, list) else []
+
+
+def _interview_cv_context(cv_data: dict[str, Any], skill: str) -> str:
+    parts: list[str] = []
+    headline = _clean_string(cv_data.get("headline") or cv_data.get("bestRole") or cv_data.get("best_role"))
+    if headline:
+        parts.append(f"Headline/role: {headline}")
+
+    for project in _cv_collection(cv_data, "projects")[:6]:
+        techs = _clean_string_list(project.get("technologies"))
+        name = _clean_string(project.get("name")) or "CV project"
+        if not techs or skill.lower() in {tech.lower() for tech in techs}:
+            parts.append(f"Project '{name}' used: {', '.join(techs) if techs else skill}")
+
+    for experience in _cv_collection(cv_data, "experience")[:5]:
+        role = _clean_string(experience.get("role")) or "Role"
+        company = _clean_string(experience.get("company")) or "company"
+        years = _clean_string(experience.get("years")) or "duration not specified"
+        parts.append(f"Experience: {role} at {company} ({years})")
+
+    for cert in _cv_collection(cv_data, "certifications")[:4]:
+        name = _clean_string(cert.get("name"))
+        if name:
+            parts.append(f"Certification: {name}")
+
+    return "\n".join(parts[:10]) if parts else f"Candidate lists {skill} as a skill."
+
+
+def _generate_interview_question(
+    skill: str, cv_context: str, previous_questions: list[str]
+) -> dict[str, Any]:
+    data = _call_interview_llm(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You are a senior technical interviewer for a freelancer marketplace. "
+                    "Ask practical, scenario-based questions tied to the candidate CV. "
+                    "Return strict JSON only."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "skill": skill,
+                        "difficulty": INTERVIEW_DIFFICULTY,
+                        "cv_context": cv_context,
+                        "previous_questions": previous_questions,
+                        "requirements": [
+                            "Generate one concise interview question.",
+                            "Avoid definitions and repeated questions.",
+                            "Make it answerable in 2 to 4 paragraphs.",
+                        ],
+                        "json_shape": {"question_text": "...", "focus_concept": "..."},
+                    }
+                ),
+            },
+        ],
+    )
+    if not _clean_string(data.get("question_text")) or not _clean_string(data.get("focus_concept")):
+        raise RuntimeError("Interview LLM response missing question_text or focus_concept")
+    return data
+
+
+def _generate_interview_followup(
+    skill: str, main_question: str, candidate_answer: str, followup_number: int
+) -> dict[str, Any]:
+    data = _call_interview_llm(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You are a senior technical interviewer. Ask one focused follow-up "
+                    "that probes the candidate's previous answer. Return strict JSON only."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "skill": skill,
+                        "difficulty": INTERVIEW_DIFFICULTY,
+                        "main_question": main_question,
+                        "candidate_answer": candidate_answer,
+                        "followup_number": followup_number,
+                        "json_shape": {"question_text": "...", "focus_concept": "..."},
+                    }
+                ),
+            },
+        ],
+    )
+    if not _clean_string(data.get("question_text")) or not _clean_string(data.get("focus_concept")):
+        raise RuntimeError("Interview LLM response missing follow-up question_text or focus_concept")
+    return data
+
+
+def _grade_interview_answer(
+    question_text: str, answer: str, skill: str, is_followup: bool
+) -> dict[str, Any]:
+    grade = _call_interview_llm(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You are a strict but fair technical interview grader. Score from 0 to 10. "
+                    "Return strict JSON only."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "skill": skill,
+                        "question_type": "follow_up" if is_followup else "main",
+                        "question": question_text,
+                        "answer": answer,
+                        "rubric": {
+                            "technical_accuracy": "30%",
+                            "depth_specificity": "30%",
+                            "practical_experience": "25%",
+                            "clarity": "15%",
+                        },
+                        "cheating_flag_rules": [
+                            "Textbook-only answer with no personal detail",
+                            "Irrelevant answer",
+                            "Suspicious copy-paste style",
+                        ],
+                        "json_shape": {
+                            "score": 0,
+                            "feedback": "2-3 sentence feedback",
+                            "cheating_flag": False,
+                        },
+                    }
+                ),
+            },
+        ],
+        temperature=0.2,
+    )
+    english = _call_interview_llm(
+        [
+            {
+                "role": "system",
+                "content": "Assess written English quality from 0 to 10. Return strict JSON only.",
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "answer": answer,
+                        "json_shape": {"score": 0, "feedback": "short English feedback"},
+                    }
+                ),
+            },
+        ],
+        temperature=0.2,
+    )
+    if grade.get("score") is None or not _clean_string(grade.get("feedback")):
+        raise RuntimeError("Interview grading response missing score or feedback")
+    if english.get("score") is None or not _clean_string(english.get("feedback")):
+        raise RuntimeError("English grading response missing score or feedback")
+    grade["english_score"] = english["score"]
+    grade["english_feedback"] = english["feedback"]
+    return grade
+
+
+def _demo_interview_grade(result: str) -> dict[str, Any]:
+    if result == "right":
+        return {
+            "score": 10,
+            "feedback": "Demo skip: marked as correct.",
+            "cheating_flag": False,
+            "english_score": 9,
+            "english_feedback": "Demo skip: strong English.",
+        }
+    if result == "wrong":
+        return {
+            "score": 2,
+            "feedback": "Demo skip: marked as incorrect.",
+            "cheating_flag": False,
+            "english_score": 4,
+            "english_feedback": "Demo skip: weak English.",
+        }
+    raise ValueError("demo_result must be 'right' or 'wrong'")
+
+
+def _interview_total_questions(session: dict[str, Any]) -> int:
+    return len(session.get("skills_to_test", [])) * (1 + INTERVIEW_FOLLOW_UPS_PER_SKILL)
+
+
+def _interview_question_response(
+    session: dict[str, Any], record: dict[str, Any], question_number: int
+) -> dict[str, Any]:
+    return {
+        "question_text": record["question_text"],
+        "focus_concept": record["focus_concept"],
+        "skill_name": record["skill_name"],
+        "is_followup": record["is_followup"],
+        "followup_number": record["followup_number"],
+        "question_number": question_number,
+        "total_questions": _interview_total_questions(session),
+    }
+
+
+def _build_next_interview_question(session: dict[str, Any]) -> dict[str, Any] | None:
+    skills = session.get("skills_to_test", [])
+    questions = session.get("questions", [])
+
+    for skill in skills:
+        skill_questions = [q for q in questions if q.get("skill_name") == skill]
+        answered = [q for q in skill_questions if q.get("user_answer")]
+        if len(answered) >= 1 + INTERVIEW_FOLLOW_UPS_PER_SKILL:
+            continue
+
+        if not any(not q.get("is_followup") for q in skill_questions):
+            q_data = _generate_interview_question(
+                skill,
+                _interview_cv_context(session.get("cv_data", {}), skill),
+                [q.get("question_text", "") for q in skill_questions],
+            )
+            record = {
+                "skill_name": skill,
+                "question_text": _clean_string(q_data.get("question_text")),
+                "focus_concept": _clean_string(q_data.get("focus_concept")),
+                "is_followup": False,
+                "followup_number": 0,
+                "user_answer": None,
+                "score": None,
+                "feedback": None,
+                "cheating_flag": False,
+                "english_score": None,
+                "english_feedback": None,
+            }
+            _add_interview_question(session["session_id"], record)
+            return _interview_question_response(session, record, len(questions) + 1)
+
+        followups_answered = sum(1 for q in answered if q.get("is_followup"))
+        if followups_answered < INTERVIEW_FOLLOW_UPS_PER_SKILL:
+            followup_number = followups_answered + 1
+            main_question = next((q for q in skill_questions if not q.get("is_followup")), skill_questions[0])
+            last_answered = answered[-1] if answered else main_question
+            q_data = _generate_interview_followup(
+                skill,
+                main_question.get("question_text", ""),
+                last_answered.get("user_answer", ""),
+                followup_number,
+            )
+            record = {
+                "skill_name": skill,
+                "question_text": _clean_string(q_data.get("question_text")),
+                "focus_concept": _clean_string(q_data.get("focus_concept")),
+                "is_followup": True,
+                "followup_number": followup_number,
+                "user_answer": None,
+                "score": None,
+                "feedback": None,
+                "cheating_flag": False,
+                "english_score": None,
+                "english_feedback": None,
+            }
+            _add_interview_question(session["session_id"], record)
+            return _interview_question_response(session, record, len(questions) + 1)
+
+    return None
+
+
+def _score_as_float(value: Any) -> float:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, min(10, score))
+
+
+def _interview_badge_tier(score: float) -> str | None:
+    if score >= 85:
+        return "gold"
+    if score >= 70:
+        return "silver"
+    if score >= 65:
+        return "bronze"
+    return None
+
+
+def _generate_interview_report(session: dict[str, Any]) -> dict[str, Any]:
+    questions = session.get("questions", [])
+    violations = int(session.get("violations", 0) or 0)
+    skill_map: dict[str, list[float]] = {}
+    english_scores: list[float] = []
+    cheat_flag_count = 0
+
+    for question in questions:
+        if not question.get("user_answer"):
+            continue
+        skill = _clean_string(question.get("skill_name")) or "Unknown"
+        skill_map.setdefault(skill, []).append(_score_as_float(question.get("score")))
+        if question.get("english_score") is not None:
+            english_scores.append(_score_as_float(question.get("english_score")))
+        if question.get("cheating_flag"):
+            cheat_flag_count += 1
+
+    skill_scores: list[dict[str, Any]] = []
+    all_scores: list[float] = []
+    for skill, scores in skill_map.items():
+        avg = sum(scores) / len(scores) if scores else 0
+        pct = round(avg * 10, 1)
+        skill_scores.append({"skill": skill, "score": pct, "questions_asked": len(scores)})
+        all_scores.extend(scores)
+
+    raw_score = round((sum(all_scores) / len(all_scores) * 10) if all_scores else 0, 1)
+    violation_penalty = violations * INTERVIEW_PENALTY_PER_VIOLATION
+    cheat_penalty = cheat_flag_count * INTERVIEW_PENALTY_PER_CHEAT_FLAG
+    total_penalty = min(violation_penalty + cheat_penalty, INTERVIEW_PENALTY_CAP)
+    overall_score = max(0, round(raw_score - total_penalty, 1))
+    cheating_detected = cheat_flag_count > 0
+
+    return {
+        "session_id": session["session_id"],
+        "candidate_id": session["candidate_id"],
+        "overall_score": overall_score,
+        "raw_score": raw_score,
+        "is_verified": overall_score >= INTERVIEW_VERIFICATION_THRESHOLD and not cheating_detected,
+        "skill_scores": skill_scores,
+        "total_questions": len([q for q in questions if q.get("user_answer")]),
+        "cheating_detected": cheating_detected,
+        "violations": violations,
+        "violation_types": session.get("violation_types", []),
+        "violation_reasons": session.get("violation_reasons", []),
+        "english_score": round((sum(english_scores) / len(english_scores) * 10) if english_scores else 0, 1),
+        "penalty": total_penalty,
+        "penalty_breakdown": {
+            "violations": violation_penalty,
+            "cheat_flags": cheat_penalty,
+            "total": total_penalty,
+        },
+        "strong_skills": [item["skill"] for item in skill_scores if item["score"] >= INTERVIEW_STRONG_SKILL_THRESHOLD],
+        "badge_tier": _interview_badge_tier(overall_score),
+        "completed_at": session.get("completed_at"),
+    }
 
 
 def _cv_value(cv_analysis: dict[str, Any], camel_key: str, snake_key: str) -> Any:
@@ -1191,6 +1684,205 @@ async def analyze_cv(file: UploadFile = File(...)):
         raise HTTPException(status_code=422, detail=result["error"])
 
     return JSONResponse(content=result)
+
+
+@app.post("/api/interview/start")
+async def start_interview(payload: StartInterviewRequest) -> dict[str, Any]:
+    cv_data = payload.cv_data or {}
+    all_skills = _clean_string_list(
+        cv_data.get("all_skills")
+        or cv_data.get("allSkills")
+        or cv_data.get("skills")
+        or []
+    )
+    if not all_skills:
+        raise HTTPException(status_code=400, detail="Interview requires extracted CV/profile skills")
+
+    requested_skills = payload.num_skills if payload.num_skills > 0 else INTERVIEW_NUM_SKILLS
+    num_skills = min(max(1, requested_skills), len(all_skills))
+    skills_to_test = random.sample(all_skills, num_skills)
+    candidate_id = _clean_string(payload.candidate_id) or _clean_string(cv_data.get("email")) or _clean_string(cv_data.get("name"))
+    if not candidate_id:
+        raise HTTPException(status_code=400, detail="Interview requires a candidate identifier")
+    session = _create_interview_session(candidate_id, skills_to_test, cv_data)
+    try:
+        first_question = await asyncio.to_thread(_build_next_interview_question, session)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return {
+        "session_id": session["session_id"],
+        "candidate_name": cv_data.get("name"),
+        "skills_to_test": skills_to_test,
+        "total_questions": _interview_total_questions(session),
+        "questions_per_skill": 1 + INTERVIEW_FOLLOW_UPS_PER_SKILL,
+        "first_question": first_question,
+    }
+
+
+@app.post("/api/interview/submit-answer")
+async def submit_interview_answer(payload: AnswerInterviewRequest) -> dict[str, Any]:
+    answer = _clean_string(payload.answer)
+    if not answer:
+        raise HTTPException(status_code=400, detail="Answer is required")
+
+    session = _load_interview_session(payload.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Interview session not found")
+    if session.get("status") != "in_progress":
+        raise HTTPException(status_code=400, detail="Interview already completed")
+
+    questions = session.get("questions", [])
+    current_question = next((q for q in reversed(questions) if q.get("user_answer") is None), None)
+    if not current_question:
+        raise HTTPException(status_code=400, detail="No pending interview question found")
+
+    try:
+        if payload.demo_result in {"right", "wrong"}:
+            grade = _demo_interview_grade(payload.demo_result)
+        elif payload.demo_result:
+            raise ValueError("demo_result must be 'right' or 'wrong'")
+        else:
+            grade = await asyncio.to_thread(
+                _grade_interview_answer,
+                current_question.get("question_text", ""),
+                answer,
+                current_question.get("skill_name", "Unknown"),
+                bool(current_question.get("is_followup")),
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    current_question["user_answer"] = answer
+    current_question["score"] = _score_as_float(grade.get("score"))
+    current_question["feedback"] = _clean_string(grade.get("feedback"))
+    current_question["cheating_flag"] = bool(grade.get("cheating_flag"))
+    current_question["english_score"] = _score_as_float(grade.get("english_score"))
+    current_question["english_feedback"] = _clean_string(grade.get("english_feedback"))
+    _update_interview_session(payload.session_id, {"questions": questions})
+
+    session = _load_interview_session(payload.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Interview session not found")
+
+    answered_count = sum(1 for q in session.get("questions", []) if q.get("user_answer"))
+    if answered_count >= _interview_total_questions(session):
+        session = _complete_interview_session(payload.session_id) or session
+        report = _generate_interview_report(session)
+        return {
+            "status": "completed",
+            "next_question": None,
+            "questions_answered": answered_count,
+            "total_questions": _interview_total_questions(session),
+            "report": report,
+        }
+
+    try:
+        next_question = await asyncio.to_thread(_build_next_interview_question, session)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {
+        "status": "in_progress",
+        "next_question": next_question,
+        "questions_answered": answered_count,
+        "total_questions": _interview_total_questions(session),
+        "report": None,
+    }
+
+
+@app.post("/api/interview/report-violation")
+async def report_interview_violation(payload: InterviewViolationRequest) -> dict[str, Any]:
+    session = _load_interview_session(payload.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Interview session not found")
+    if session.get("status") != "in_progress":
+        report = _generate_interview_report(session)
+        return {
+            "violations": session.get("violations", 0),
+            "warning": True,
+            "closed": True,
+            "reason": "Interview is already closed.",
+            "report": report,
+        }
+
+    violations = int(session.get("violations", 0) or 0) + 1
+    violation_types = session.get("violation_types", [])
+    violation_reasons = session.get("violation_reasons", [])
+    violation_type = _clean_string(payload.violation_type) or "unknown"
+    reason = _clean_string(payload.reason) or violation_type.replace("_", " ")
+    violation_types.append(violation_type)
+    violation_reasons.append(
+        {
+            "type": violation_type,
+            "reason": reason,
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+
+    if violations >= INTERVIEW_MAX_VIOLATIONS:
+        session.update(
+            {
+                "violations": violations,
+                "violation_types": violation_types,
+                "violation_reasons": violation_reasons,
+                "status": "closed",
+                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "closed_reason": "Maximum proctoring violations reached.",
+            }
+        )
+        _save_interview_session(session)
+        report = _generate_interview_report(session)
+        return {
+            "violations": violations,
+            "warning": True,
+            "closed": True,
+            "reason": "Maximum proctoring violations reached.",
+            "report": report,
+        }
+
+    _update_interview_session(
+        payload.session_id,
+        {
+            "violations": violations,
+            "violation_types": violation_types,
+            "violation_reasons": violation_reasons,
+        },
+    )
+    return {
+        "violations": violations,
+        "warning": violations >= 3,
+        "closed": False,
+        "reason": reason,
+        "remaining": INTERVIEW_MAX_VIOLATIONS - violations,
+    }
+
+
+@app.get("/api/interview/{session_id}/status")
+async def get_interview_status(session_id: str) -> dict[str, Any]:
+    session = _load_interview_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Interview session not found")
+
+    return {
+        "session_id": session["session_id"],
+        "status": session["status"],
+        "skills_to_test": session.get("skills_to_test", []),
+        "questions_answered": sum(1 for q in session.get("questions", []) if q.get("user_answer")),
+        "total_questions": _interview_total_questions(session),
+        "violations": session.get("violations", 0),
+    }
+
+
+@app.get("/api/interview/{session_id}/report")
+async def get_interview_report(session_id: str) -> dict[str, Any]:
+    session = _load_interview_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Interview session not found")
+    if session.get("status") not in {"completed", "closed"}:
+        raise HTTPException(status_code=400, detail="Interview is not completed yet")
+    return _generate_interview_report(session)
 
 
 @app.get("/health")

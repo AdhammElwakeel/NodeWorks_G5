@@ -1,5 +1,10 @@
 const API_BASE = "/api";
 
+// The shared API wrapper is intentionally dynamic because individual endpoint
+// helpers narrow the response shape where the app needs strong typing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiResponse = any;
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -11,7 +16,7 @@ export class ApiError extends Error {
 async function fetchApi(
   endpoint: string,
   options: RequestInit = {}
-): Promise<any> {
+): Promise<ApiResponse> {
   const url = `${API_BASE}${endpoint}`;
 
   const res = await fetch(url, {
@@ -58,7 +63,7 @@ export const profileApi = {
   update: (body: {
     name?: string;
     avatar?: string;
-    profile?: Record<string, any>;
+    profile?: Record<string, unknown>;
   }) =>
     fetchApi("/users/profile", {
       method: "PATCH",
@@ -254,6 +259,91 @@ export const skillApi = {
     fetchApi("/skills"),
 };
 
+// ─── AI Interview ───────────────────────────────────────────────────────
+
+export interface InterviewQuestionData {
+  question_text: string;
+  focus_concept: string;
+  skill_name: string;
+  is_followup: boolean;
+  followup_number: number;
+  question_number: number;
+  total_questions: number;
+}
+
+export interface InterviewSkillScore {
+  skill: string;
+  score: number;
+  questions_asked: number;
+}
+
+export interface InterviewReportData {
+  session_id: string;
+  candidate_id?: string;
+  overall_score: number;
+  raw_score?: number;
+  is_verified: boolean;
+  skill_scores: InterviewSkillScore[];
+  total_questions: number;
+  cheating_detected?: boolean;
+  violations?: number;
+  violation_types?: string[];
+  violation_reasons?: { type: string; reason: string; occurred_at: string }[];
+  english_score?: number;
+  penalty?: number;
+  strong_skills?: string[];
+  badge_tier?: "gold" | "silver" | "bronze" | null;
+  completed_at?: string;
+}
+
+export const interviewApi = {
+  start: (body: {
+    candidate_id?: string;
+    num_skills?: number;
+    cv_data: Record<string, unknown>;
+  }): Promise<{
+    session_id: string;
+    candidate_name?: string;
+    skills_to_test: string[];
+    total_questions: number;
+    questions_per_skill: number;
+    first_question: InterviewQuestionData | null;
+  }> =>
+    fetchApi("/interview/start", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  submitAnswer: (body: {
+    session_id: string;
+    answer: string;
+    demo_result?: "right" | "wrong";
+  }): Promise<{
+    status: "in_progress" | "completed";
+    next_question: InterviewQuestionData | null;
+    questions_answered: number;
+    total_questions: number;
+    report: InterviewReportData | null;
+  }> =>
+    fetchApi("/interview/submit-answer", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  reportViolation: (body: { session_id: string; violation_type: string; reason?: string }): Promise<{
+    violations: number;
+    warning: boolean;
+    closed?: boolean;
+    reason?: string;
+    remaining?: number;
+    report?: InterviewReportData;
+  }> =>
+    fetchApi("/interview/report-violation", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+};
+
 // ─── Messages ──────────────────────────────────────────────────────────
 
 export const messageApi = {
@@ -381,11 +471,11 @@ export const recApi = {
 
 export const kbsApi = {
   health: () => fetchApi("/kbs/health"),
-  syncFreelancer: (): Promise<{ kbsSync: ProjectData["kbsSync"]; result: any }> =>
+  syncFreelancer: (): Promise<{ kbsSync: ProjectData["kbsSync"]; result: unknown }> =>
     fetchApi("/kbs/freelancer/sync", { method: "POST" }),
   syncProject: (
     projectId: string
-  ): Promise<{ kbsSync: ProjectData["kbsSync"]; result: any }> =>
+  ): Promise<{ kbsSync: ProjectData["kbsSync"]; result: unknown }> =>
     fetchApi(`/kbs/projects/${projectId}/sync`, { method: "POST" }),
   list: (params?: { category?: string; search?: string; mine?: boolean }) => {
     const entries = Object.entries(params || {}).filter(
@@ -397,7 +487,7 @@ export const kbsApi = {
     return fetchApi(`/kbs${qs}`);
   },
   getBySlug: (slug: string) => fetchApi(`/kbs?slug=${slug}`),
-  create: (body: any) =>
+  create: (body: Record<string, unknown>) =>
     fetchApi("/kbs", { method: "POST", body: JSON.stringify(body) }),
 };
 
@@ -418,20 +508,4 @@ export const cvApi = {
       return data;
     });
   },
-};
-
-// ─── Interviews ────────────────────────────────────────────────────────
-
-export const interviewApi = {
-  list: () => fetchApi("/interviews"),
-  create: () => fetchApi("/interviews", { method: "POST" }),
-  submit: (body: {
-    interviewId: string;
-    responses: any[];
-    scores?: any;
-  }) =>
-    fetchApi("/interviews", {
-      method: "PATCH",
-      body: JSON.stringify(body),
-    }),
 };
