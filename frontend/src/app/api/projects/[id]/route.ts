@@ -37,6 +37,7 @@ export async function GET(
         description: project.description,
         budget: project.budget,
         skills: project.skills || [],
+        hiringMode: project.hiringMode || "individual",
         status: project.status,
         timeline: project.timeline,
         kbsSync: project.kbsSync,
@@ -97,6 +98,12 @@ export async function PATCH(
       project.skills = body.skills;
       recommendationDataChanged = true;
     }
+    if (body.hiringMode !== undefined) {
+      if (!["individual", "team"].includes(body.hiringMode)) {
+        return NextResponse.json({ error: "Invalid hiring mode" }, { status: 400 });
+      }
+      project.hiringMode = body.hiringMode;
+    }
     if (body.timeline !== undefined) {
       project.timeline = body.timeline;
       recommendationDataChanged = true;
@@ -133,6 +140,7 @@ export async function PATCH(
         description: updatedProject?.description || project.description,
         budget: updatedProject?.budget || project.budget,
         skills: updatedProject?.skills || project.skills || [],
+        hiringMode: updatedProject?.hiringMode || project.hiringMode || "individual",
         status: updatedProject?.status || project.status,
         timeline: updatedProject?.timeline || project.timeline,
         kbsSync: updatedProject?.kbsSync || project.kbsSync,
