@@ -1,0 +1,9 @@
+# Runtime session data - contains sensitive candidate information
+data/session_*.json
+data/*.tmp
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.env

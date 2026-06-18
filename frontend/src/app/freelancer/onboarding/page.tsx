@@ -7,7 +7,7 @@ import { CVUploadStep, type CvData } from "./components/CVUploadStep";
 import { ProfileStep, type ProfileData } from "./components/ProfileStep";
 import { AIInterviewStep } from "./components/AIInterviewStep";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { profileApi, cvApi } from "@/lib/api";
+import { profileApi, cvApi, type InterviewReportData } from "@/lib/api";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "@/lib/auth-context";
 
@@ -54,25 +54,10 @@ function normalizeCvAnalysis(cvData: CvData, experience: ProfileData["experience
   };
 }
 
-function hasCompleteExperience(experience: ProfileData["experience"]) {
-  return experience.some(
-    (item) => item.role.trim() && item.company.trim() && item.years.trim()
-  );
-}
-
 function getMissingProfileFields(profileData: ProfileData) {
   const missing: string[] = [];
 
-  if (!profileData.headline.trim()) missing.push("headline");
-  if (!profileData.experienceLevel) missing.push("experience level");
-  if (!profileData.country.trim()) missing.push("country");
-  if (typeof profileData.hourlyRate !== "number" || profileData.hourlyRate <= 0) {
-    missing.push("hourly rate");
-  }
-  if (!profileData.availability) missing.push("availability");
   if (profileData.skills.length === 0) missing.push("skills");
-  if (!profileData.bio.trim()) missing.push("about you");
-  if (!hasCompleteExperience(profileData.experience)) missing.push("past experience");
 
   return missing;
 }
@@ -89,6 +74,7 @@ export default function FreelancerOnboardingPage() {
   const [cvData, setCvData] = useState<CvData | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [interviewReport, setInterviewReport] = useState<InterviewReportData | null>(null);
 
   // --- Profile form state (lifted here so it survives step transitions) ---
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -120,6 +106,7 @@ export default function FreelancerOnboardingPage() {
     setCvData(null);
     setAnalysisError(null);
     setCvFile(null);
+    setInterviewReport(null);
 
     if (!file) return;
 
@@ -173,6 +160,16 @@ export default function FreelancerOnboardingPage() {
   };
 
   const handleFinish = async () => {
+    if (!interviewReport) {
+      notifications.show({
+        title: "Complete the AI interview",
+        message: "Finish the interview before entering your freelancer dashboard.",
+        color: "orange",
+      });
+      setStep(2);
+      return;
+    }
+
     const missingFields = getMissingProfileFields(profileData);
     if (missingFields.length > 0) {
       notifications.show({
@@ -208,6 +205,7 @@ export default function FreelancerOnboardingPage() {
           portfolioLinks: profileData.portfolioLinks,
           about: profileData.bio.trim() || undefined,
           cvAnalysis: cvData ? normalizeCvAnalysis(cvData, profileData.experience) : undefined,
+          aiInterviewReport: interviewReport,
         },
       });
       await refreshUser();
@@ -229,7 +227,8 @@ export default function FreelancerOnboardingPage() {
     }
   };
 
-  const canContinue = step === 0 ? cvExtracted && !isAnalyzing : true;
+  const canContinue =
+    step === 0 ? !isAnalyzing : step === 2 ? Boolean(interviewReport) : true;
 
   return (
     <ProtectedRoute requiredRole="freelancer">
@@ -260,7 +259,14 @@ export default function FreelancerOnboardingPage() {
             onProfileChange={setProfileData}
           />
         )}
-        {step === 2 && <AIInterviewStep />}
+        {step === 2 && (
+          <AIInterviewStep
+            cvData={cvData}
+            profileData={profileData}
+            report={interviewReport}
+            onComplete={setInterviewReport}
+          />
+        )}
       </OnboardingLayout>
     </ProtectedRoute>
   );
