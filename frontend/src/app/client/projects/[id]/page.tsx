@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Card,
+  Modal,
   Stack,
   Text,
   Group,
@@ -19,6 +20,10 @@ import {
   Progress,
   ThemeIcon,
   Tabs,
+  TextInput,
+  Textarea,
+  NumberInput,
+  TagsInput,
 } from "@mantine/core";
 import {
   ArrowLeft,
@@ -34,6 +39,8 @@ import {
   Sparkles,
   Mail,
   ShieldCheck,
+  Pencil,
+  Save,
 } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/client/PageHeader";
@@ -49,6 +56,37 @@ type FreelancerRecommendation = Awaited<
 >["recommendations"][number];
 type TeamRecommendation = Awaited<ReturnType<typeof recApi.team>>["recommendations"][number];
 
+type EditProjectForm = {
+  title: string;
+  description: string;
+  budget: number | "";
+  timeline: string;
+  skills: string[];
+};
+
+const SKILL_OPTIONS = [
+  "React",
+  "Next.js",
+  "Node.js",
+  "TypeScript",
+  "UI Design",
+  "Figma",
+  "Python",
+  "Data Analysis",
+  "Content Writing",
+  "Mobile Design",
+  "Stripe",
+  "MongoDB",
+  "PostgreSQL",
+  "AWS",
+  "DevOps",
+  "Machine Learning",
+  "D3.js",
+  "Tailwind",
+  "REST API",
+  "Webhooks",
+];
+
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<ProjectData | null>(null);
@@ -56,6 +94,16 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [editOpened, setEditOpened] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [recommendationVersion, setRecommendationVersion] = useState(0);
+  const [editForm, setEditForm] = useState<EditProjectForm>({
+    title: "",
+    description: "",
+    budget: "",
+    timeline: "",
+    skills: [],
+  });
   const [freelancerRecommendations, setFreelancerRecommendations] = useState<FreelancerRecommendation[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
@@ -129,7 +177,7 @@ export default function ProjectDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, recommendationVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -169,7 +217,70 @@ export default function ProjectDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, recommendationVersion]);
+
+  const openEditModal = () => {
+    if (!project) return;
+
+    setEditForm({
+      title: project.title,
+      description: project.description,
+      budget: project.budget,
+      timeline: project.timeline || "",
+      skills: project.skills || [],
+    });
+    setEditOpened(true);
+  };
+
+  const handleEditSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!project) return;
+
+    const title = editForm.title.trim();
+    const description = editForm.description.trim();
+    const skills = editForm.skills.map((skill) => skill.trim()).filter(Boolean);
+
+    if (!title || !description || !editForm.budget || skills.length === 0) {
+      notifications.show({
+        title: "Missing project details",
+        message: "Add a title, description, budget, and at least one required skill.",
+        color: "orange",
+      });
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const result = await projectApi.update(project.id, {
+        title,
+        description,
+        budget: Number(editForm.budget),
+        skills,
+        timeline: editForm.timeline.trim() || undefined,
+      });
+
+      setProject((current) => ({
+        ...(current || project),
+        ...result.project,
+        proposalsCount: current?.proposalsCount || project.proposalsCount,
+      }));
+      setRecommendationVersion((current) => current + 1);
+      setEditOpened(false);
+      notifications.show({
+        title: "Project updated",
+        message: "Your job details were saved and recommendations are refreshing.",
+        color: "green",
+      });
+    } catch (error: unknown) {
+      notifications.show({
+        title: "Update failed",
+        message: error instanceof Error ? error.message : "Failed to update project.",
+        color: "red",
+      });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const handleClose = async () => {
     if (!project) return;
@@ -255,6 +366,7 @@ export default function ProjectDetailPage() {
   const pendingProposals = proposals.filter((p) => p.status === "pending");
   const acceptedProposals = proposals.filter((p) => p.status === "accepted");
   const rejectedProposals = proposals.filter((p) => p.status === "rejected");
+  const editSkillOptions = Array.from(new Set([...SKILL_OPTIONS, ...editForm.skills]));
 
   return (
     <Box>
@@ -274,16 +386,26 @@ export default function ProjectDetailPage() {
       <PageHeader
         title={project.title}
         actions={
-          project.status === "open" && (
+          <Group gap="sm">
             <Button
-              leftSection={<XCircle size={16} />}
+              leftSection={<Pencil size={16} />}
               variant="light"
-              color="red"
-              onClick={() => setShowCloseModal(true)}
+              color="teal"
+              onClick={openEditModal}
             >
-              Close Project
+              Edit Job
             </Button>
-          )
+            {project.status === "open" && (
+              <Button
+                leftSection={<XCircle size={16} />}
+                variant="light"
+                color="red"
+                onClick={() => setShowCloseModal(true)}
+              >
+                Close Project
+              </Button>
+            )}
+          </Group>
         }
       />
 
@@ -829,6 +951,78 @@ export default function ProjectDetailPage() {
           </Stack>
         )}
       </Box>
+
+      <Modal
+        opened={editOpened}
+        onClose={() => setEditOpened(false)}
+        title="Edit Job"
+        size="lg"
+        radius="lg"
+        centered
+      >
+        <form onSubmit={handleEditSubmit}>
+          <Stack gap="md">
+            <TextInput
+              label="Project Title"
+              required
+              value={editForm.title}
+              onChange={(event) =>
+                setEditForm((current) => ({ ...current, title: event.currentTarget.value }))
+              }
+            />
+            <Textarea
+              label="Description"
+              required
+              autosize
+              minRows={8}
+              maxRows={18}
+              value={editForm.description}
+              onChange={(event) =>
+                setEditForm((current) => ({ ...current, description: event.currentTarget.value }))
+              }
+            />
+            <Group grow align="flex-start">
+              <NumberInput
+                label="Budget (USD)"
+                required
+                min={1}
+                prefix="$"
+                value={editForm.budget}
+                onChange={(value) =>
+                  setEditForm((current) => ({
+                    ...current,
+                    budget: typeof value === "number" ? value : "",
+                  }))
+                }
+              />
+              <TextInput
+                label="Timeline / Duration"
+                placeholder="e.g. 4 weeks"
+                value={editForm.timeline}
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, timeline: event.currentTarget.value }))
+                }
+              />
+            </Group>
+            <TagsInput
+              label="Required Skills"
+              required
+              clearable
+              data={editSkillOptions}
+              value={editForm.skills}
+              onChange={(skills) => setEditForm((current) => ({ ...current, skills }))}
+            />
+            <Group justify="flex-end" mt="sm">
+              <Button variant="default" onClick={() => setEditOpened(false)} disabled={savingEdit}>
+                Cancel
+              </Button>
+              <Button type="submit" color="teal" loading={savingEdit} leftSection={<Save size={16} />}>
+                Save Changes
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      </Modal>
 
       {/* Confirm Close Modal */}
       <ConfirmModal
