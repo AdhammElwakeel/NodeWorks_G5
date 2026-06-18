@@ -89,8 +89,7 @@ export function CVUploadStep({
               CV extraction
             </Title>
             <Text c="var(--app-text)" fz="sm">
-              Upload your PDF and let AI extract your profile details
-              automatically.
+              Optional for testing: upload a PDF to extract profile details, or continue and add skills manually.
             </Text>
           </Stack>
         </Group>
@@ -241,7 +240,7 @@ export function CVUploadStep({
               </Badge>
             </Group>
             <Text fz="sm" c="var(--app-text)" mt={6}>
-              Upload your CV to continue to the next step.
+              You can skip CV analysis for testing and continue to the next step.
             </Text>
           </Card>
         )}
