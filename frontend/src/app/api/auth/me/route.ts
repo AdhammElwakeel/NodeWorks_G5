@@ -31,10 +31,11 @@ export async function GET(req: NextRequest) {
         avatar: user.avatar,
       },
     });
-  } catch (error: any) {
-    console.error("Auth me error:", error?.message || error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    console.error("Auth me error:", message);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      { error: message },
       { status: 500 }
     );
   }

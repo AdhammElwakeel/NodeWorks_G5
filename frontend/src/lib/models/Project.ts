@@ -1,10 +1,7 @@
 import mongoose from "mongoose";
+import { IKbsSync, KbsSyncSchema } from "./shared";
 
-export interface IKbsSync {
-  status: "not_synced" | "synced" | "outdated" | "failed";
-  syncedAt?: Date;
-  error?: string;
-}
+export type { IKbsSync };
 
 export interface IProject {
   _id: string;
@@ -20,19 +17,6 @@ export interface IProject {
   createdAt: Date;
   updatedAt: Date;
 }
-
-const KbsSyncSchema = new mongoose.Schema<IKbsSync>(
-  {
-    status: {
-      type: String,
-      enum: ["not_synced", "synced", "outdated", "failed"],
-      default: "not_synced",
-    },
-    syncedAt: { type: Date },
-    error: { type: String },
-  },
-  { _id: false }
-);
 
 const ProjectSchema = new mongoose.Schema<IProject>(
   {

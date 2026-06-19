@@ -44,14 +44,22 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setEmailError(null);
+    setPasswordError(null);
 
-    if (!email.trim().includes("@")) {
-      setEmailError("Please enter a valid email address that contains @.");
+    const trimmedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
       return;
     }
 
@@ -322,9 +330,16 @@ function RegisterForm() {
                   size="md"
                   leftSection={<Lock size={18} />}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  error={passwordError}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError(null);
+                  }}
                   styles={{ label: { color: "var(--app-text)" } }}
                 />
+                <Text fz="xs" c="dimmed">
+                  Minimum 6 characters
+                </Text>
                 <Text fz="xs" c="dimmed">
                   By creating an account, you agree to our{" "}
                   <Anchor href="#" fz="xs" c="indigo">

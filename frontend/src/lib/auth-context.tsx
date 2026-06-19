@@ -91,12 +91,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function login(email: string, password: string): Promise<User> {
     const data = await authApi.login({ email, password });
+    // Set the basic user from the auth response immediately so the UI can
+    // react without waiting for the full profile fetch.
+    setUser(data.user);
     try {
       const profileData = await profileApi.get();
       setUser(profileData.user);
       return profileData.user;
     } catch {
-      setUser(data.user);
       return data.user;
     }
   }
@@ -108,12 +110,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: "freelancer" | "client";
   }) {
     const res = await authApi.register(data);
-    try {
-      const profileData = await profileApi.get();
-      setUser(profileData.user);
-    } catch {
-      setUser(res.user);
-    }
+    // New users have no profile yet — use the auth response directly.
+    // The onboarding flow will create the profile, and refreshUser() will
+    // pick it up after profile save.
+    setUser(res.user);
   }
 
   async function logout() {

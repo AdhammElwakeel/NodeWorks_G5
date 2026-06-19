@@ -29,11 +29,10 @@ const SkillSchema = new mongoose.Schema<ISkill>(
 export const Skill =
   mongoose.models.Skill || mongoose.model<ISkill>("Skill", SkillSchema);
 
-// Seed helper — call this once to populate initial skills
+// Seed helper — call this once to populate initial skills.
+// Upserts missing skills so new entries are added even if the DB already has
+// older skills (the old `count > 0` early-return skipped new skills forever).
 export async function seedSkills() {
-  const count = await Skill.countDocuments();
-  if (count > 0) return;
-
   const skills = [
     // Frontend
     { name: "React", category: "Frontend" },
@@ -240,6 +239,17 @@ export async function seedSkills() {
     { name: "Unreal Engine", category: "Other" },
   ];
 
-  await Skill.insertMany(skills);
-  console.log(`Seeded ${skills.length} skills`);
+  // Upsert each skill so existing DBs get new entries without duplicates.
+  let inserted = 0;
+  for (const skill of skills) {
+    const result = await Skill.updateOne(
+      { name: skill.name },
+      { $setOnInsert: skill },
+      { upsert: true },
+    );
+    if (result.upsertedCount > 0) inserted++;
+  }
+  if (inserted > 0) {
+    console.log(`Seeded ${inserted} new skills (${skills.length - inserted} already existed)`);
+  }
 }

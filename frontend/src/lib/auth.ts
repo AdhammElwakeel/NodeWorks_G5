@@ -1,9 +1,13 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production"
-);
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
+if (!JWT_SECRET_RAW) {
+  throw new Error(
+    "JWT_SECRET environment variable is required. Set it in frontend/.env"
+  );
+}
+const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW);
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -37,10 +41,4 @@ export async function verifyToken(token: string) {
   } catch {
     return null;
   }
-}
-
-export async function getUserFromRequest(request: Request) {
-  const token = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (!token) return null;
-  return verifyToken(token);
 }

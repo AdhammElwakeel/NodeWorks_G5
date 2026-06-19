@@ -23,6 +23,7 @@
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "graduation_project": "file:..",
     "jose": "^6.2.2",
     "lucide-react": "^1.7.0",
     "mongoose": "^9.5.0",

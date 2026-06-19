@@ -14,6 +14,7 @@ import {
   FileInput,
   NumberInput,
   Select,
+  TagsInput,
   Title,
   Loader,
   Center,

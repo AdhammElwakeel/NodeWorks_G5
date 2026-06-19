@@ -1,5 +1,5 @@
 export { User, type IUser } from "./User";
-export { FreelancerProfile, type IFreelancerProfile } from "./FreelancerProfile";
+export { FreelancerProfile, type IFreelancerProfile, type IKbsSync } from "./FreelancerProfile";
 export { ClientProfile, type IClientProfile } from "./ClientProfile";
 export { Project, type IProject } from "./Project";
 export { Proposal, type IProposal } from "./Proposal";

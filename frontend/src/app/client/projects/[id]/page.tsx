@@ -23,7 +23,6 @@ import {
   TextInput,
   Textarea,
   NumberInput,
-  TagsInput,
 } from "@mantine/core";
 import {
   ArrowLeft,
@@ -47,6 +46,7 @@ import { PageHeader } from "@/components/client/PageHeader";
 import { StatusBadge } from "@/components/client/StatusBadge";
 import { SkillsTags } from "@/components/client/SkillsTags";
 import { ConfirmModal } from "@/components/client/ConfirmModal";
+import { SkillsSelect } from "@/components/SkillsSelect";
 import { projectApi, proposalApi, recApi, type ProjectData, type ProposalData } from "@/lib/api";
 import { KbsExplanationPanel } from "@/components/kbs/KbsExplanationPanel";
 import { notifications } from "@mantine/notifications";
@@ -63,29 +63,6 @@ type EditProjectForm = {
   timeline: string;
   skills: string[];
 };
-
-const SKILL_OPTIONS = [
-  "React",
-  "Next.js",
-  "Node.js",
-  "TypeScript",
-  "UI Design",
-  "Figma",
-  "Python",
-  "Data Analysis",
-  "Content Writing",
-  "Mobile Design",
-  "Stripe",
-  "MongoDB",
-  "PostgreSQL",
-  "AWS",
-  "DevOps",
-  "Machine Learning",
-  "D3.js",
-  "Tailwind",
-  "REST API",
-  "Webhooks",
-];
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -366,7 +343,6 @@ export default function ProjectDetailPage() {
   const pendingProposals = proposals.filter((p) => p.status === "pending");
   const acceptedProposals = proposals.filter((p) => p.status === "accepted");
   const rejectedProposals = proposals.filter((p) => p.status === "rejected");
-  const editSkillOptions = Array.from(new Set([...SKILL_OPTIONS, ...editForm.skills]));
 
   return (
     <Box>
@@ -1004,11 +980,10 @@ export default function ProjectDetailPage() {
                 }
               />
             </Group>
-            <TagsInput
+            <SkillsSelect
               label="Required Skills"
               required
               clearable
-              data={editSkillOptions}
               value={editForm.skills}
               onChange={(skills) => setEditForm((current) => ({ ...current, skills }))}
             />

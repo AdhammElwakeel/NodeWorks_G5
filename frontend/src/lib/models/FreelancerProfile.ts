@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import { IKbsSync, KbsSyncSchema } from "./shared";
+
+export type { IKbsSync };
 
 export interface ICvExperienceItem {
   role?: string;
@@ -42,12 +45,6 @@ export interface ICvAnalysis {
   roleConfidenceThreshold?: number;
   roleRankings?: ICvRoleRanking[];
   analyzedAt?: Date;
-}
-
-export interface IKbsSync {
-  status: "not_synced" | "synced" | "outdated" | "failed";
-  syncedAt?: Date;
-  error?: string;
 }
 
 export interface IInterviewSkillScore {
@@ -95,19 +92,6 @@ export interface IFreelancerProfile {
   createdAt: Date;
   updatedAt: Date;
 }
-
-const KbsSyncSchema = new mongoose.Schema<IKbsSync>(
-  {
-    status: {
-      type: String,
-      enum: ["not_synced", "synced", "outdated", "failed"],
-      default: "not_synced",
-    },
-    syncedAt: { type: Date },
-    error: { type: String },
-  },
-  { _id: false }
-);
 
 const CvExperienceItemSchema = new mongoose.Schema<ICvExperienceItem>(
   {

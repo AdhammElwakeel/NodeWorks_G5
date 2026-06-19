@@ -47,33 +47,45 @@ export async function GET(req: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Count proposals for each project
+    // Count proposals for all projects in a single aggregation pass
+    // (avoids N+1 individual countDocuments calls).
     const { Proposal } = await import("@/lib/models/Proposal");
-    const projectsWithCount = await Promise.all(
-      projects.map(async (p) => {
-        const count = await Proposal.countDocuments({ projectId: p._id });
-        const obj = p as Record<string, any>;
-        return {
-          id: obj._id.toString(),
-          clientId: obj.clientId.toString(),
-          title: obj.title,
-          description: obj.description,
-          budget: obj.budget,
-          skills: obj.skills || [],
-          hiringMode: obj.hiringMode || "individual",
-          status: obj.status,
-          timeline: obj.timeline,
-          kbsSync: obj.kbsSync,
-          createdAt: obj.createdAt,
-          updatedAt: obj.updatedAt,
-          proposalsCount: count,
-        };
-      })
+    const projectIds = projects.map((p) => p._id);
+    const counts = await Proposal.aggregate([
+      { $match: { projectId: { $in: projectIds } } },
+      { $group: { _id: "$projectId", count: { $sum: 1 } } },
+    ]);
+    const countMap = new Map(
+      counts.map((c: { _id: { toString: () => string }; count: number }) => [
+        c._id.toString(),
+        c.count,
+      ])
     );
 
+    const projectsWithCount = projects.map((p) => {
+      const obj = p as Record<string, unknown>;
+      const id = obj._id as { toString: () => string };
+      return {
+        id: id.toString(),
+        clientId: (obj.clientId as { toString: () => string }).toString(),
+        title: obj.title,
+        description: obj.description,
+        budget: obj.budget,
+        skills: obj.skills || [],
+        hiringMode: obj.hiringMode || "individual",
+        status: obj.status,
+        timeline: obj.timeline,
+        kbsSync: obj.kbsSync,
+        createdAt: obj.createdAt,
+        updatedAt: obj.updatedAt,
+        proposalsCount: countMap.get(id.toString()) || 0,
+      };
+    });
+
     return NextResponse.json({ projects: projectsWithCount });
-  } catch (error: any) {
-    console.error("Projects GET error:", error?.message || error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch projects";
+    console.error("Projects GET error:", message);
     return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
   }
 }
@@ -118,8 +130,9 @@ export async function POST(req: NextRequest) {
     try {
       const sync = await syncProjectToKbs(project._id.toString());
       kbsSync = sync.kbsSync;
-    } catch (syncError: any) {
-      console.warn("Project auto KBS sync failed:", syncError?.message || syncError);
+    } catch (syncError: unknown) {
+      const msg = syncError instanceof Error ? syncError.message : String(syncError);
+      console.warn("Project auto KBS sync failed:", msg);
       const refreshedProject = await Project.findById(project._id).lean();
       kbsSync = refreshedProject?.kbsSync || kbsSync;
     }
@@ -144,8 +157,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    console.error("Projects POST error:", error?.message || error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to create project";
+    console.error("Projects POST error:", message);
     return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
   }
 }
