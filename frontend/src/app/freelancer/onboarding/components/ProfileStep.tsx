@@ -16,6 +16,7 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
+import { SkillsSelect } from "@/components/SkillsSelect";
 import { Plus, Trash2, UserCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type CvData } from "./CVUploadStep";
@@ -310,9 +311,9 @@ export function ProfileStep({
           />
         </SimpleGrid>
 
-        <TagsInput
+        <SkillsSelect
           label="Skills"
-          placeholder="Add and press Enter"
+          placeholder="Search and select skills"
           value={skills}
           onChange={setSkills}
           clearable

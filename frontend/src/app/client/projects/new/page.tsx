@@ -9,40 +9,18 @@ import {
   TextInput,
   Textarea,
   NumberInput,
-  TagsInput,
   Group,
   Title,
   Loader,
   Text,
 } from "@mantine/core";
+import { SkillsSelect } from "@/components/SkillsSelect";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
 import { projectApi } from "@/lib/api";
 
-const SKILL_OPTIONS = [
-  "React",
-  "Next.js",
-  "Node.js",
-  "TypeScript",
-  "UI Design",
-  "Figma",
-  "Python",
-  "Data Analysis",
-  "Content Writing",
-  "Mobile Design",
-  "Stripe",
-  "MongoDB",
-  "PostgreSQL",
-  "AWS",
-  "DevOps",
-  "Machine Learning",
-  "D3.js",
-  "Tailwind",
-  "REST API",
-  "Webhooks",
-];
 
 function MagicWindIcon({ size = 16 }: { size?: number }) {
   return (
@@ -77,9 +55,6 @@ export default function CreateProjectPage() {
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const skillOptions = Array.from(
-    new Set([...SKILL_OPTIONS, ...skills, ...suggestedSkills])
-  );
 
   const addSkill = (skill: string) => {
     const normalized = skill.trim();
@@ -318,10 +293,10 @@ export default function CreateProjectPage() {
               />
             </Group>
 
-            <TagsInput
+            <SkillsSelect
               label="Required Skills"
-              placeholder="Type a skill and press Enter"
-              data={skillOptions}
+              placeholder="Search and select skills"
+              extraOptions={suggestedSkills}
               value={skills}
               onChange={setSkills}
               clearable

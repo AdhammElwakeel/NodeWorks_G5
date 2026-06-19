@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { User, FreelancerProfile, ClientProfile } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
 import { syncFreelancerToKbs } from "@/lib/server/kbs-sync";
+import { matchSkillsToLibrary } from "@/lib/server/skills";
 
 async function getCurrentUser(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
@@ -76,6 +77,17 @@ export async function PATCH(req: NextRequest) {
         const existingProfile = await FreelancerProfile.findOne({ userId: user._id });
         const profileUpdates = { ...body.profile };
         delete profileUpdates.kbsSync;
+
+        if (profileUpdates.skills !== undefined) {
+          profileUpdates.skills = await matchSkillsToLibrary(profileUpdates.skills);
+        }
+
+        if (profileUpdates.cvAnalysis?.allSkills !== undefined) {
+          profileUpdates.cvAnalysis = {
+            ...profileUpdates.cvAnalysis,
+            allSkills: await matchSkillsToLibrary(profileUpdates.cvAnalysis.allSkills),
+          };
+        }
 
         if (existingProfile?.kbsSync?.status === "synced") {
           profileUpdates.kbsSync = {

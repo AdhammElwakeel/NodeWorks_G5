@@ -14,12 +14,12 @@ import {
   FileInput,
   NumberInput,
   Select,
-  TagsInput,
   Title,
   Loader,
   Center,
   Alert,
 } from "@mantine/core";
+import { SkillsSelect } from "@/components/SkillsSelect";
 import {
   User,
   Save,
@@ -43,19 +43,6 @@ const EXPERIENCE_LEVELS = ["Junior", "Mid-level", "Senior", "Lead"];
 const AVAILABILITY_OPTIONS = ["Full-time", "Part-time", "As needed", "Not available"];
 const CV_ANALYSIS_URL = "/api/cv/analyze";
 
-const SKILL_OPTIONS = [
-  "React", "Next.js", "Node.js", "TypeScript", "JavaScript",
-  "Python", "Django", "Flask", "FastAPI",
-  "Vue.js", "Angular", "Svelte",
-  "React Native", "Flutter", "Swift", "Kotlin",
-  "PostgreSQL", "MongoDB", "MySQL", "Redis",
-  "AWS", "Docker", "Kubernetes", "CI/CD",
-  "UI Design", "UX Design", "Figma",
-  "Project Management", "Agile", "Scrum",
-  "Data Analysis", "Machine Learning", "AI",
-  "Content Writing", "SEO", "Marketing",
-  "DevOps", "Linux", "Shell Scripting",
-];
 
 function normalizeCvAnalysis(cvData: CvData) {
   return {
@@ -416,10 +403,9 @@ export default function EditProfilePage() {
 
           <Card withBorder radius="md" bg="var(--app-surface)" mb="md">
             <Text fw={600} c="var(--app-text)" mb="md">Skills</Text>
-            <TagsInput
+            <SkillsSelect
               label="Your Skills"
-              placeholder="Type a skill and press Enter"
-              data={SKILL_OPTIONS}
+              placeholder="Search and select skills"
               required
               value={form.skills}
               onChange={(v) => update("skills", v)}

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { Project } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
 import { syncProjectToKbs } from "@/lib/server/kbs-sync";
+import { matchSkillsToLibrary } from "@/lib/server/skills";
 
 // GET /api/projects/[id] — get single project
 export async function GET(
@@ -95,7 +96,7 @@ export async function PATCH(
       recommendationDataChanged = true;
     }
     if (body.skills !== undefined) {
-      project.skills = body.skills;
+      project.skills = await matchSkillsToLibrary(body.skills);
       recommendationDataChanged = true;
     }
     if (body.hiringMode !== undefined) {

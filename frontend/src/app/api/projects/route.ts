@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { Project } from "@/lib/models";
 import { verifyToken } from "@/lib/auth";
 import { syncProjectToKbs } from "@/lib/server/kbs-sync";
+import { matchSkillsToLibrary } from "@/lib/server/skills";
 
 // GET /api/projects — list projects with filters
 export async function GET(req: NextRequest) {
@@ -99,12 +100,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const matchedSkills = await matchSkillsToLibrary(skills || []);
+
     const project = await Project.create({
       clientId: payload.userId,
       title,
       description,
       budget,
-      skills: skills || [],
+      skills: matchedSkills,
       hiringMode: hiringMode === "team" ? "team" : "individual",
       timeline: timeline || undefined,
       status: "open",

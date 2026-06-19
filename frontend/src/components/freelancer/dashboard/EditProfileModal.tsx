@@ -13,6 +13,7 @@ import {
   TagsInput,
   ScrollArea,
 } from "@mantine/core";
+import { SkillsSelect } from "@/components/SkillsSelect";
 import type { EditFormState } from "./types";
 
 interface EditProfileModalProps {
@@ -95,21 +96,9 @@ export function EditProfileModal({ opened, onClose, form, setForm, onSave }: Edi
             styles={labelStyles}
           />
         </Group>
-        <TagsInput
+        <SkillsSelect
           label="Skills"
-          placeholder="Add skills and press Enter"
-          data={[
-            "React",
-            "Next.js",
-            "Node.js",
-            "TypeScript",
-            "Python",
-            "UI Design",
-            "Project Management",
-            "Data Analysis",
-            "Content Writing",
-            "Mobile Development",
-          ]}
+          placeholder="Search and select skills"
           value={form.skills}
           onChange={(v) => setForm((f) => ({ ...f, skills: v }))}
           radius="md"

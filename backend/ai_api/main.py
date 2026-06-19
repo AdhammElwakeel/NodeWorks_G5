@@ -806,6 +806,145 @@ def _shared_entity_names(member: dict[str, Any]) -> set[str]:
     return set(member.get("affinityEntities") or [])
 
 
+def _lower_set(values: list[str]) -> set[str]:
+    return {value.lower() for value in values if isinstance(value, str)}
+
+
+def _skill_match_score(candidate_skills: list[str], required_skills: list[str]) -> float:
+    if not required_skills:
+        return 100.0
+    matched = len(_lower_set(candidate_skills) & _lower_set(required_skills))
+    return round((matched / len(_lower_set(required_skills))) * 100, 1)
+
+
+def _matched_skills(candidate_skills: list[str], required_skills: list[str]) -> list[str]:
+    candidate_lower = _lower_set(candidate_skills)
+    return [skill for skill in required_skills if skill.lower() in candidate_lower]
+
+
+def _missing_skills(candidate_skills: list[str], required_skills: list[str]) -> list[str]:
+    candidate_lower = _lower_set(candidate_skills)
+    return [skill for skill in required_skills if skill.lower() not in candidate_lower]
+
+
+def _best_role_match(candidate: dict[str, Any], required_roles: list[dict[str, Any]]) -> tuple[str | None, float]:
+    role_matches = candidate.get("roleMatches") or []
+    if not role_matches:
+        return None, 0.0
+
+    normalized_required = [
+        str(role.get("name", "")).lower()
+        for role in required_roles
+        if role.get("name")
+    ]
+
+    best_name = None
+    best_score = 0.0
+    for role in role_matches:
+        role_name = role.get("name")
+        role_score = float(role.get("score") or 0)
+        if normalized_required:
+            role_lower = str(role_name or "").lower()
+            if not any(req in role_lower or role_lower in req for req in normalized_required):
+                role_score = 0.0
+        if role_score >= best_score:
+            best_name = role_name
+            best_score = role_score
+
+    return best_name, round(best_score, 1)
+
+
+def _project_evidence(candidate: dict[str, Any], required_skills: list[str]) -> tuple[float, list[str], list[dict[str, Any]]]:
+    required_lower = _lower_set(required_skills)
+    evidence_skills: set[str] = set()
+    evidence_details: list[dict[str, Any]] = []
+
+    for project in candidate.get("projects", []):
+        technologies = _clean_string_list(project.get("technologies"))
+        overlap = [skill for skill in technologies if skill.lower() in required_lower]
+        if not overlap:
+            continue
+        evidence_skills.update(overlap)
+        evidence_details.extend(
+            {"project": project.get("name"), "technology": skill}
+            for skill in overlap
+        )
+
+    if not required_skills:
+        return 0.0, [], []
+
+    evidence_score = round((len(_lower_set(list(evidence_skills))) / len(required_lower)) * 100, 1)
+    return evidence_score, sorted(evidence_skills), evidence_details
+
+
+def _experience_score(candidate: dict[str, Any], required_roles: list[dict[str, Any]]) -> tuple[float, list[dict[str, Any]]]:
+    experiences = candidate.get("experience") or []
+    required_role_names = [
+        str(role.get("name", "")).lower()
+        for role in required_roles
+        if role.get("name")
+    ]
+    relevant = [
+        exp
+        for exp in experiences
+        if exp.get("role")
+        and any(req in str(exp["role"]).lower() or str(exp["role"]).lower() in req for req in required_role_names)
+    ]
+
+    if relevant:
+        return 100.0, relevant
+    if len(experiences) >= 2:
+        return 80.0, []
+    if len(experiences) == 1:
+        return 60.0, []
+    if candidate.get("yearsOfExperience"):
+        return 35.0, []
+    return 0.0, []
+
+
+def _recommender_style_score(
+    candidate: dict[str, Any],
+    required_skills: list[str],
+    required_roles: list[dict[str, Any]],
+) -> dict[str, Any]:
+    skills = candidate.get("skills") or []
+    skill_score = _skill_match_score(skills, required_skills)
+    best_role, role_score = _best_role_match(candidate, required_roles)
+    project_score, evidence_skills, project_details = _project_evidence(candidate, required_skills)
+    experience_score, relevant_experience = _experience_score(candidate, required_roles)
+
+    # Ported from backend/Recommender-System/recommender.py, adapted to the live graph:
+    # required skills dominate, role/CV score is next, and CV project evidence is the bonus.
+    score = round((skill_score * 0.50) + (role_score * 0.30) + (project_score * 0.20), 1)
+
+    return {
+        "score": score,
+        "matchedSkills": _matched_skills(skills, required_skills),
+        "missingSkills": _missing_skills(skills, required_skills),
+        "requiredSkills": required_skills,
+        "bestRole": best_role,
+        "bestRoleScore": role_score,
+        "scoreBreakdown": {
+            "skillScore": skill_score,
+            "experienceScore": experience_score,
+            "projectEvidenceScore": project_score,
+            "roleScore": role_score,
+        },
+        "evidence": {
+            "requiredRoles": [role.get("name") for role in required_roles if role.get("name")],
+            "projectEvidenceSkills": evidence_skills,
+        },
+        "experienceDetails": candidate.get("experience") or [],
+        "relevantExperienceDetails": relevant_experience,
+        "projectEvidenceDetails": project_details,
+        "reason": (
+            "Recommended by recommender.py scoring: "
+            f"{len(_matched_skills(skills, required_skills))} required skills matched, "
+            f"role score {role_score}, CV project evidence {project_score}%."
+        ),
+    }
+
+
 class KnowledgeGraphService:
     def __init__(self) -> None:
         uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
@@ -914,12 +1053,30 @@ class KnowledgeGraphService:
 
     def recommend_jobs(self, payload: FreelancerJobRecommendationRequest) -> dict[str, Any]:
         with self.driver.session() as session:
-            records = session.execute_read(
-                self._read_job_recommendations,
-                payload.userId,
-                payload.excludeProjectIds,
-                max(1, min(payload.limit, 50)),
+            freelancer = session.execute_read(self._read_freelancer_profile, payload.userId)
+            projects = session.execute_read(self._read_open_project_profiles, payload.excludeProjectIds)
+
+        if not freelancer:
+            records = []
+        else:
+            records = []
+            for project in projects:
+                score_info = _recommender_style_score(
+                    freelancer,
+                    project["requiredSkills"],
+                    project["requiredRoles"],
+                )
+                records.append({"projectId": project["projectId"], **score_info})
+
+            records.sort(
+                key=lambda item: (
+                    item["score"],
+                    item["scoreBreakdown"]["skillScore"],
+                    item["scoreBreakdown"]["projectEvidenceScore"],
+                ),
+                reverse=True,
             )
+            records = records[: max(1, min(payload.limit, 50))]
 
         return {
             "status": "ok",
@@ -930,12 +1087,30 @@ class KnowledgeGraphService:
         self, payload: ProjectFreelancerRecommendationRequest
     ) -> dict[str, Any]:
         with self.driver.session() as session:
-            records = session.execute_read(
-                self._read_freelancer_recommendations,
-                payload.projectId,
-                payload.excludeUserIds,
-                max(1, min(payload.limit, 50)),
+            project = session.execute_read(self._read_project_profile, payload.projectId)
+            candidates = session.execute_read(self._read_freelancer_profiles, payload.excludeUserIds)
+
+        if not project:
+            records = []
+        else:
+            records = []
+            for candidate in candidates:
+                score_info = _recommender_style_score(
+                    candidate,
+                    project["requiredSkills"],
+                    project["requiredRoles"],
+                )
+                records.append({"userId": candidate["userId"], **score_info})
+
+            records.sort(
+                key=lambda item: (
+                    item["score"],
+                    item["scoreBreakdown"]["skillScore"],
+                    item["scoreBreakdown"]["projectEvidenceScore"],
+                ),
+                reverse=True,
             )
+            records = records[: max(1, min(payload.limit, 50))]
 
         return {
             "status": "ok",
@@ -944,24 +1119,300 @@ class KnowledgeGraphService:
 
     def recommend_teams(self, payload: ProjectTeamRecommendationRequest) -> dict[str, Any]:
         with self.driver.session() as session:
-            graph_data = session.execute_read(
-                self._read_team_candidates,
-                payload.projectId,
-                payload.excludeUserIds,
-            )
+            project = session.execute_read(self._read_project_profile, payload.projectId)
+            candidates = session.execute_read(self._read_freelancer_profiles, payload.excludeUserIds)
 
-        required_skills = graph_data["requiredSkills"]
-        candidates = graph_data["candidates"]
+        required_skills = project["requiredSkills"] if project else []
+        required_roles = project["requiredRoles"] if project else []
         max_team_size = max(1, min(payload.maxTeamSize, 8))
         limit = max(1, min(payload.limit, 10))
-        teams = self._build_skill_coverage_teams(required_skills, candidates, max_team_size, limit)
+        teams = self._build_recommender_style_teams(
+            required_skills,
+            required_roles,
+            candidates,
+            max_team_size,
+            limit,
+        )
 
         return {
             "status": "ok",
             "requiredSkills": required_skills,
-            "requiredRoles": graph_data["requiredRoles"],
+            "requiredRoles": required_roles,
             "recommendations": teams,
         }
+
+    @staticmethod
+    def _read_project_profile(tx: Any, project_id: str) -> dict[str, Any] | None:
+        project = tx.run(
+            """
+            MATCH (p)
+            WHERE (p:ClientProject OR p:Project)
+              AND p.projectId = $project_id
+            RETURN p.projectId AS projectId
+            """,
+            project_id=project_id,
+        ).single()
+        if not project:
+            return None
+
+        skills = tx.run(
+            """
+            MATCH (p)-[:REQUIRES_SKILL]->(s:Skill)
+            WHERE (p:ClientProject OR p:Project)
+              AND p.projectId = $project_id
+            RETURN collect(DISTINCT s.name) AS skills
+            """,
+            project_id=project_id,
+        ).single()
+        roles = tx.run(
+            """
+            MATCH (p)-[requires:REQUIRES_ROLE]->(r:Role)
+            WHERE (p:ClientProject OR p:Project)
+              AND p.projectId = $project_id
+            RETURN collect(DISTINCT {name: r.name, count: requires.count}) AS roles
+            """,
+            project_id=project_id,
+        ).single()
+
+        return {
+            "projectId": project["projectId"],
+            "requiredSkills": skills["skills"] if skills else [],
+            "requiredRoles": roles["roles"] if roles else [],
+        }
+
+    @staticmethod
+    def _read_open_project_profiles(tx: Any, exclude_project_ids: list[str]) -> list[dict[str, Any]]:
+        rows = tx.run(
+            """
+            MATCH (p)
+            WHERE (p:ClientProject OR p:Project)
+              AND coalesce(p.status, 'open') = 'open'
+              AND NOT p.projectId IN $exclude_project_ids
+            OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(s:Skill)
+            OPTIONAL MATCH (p)-[requires:REQUIRES_ROLE]->(r:Role)
+            RETURN p.projectId AS projectId,
+                   collect(DISTINCT s.name) AS requiredSkills,
+                   collect(DISTINCT CASE
+                     WHEN r IS NULL THEN null
+                     ELSE {name: r.name, count: requires.count}
+                   END) AS requiredRoles,
+                   p.syncedAt AS syncedAt
+            ORDER BY p.syncedAt DESC
+            """,
+            exclude_project_ids=exclude_project_ids,
+        )
+        projects = []
+        for row in rows:
+            projects.append(
+                {
+                    "projectId": row["projectId"],
+                    "requiredSkills": [skill for skill in row["requiredSkills"] if skill],
+                    "requiredRoles": [role for role in row["requiredRoles"] if role],
+                    "syncedAt": row["syncedAt"],
+                }
+            )
+        return projects
+
+    @staticmethod
+    def _read_freelancer_profile(tx: Any, user_id: str) -> dict[str, Any] | None:
+        profiles = KnowledgeGraphService._read_freelancer_profiles(tx, [], [user_id])
+        return profiles[0] if profiles else None
+
+    @staticmethod
+    def _read_freelancer_profiles(
+        tx: Any, exclude_user_ids: list[str], only_user_ids: list[str] | None = None
+    ) -> list[dict[str, Any]]:
+        rows = tx.run(
+            """
+            MATCH (f:Freelancer)
+            WHERE NOT f.userId IN $exclude_user_ids
+              AND ($only_user_ids IS NULL OR f.userId IN $only_user_ids)
+            OPTIONAL MATCH (f)-[:HAS_SKILL]->(skill:Skill)
+            OPTIONAL MATCH (f)-[worked:WORKED_AT]->(company:Company)
+            OPTIONAL MATCH (f)-[roleMatch:MATCHES_ROLE]->(role:Role)
+            OPTIONAL MATCH (f)-[:CREATED_CV_PROJECT]->(project:CvProject)
+            OPTIONAL MATCH (project)-[:USED_TECH]->(technology:Skill)
+            OPTIONAL MATCH (f)--(shared)
+            WHERE shared IS NULL
+               OR shared:Skill
+               OR shared:Institution
+               OR shared:Company
+               OR shared:CvProject
+               OR shared:Project
+               OR shared:Role
+            RETURN f.userId AS userId,
+                   f.yearsOfExperience AS yearsOfExperience,
+                   collect(DISTINCT skill.name) AS skills,
+                   collect(DISTINCT CASE
+                     WHEN company IS NULL THEN null
+                     ELSE {company: company.name, role: worked.role, duration: worked.duration}
+                   END) AS experience,
+                   collect(DISTINCT CASE
+                     WHEN role IS NULL THEN null
+                     ELSE {name: role.name, score: roleMatch.score}
+                   END) AS roleMatches,
+                   collect(DISTINCT CASE
+                     WHEN project IS NULL THEN null
+                     ELSE {name: project.name, technology: technology.name}
+                   END) AS projectRows,
+                   collect(DISTINCT CASE
+                     WHEN shared IS NULL THEN null
+                     ELSE labels(shared)[0] + ':' + coalesce(shared.name, shared.title, shared.projectId, shared.userId)
+                   END) AS affinityEntities
+            """,
+            exclude_user_ids=exclude_user_ids,
+            only_user_ids=only_user_ids,
+        )
+
+        profiles = []
+        for row in rows:
+            project_map: dict[str, set[str]] = {}
+            for project_row in row["projectRows"]:
+                if not project_row or not project_row.get("name"):
+                    continue
+                project_map.setdefault(project_row["name"], set())
+                if project_row.get("technology"):
+                    project_map[project_row["name"]].add(project_row["technology"])
+
+            profiles.append(
+                {
+                    "userId": row["userId"],
+                    "yearsOfExperience": row["yearsOfExperience"],
+                    "skills": [skill for skill in row["skills"] if skill],
+                    "experience": [item for item in row["experience"] if item],
+                    "roleMatches": [item for item in row["roleMatches"] if item],
+                    "projects": [
+                        {"name": name, "technologies": sorted(technologies)}
+                        for name, technologies in project_map.items()
+                    ],
+                    "affinityEntities": [entity for entity in row["affinityEntities"] if entity],
+                }
+            )
+        return profiles
+
+    @staticmethod
+    def _build_recommender_style_teams(
+        required_skills: list[str],
+        required_roles: list[dict[str, Any]],
+        candidates: list[dict[str, Any]],
+        max_team_size: int,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        if not required_skills or not candidates:
+            return []
+
+        required_lower = _lower_set(required_skills)
+        scored_candidates = sorted(
+            [
+                {
+                    "candidate": candidate,
+                    "scoreInfo": _recommender_style_score(candidate, required_skills, required_roles),
+                }
+                for candidate in candidates
+            ],
+            key=lambda item: item["scoreInfo"]["score"],
+            reverse=True,
+        )
+
+        teams: list[dict[str, Any]] = []
+        seen_team_keys: set[tuple[str, ...]] = set()
+
+        for seed in scored_candidates[: max(limit * 3, limit)]:
+            selected = [seed]
+            covered = _lower_set(seed["scoreInfo"]["matchedSkills"]) & required_lower
+
+            while len(selected) < max_team_size and covered != required_lower:
+                selected_ids = {item["candidate"]["userId"] for item in selected}
+                remaining = [
+                    item
+                    for item in scored_candidates
+                    if item["candidate"]["userId"] not in selected_ids
+                ]
+                if not remaining:
+                    break
+
+                best_candidate = max(
+                    remaining,
+                    key=lambda item: (
+                        len((_lower_set(item["scoreInfo"]["matchedSkills"]) & required_lower) - covered),
+                        item["scoreInfo"]["score"],
+                    ),
+                )
+                new_skills = (_lower_set(best_candidate["scoreInfo"]["matchedSkills"]) & required_lower) - covered
+                if not new_skills:
+                    break
+
+                selected.append(best_candidate)
+                covered.update(new_skills)
+
+            team_key = tuple(sorted(item["candidate"]["userId"] for item in selected))
+            if team_key in seen_team_keys:
+                continue
+            seen_team_keys.add(team_key)
+
+            covered_skills = [skill for skill in required_skills if skill.lower() in covered]
+            missing_skills = [skill for skill in required_skills if skill.lower() not in covered]
+            coverage_score = round((len(covered) / len(required_lower)) * 100, 1)
+            role_names = {
+                item["scoreInfo"]["bestRole"]
+                for item in selected
+                if item["scoreInfo"].get("bestRole")
+            }
+            role_diversity_bonus = min(len(role_names) * 5, 20)
+
+            shared_synergy_entities: set[str] = set()
+            for index, item in enumerate(selected):
+                entities = _shared_entity_names(item["candidate"])
+                for other in selected[index + 1 :]:
+                    shared_synergy_entities.update(entities & _shared_entity_names(other["candidate"]))
+
+            collaboration_bonus = min(len(shared_synergy_entities), 15)
+            avg_individual = sum(item["scoreInfo"]["score"] for item in selected) / len(selected)
+            final_score = round(
+                0.70 * coverage_score
+                + 0.15 * role_diversity_bonus
+                + 0.15 * collaboration_bonus
+                + 0.10 * avg_individual,
+                1,
+            )
+            technical_score = round(avg_individual, 1)
+
+            teams.append(
+                {
+                    "score": final_score,
+                    "finalScore": final_score,
+                    "technicalScore": technical_score,
+                    "synergyScore": collaboration_bonus,
+                    "coverageScore": coverage_score,
+                    "coveredSkills": covered_skills,
+                    "missingSkills": missing_skills,
+                    "sharedEntities": sorted(shared_synergy_entities),
+                    "reason": (
+                        f"Recommender.py team score: {coverage_score}% skill coverage, "
+                        f"+{role_diversity_bonus} role diversity, +{collaboration_bonus} graph synergy."
+                    ),
+                    "members": [
+                        {
+                            "userId": item["candidate"]["userId"],
+                            "coveredSkills": item["scoreInfo"]["matchedSkills"],
+                            "bestRole": item["scoreInfo"]["bestRole"],
+                            "bestRoleScore": item["scoreInfo"]["bestRoleScore"],
+                        }
+                        for item in selected
+                    ],
+                }
+            )
+
+        teams.sort(
+            key=lambda team: (
+                team["finalScore"],
+                team["coverageScore"],
+                team["technicalScore"],
+                -len(team["members"]),
+            ),
+            reverse=True,
+        )
+        return teams[:limit]
 
     @staticmethod
     def _write_freelancer(tx: Any, data: dict[str, Any]) -> None:

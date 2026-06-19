@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
+import { connectDB } from "@/lib/db";
+import { matchSkillsToLibrary } from "@/lib/server/skills";
 
 export const runtime = "nodejs";
 
@@ -18,6 +20,8 @@ async function parseApiResponse(response: Response) {
 
 export async function POST(req: NextRequest) {
   try {
+    await connectDB();
+
     const token = req.cookies.get("token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -64,7 +68,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ skills: Array.isArray(data.skills) ? data.skills : [] });
+    return NextResponse.json({
+      skills: await matchSkillsToLibrary(Array.isArray(data.skills) ? data.skills : []),
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
