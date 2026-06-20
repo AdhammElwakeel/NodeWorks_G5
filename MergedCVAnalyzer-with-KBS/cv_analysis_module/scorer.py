@@ -7,7 +7,7 @@ MAX_EXPERIENCE_YEARS = 3
 # How much of the final score comes from skills vs experience
 # 80% skill match + 20% experience bonus
 SKILL_WEIGHT = 0.80
-EXPERIENCE_WEIGHT = 0.20
+EXPERIENCE_WEIGHT = 1.0 - SKILL_WEIGHT
 
 
 def _parse_years(years_of_experience: str) -> float:
