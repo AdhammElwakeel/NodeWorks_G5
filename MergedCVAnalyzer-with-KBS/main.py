@@ -172,10 +172,31 @@ if __name__ == "__main__":
         for json_file in CVS_JSON_DIR.glob("*_result.json"):
             with open(json_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            if not data.get("name"):
-                print(f"⚠️  Skipping {json_file.name} — name missing, CV parsing failed completely")
-                continue
-            # Stable unique ID: prefer email, fall back to hash of name+filename
+
+            # ── Graceful fallback when the LLM couldn't extract name/email ──
+            # This happens when:
+            #   • The CV name is embedded as an image (not selectable text).
+            #   • The LLM returned null/None for the name field.
+            # We derive a placeholder from the filename so the freelancer is
+            # still ingested with all their skills, domains, and role scores.
+            name_missing  = not data.get("name") or str(data.get("name")).lower() in ("none", "null", "")
+            email_missing = not data.get("email") or str(data.get("email")).lower() in ("none", "null", "")
+
+            if name_missing:
+                # e.g.  "Farah_Mohamed_CV_result.json"  →  "Farah Mohamed CV"
+                stem = json_file.stem.replace("_result", "")
+                fallback_name = stem.replace("_", " ").replace("-", " ").strip()
+                print(f"⚠️  Name missing in {json_file.name} — using filename fallback: '{fallback_name}'")
+                data["name"] = fallback_name
+
+            if email_missing:
+                # Synthesise a placeholder email so MERGE on email still works
+                safe_stem = json_file.stem.replace(" ", "_").replace("_result", "")
+                data["email"] = f"unknown_{safe_stem}@placeholder.nodeworks"
+                if name_missing:  # only print once
+                    print(f"   Also missing email — placeholder assigned.")
+
+            # Stable unique ID: prefer real email, fall back to hash of name+filename
             seed = data.get("email") or f"{data.get('name')}_{json_file.stem}"
             data["kbs_id"] = hashlib.md5(seed.encode()).hexdigest()[:16]
             try:
