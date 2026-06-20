@@ -97,6 +97,7 @@ Extract and normalize all TECHNICAL skills to match our Standard Technology List
 4. **Research Inference (CRITICAL):** If the candidate lists ANY published papers, conference papers, or journal articles → MUST add "Publications" and "Research" to all_skills. A Master's/PhD thesis → add "Research".
 5. **Agentic/GenAI Inference:** Mentions of CrewAI/AutoGen/LangGraph/AI Agents → add "Tool Calling" and "Multi-Agent Collaboration".
 6. **Completeness:** Extract ALL skills mentioned anywhere — skills section, projects, experience, certifications, and education. Do NOT skip skills found only in projects or certifications.
+7. **Inference:** If they mention "Prompt Engineering" or "Fine-tuning" → add "LLM". If they mention "Stable Diffusion" → add "Generative AI (Vision)". If they mention "Whisper" → add "Generative AI (Audio/Speech)". If they mention "Deep Learning" → add "Machine learning".
 
 ---
 
@@ -133,8 +134,6 @@ Extract and normalize all TECHNICAL skills to match our Standard Technology List
 - Be specific but concise. "Medical AI" is too vague. "Diabetic Retinopathy Classification" is better.
 - Do NOT include tech skills here (no "Python", "PyTorch", "React", etc.).
 - Each domain entry should be 2-4 words maximum.
-- A candidate with 10 projects should have at least 10 domain entries — one per project/publication/role.
-
 ---
 
 ### PART 3 — EXPERIENCE CALCULATION
