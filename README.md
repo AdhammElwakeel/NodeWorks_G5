@@ -18,7 +18,25 @@ graduation_project/
 |   |-- cv_api/                 # Standalone CV analysis API
 |   `-- MergedCVAnalyzer-with-KBS/
 |-- MergedCVAnalyzer-with-KBS/   # CV analysis module/research code
+|   |-- assests
+|   |-- cv_analysis_module
+|   |   |-- __init__.py
+|   |   |-- config.py 
+|   |   |-- glm_client.py  
+|   |   |-- opencode_go_client.py
+|   |   |-- pdf_utils.py
+|   |   `-- scorer.py 
+|   |-- check_models.py
+|   |-- main.py                 # the main file that is adding the analyzed CVs to the KBS
+|   |-- New Knowledge Graph Relationships Bidirectionally.csv
+|   `-- Queries.docx 
 |-- Recommender-System/         # Recommendation-system research prototype
+|   |-- Content_based_recommender.py
+|   |-- kg_reader.py
+|   |-- knowledge_based_recommendar.py
+|   |-- role_matcher.py 
+|   |-- .gitignore 
+|   `-- team_formation.ipynb 
 |-- docs/                       # Report and presentation files
 |-- package.json                # Root scripts that run the frontend
 |-- requirements.txt            # Single Python dependency file
