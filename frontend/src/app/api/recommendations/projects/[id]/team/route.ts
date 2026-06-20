@@ -86,8 +86,10 @@ export async function GET(
     const enriched = teams.map((team: any) => ({
       score: team.score,
       finalScore: team.finalScore,
+      rawFinalScore: team.rawFinalScore,
       technicalScore: team.technicalScore,
       synergyScore: team.synergyScore,
+      knowledgeScore: team.knowledgeScore,
       coverageScore: team.coverageScore,
       reason: team.reason,
       coveredSkills: team.coveredSkills || [],

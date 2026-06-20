@@ -29,6 +29,7 @@ function normalizeCvAnalysis(cvData: CvData, experience: ProfileData["experience
     headline: cvData.headline,
     yearsOfExperience: cvData["years of experience"],
     allSkills: cvData.all_skills ?? [],
+    domainKnowledge: cvData.domain_knowledge ?? [],
     experience: experience
       .map((item) => ({
         role: item.role.trim(),
@@ -265,6 +266,7 @@ export default function FreelancerOnboardingPage() {
             profileData={profileData}
             report={interviewReport}
             onComplete={setInterviewReport}
+            allowSkip
           />
         )}
       </OnboardingLayout>

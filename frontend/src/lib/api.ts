@@ -355,8 +355,22 @@ export const messageApi = {
 
 // ─── Recommendations (stub — AI team feature) ──────────────────────────
 
-export type KbsScoreBreakdown = Record<string, number | undefined>;
-export type KbsEvidence = Record<string, string[] | undefined>;
+export type KbsScoreBreakdown = {
+  skillScore?: number;
+  experienceScore?: number;
+  projectEvidenceScore?: number;
+  roleScore?: number;
+  techScore?: number;
+  synergyScore?: number;
+  knowledgeScore?: number;
+  rawFinalScore?: number;
+  finalScore?: number;
+};
+export type KbsEvidence = {
+  requiredRoles?: string[];
+  projectEvidenceSkills?: string[];
+  domainKnowledge?: string[];
+};
 export type KbsExperienceDetail = {
   company?: string;
   role?: string;
@@ -432,8 +446,10 @@ export const recApi = {
     recommendations: {
       score: number;
       finalScore: number;
+      rawFinalScore?: number;
       technicalScore: number;
       synergyScore: number;
+      knowledgeScore?: number;
       coverageScore: number;
       reason: string;
       coveredSkills: string[];

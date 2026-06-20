@@ -28,6 +28,7 @@ export interface CvData {
   headline?: string;
   "years of experience"?: string;
   all_skills?: string[];
+  domain_knowledge?: string[];
   experience?: { role: string; company: string; years: string }[];
   education?: {
     degree: string;
