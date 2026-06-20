@@ -49,6 +49,10 @@ import type { ProjectData, ProposalData } from "@/lib/api";
 
 type JobRecommendation = Awaited<ReturnType<typeof recApi.jobs>>["recommendations"][number];
 
+function clampScore(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
 const OPEN_JOBS_PER_PAGE = 6;
 
 function formatDate(value: string) {
@@ -317,7 +321,7 @@ function FreelancerDashboardContent() {
                                 <Stack gap={4} style={{ minWidth: 0 }}>
                                   <Group gap="xs" wrap="wrap">
                                     <Badge color="violet" variant="filled" radius="md">
-                                      {item.score}% individual match
+                                      {clampScore(item.score)}% individual match
                                     </Badge>
                                     <Badge color="cyan" variant="light" radius="md">
                                       Graph matched
@@ -609,7 +613,7 @@ function FreelancerDashboardContent() {
                                 size="sm"
                                 radius="sm"
                               >
-                                {recommendation ? `${recommendation.score}% match` : "Open"}
+                                {recommendation ? `${clampScore(recommendation.score)}% match` : "Open"}
                               </Badge>
                               <Group gap={4} wrap="nowrap">
                                 <CircleDollarSign

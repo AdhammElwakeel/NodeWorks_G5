@@ -9,3 +9,4 @@ pytz==2025.2
 python-multipart
 zhipuai
 openai
+sentence-transformers

@@ -9,6 +9,10 @@ function scoreColor(value: number) {
   return "orange";
 }
 
+function clampScore(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
 function recommendationLabel(value?: number) {
   if (value === undefined) return "Best match";
   if (value >= 80) return "Excellent match";
@@ -52,8 +56,17 @@ export function KbsExplanationPanel({
   projectEvidenceDetails?: { project?: string; technology?: string }[];
   color?: string;
 }) {
+  const displayScore = score === undefined ? undefined : clampScore(score);
   const roleScore = scoreBreakdown?.roleScore || 0;
+  const techScore = scoreBreakdown?.techScore;
+  const synergyScore = scoreBreakdown?.synergyScore;
+  const knowledgeScore = scoreBreakdown?.knowledgeScore;
+  const rawFinalScore = scoreBreakdown?.rawFinalScore;
+  const finalScore = scoreBreakdown?.finalScore;
+  const hasRecsysBreakdown =
+    techScore !== undefined || synergyScore !== undefined || knowledgeScore !== undefined || finalScore !== undefined || rawFinalScore !== undefined;
   const requiredRoles = evidence?.requiredRoles || [];
+  const domainKnowledge = evidence?.domainKnowledge || [];
   const projectEvidenceSkills = evidence?.projectEvidenceSkills || [];
   const visibleExperience = (relevantExperienceDetails?.length
     ? relevantExperienceDetails
@@ -79,22 +92,22 @@ export function KbsExplanationPanel({
             </ThemeIcon>
             <Stack gap={1}>
               <Text fz="sm" fw={800} c="var(--app-text)">
-                {recommendationLabel(score)}
+                {recommendationLabel(displayScore)}
               </Text>
               <Text fz="xs" c="dimmed">
                 Recommended using KBS graph evidence and RecSys ranking
               </Text>
             </Stack>
           </Group>
-          {score !== undefined && (
-            <Badge size="md" color={scoreColor(score)} variant="filled" radius="md">
-              {score}%
+          {displayScore !== undefined && (
+            <Badge size="md" color={scoreColor(displayScore)} variant="filled" radius="md">
+              {displayScore}%
             </Badge>
           )}
         </Group>
 
-        {score !== undefined && (
-          <Progress value={Math.min(score, 100)} color={scoreColor(score)} radius="xl" size="sm" />
+        {displayScore !== undefined && (
+          <Progress value={displayScore} color={scoreColor(displayScore)} radius="xl" size="sm" />
         )}
 
         {reason && (
@@ -103,7 +116,32 @@ export function KbsExplanationPanel({
           </Text>
         )}
 
-        {(matchedSkills.length > 0 || visibleExperience.length > 0 || visibleProjectEvidence.length > 0 || requiredRoles.length > 0) && (
+        {hasRecsysBreakdown && (
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={6}>
+            <Box p="xs" style={{ borderRadius: "var(--mantine-radius-md)", background: "rgba(255,255,255,0.48)" }}>
+              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Tech Role</Text>
+              <Text fz="sm" fw={900} c="var(--app-text)">{techScore ?? 0}</Text>
+              <Text fz={10} c="dimmed">normalized role fit</Text>
+            </Box>
+            <Box p="xs" style={{ borderRadius: "var(--mantine-radius-md)", background: "rgba(255,255,255,0.48)" }}>
+              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Synergy</Text>
+              <Text fz="sm" fw={900} c="var(--app-text)">{synergyScore ?? 0}</Text>
+              <Text fz={10} c="dimmed">normalized bonus</Text>
+            </Box>
+            <Box p="xs" style={{ borderRadius: "var(--mantine-radius-md)", background: "rgba(255,255,255,0.48)" }}>
+              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Knowledge</Text>
+              <Text fz="sm" fw={900} c="var(--app-text)">{knowledgeScore ?? 0}</Text>
+              <Text fz={10} c="dimmed">normalized bonus</Text>
+            </Box>
+            <Box p="xs" style={{ borderRadius: "var(--mantine-radius-md)", background: "rgba(255,255,255,0.48)" }}>
+              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Final %</Text>
+              <Text fz="sm" fw={900} c="var(--app-text)">{finalScore ?? score ?? 0}</Text>
+              <Text fz={10} c="dimmed">raw {rawFinalScore ?? finalScore ?? score ?? 0}</Text>
+            </Box>
+          </SimpleGrid>
+        )}
+
+        {(matchedSkills.length > 0 || visibleExperience.length > 0 || visibleProjectEvidence.length > 0 || requiredRoles.length > 0 || domainKnowledge.length > 0) && (
           <Box
             p="sm"
             style={{
@@ -130,6 +168,15 @@ export function KbsExplanationPanel({
                     <Network size={14} color="var(--mantine-color-teal-6)" />
                     <Text fz="xs" c="dimmed">
                       Role fit: {requiredRoles.join(", ")}
+                    </Text>
+                  </Group>
+                )}
+                {domainKnowledge.length > 0 && (
+                  <Group gap={6} wrap="nowrap" align="flex-start">
+                    <Network size={14} color="var(--mantine-color-indigo-6)" />
+                    <Text fz="xs" c="dimmed">
+                      Domain knowledge: {domainKnowledge.slice(0, 6).join(", ")}
+                      {domainKnowledge.length > 6 ? ` +${domainKnowledge.length - 6} more` : ""}
                     </Text>
                   </Group>
                 )}

@@ -9,6 +9,8 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY backend /app/backend
+COPY MergedCVAnalyzer-with-KBS /app/MergedCVAnalyzer-with-KBS
+COPY Recommender-System /app/Recommender-System
 
 WORKDIR /app/backend/ai_api
 

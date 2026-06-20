@@ -5,9 +5,11 @@ Flexible team formation recommender for NodeWorks.
 
 Scoring formula
 ---------------
-    final_score = tech_score + (synergy_score * 0.1) + knowledge_score
+    raw_score   = ((2 * tech_score) + (0.1 * synergy_score) + (0.5 * knowledge_score)) / (2 * role_count)
+    final_score = min(100, raw_score)
 
-  tech_score      – sum of each member's pre-computed role score from the KG
+  tech_score      – sum of each member's pre-computed role score from the KG.
+                    It is normalized by role_count so final_score is a UI-safe percentage.
   synergy_score   – pairwise shared-skill count across all team members
                     (0 when team size == 1)
   knowledge_score – how well each member's skills AND domain knowledge
@@ -351,7 +353,10 @@ def recommend_teams(
         t_score = sum(role_scores[perm[j]][j][0] for j in range(n_roles))
         s_score = 0 if single_person else _pairwise_synergy(members)
         k_score = _knowledge_score(members, keywords)
-        final   = (2 * t_score) + (0.1 * s_score) + (0.5 * k_score)
+        # Keep the original component weights, then normalize by the maximum
+        # weighted role component so the displayed final score is a percentage.
+        raw_final = ((2 * t_score) + (0.1 * s_score) + (0.5 * k_score)) / (2 * n_roles)
+        final = min(100.0, raw_final)
 
         results.append({
             "members": [
@@ -370,10 +375,11 @@ def recommend_teams(
             "tech_score":      round(t_score, 2),
             "synergy_score":   s_score,
             "knowledge_score": round(k_score, 2),
+            "raw_final_score": round(raw_final, 4),
             "final_score":     round(final, 4),
         })
 
-    results.sort(key=lambda x: (x["final_score"], x["tech_score"]), reverse=True)
+    results.sort(key=lambda x: (x["raw_final_score"], x["tech_score"]), reverse=True)
     return results[:limit]
 
 

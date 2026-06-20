@@ -35,6 +35,10 @@ type TeamRecommendation = Awaited<
   ReturnType<typeof recApi.team>
 >["recommendations"][number];
 
+function clampScore(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
 export default function ClientDashboardPage() {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -362,7 +366,7 @@ export default function ClientDashboardPage() {
                               <Stack gap={4} style={{ minWidth: 0 }}>
                                 <Group gap="xs" wrap="wrap">
                                   <Badge color="violet" variant="filled" radius="md">
-                                    {item.score}% individual match
+                                    {clampScore(item.score)}% individual match
                                   </Badge>
                                   {item.freelancer.hourlyRate !== undefined && (
                                     <Badge color="green" variant="light" radius="md">
@@ -380,12 +384,12 @@ export default function ClientDashboardPage() {
                             </Group>
                           </Group>
 
-                          <Progress value={item.score} color={item.score >= 80 ? "green" : "violet"} radius="xl" />
+                          <Progress value={clampScore(item.score)} color={item.score >= 80 ? "green" : "violet"} radius="xl" />
 
                           <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xs">
                             <Card withBorder radius="lg" p="sm" bg="rgba(255,255,255,0.48)">
                               <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Match</Text>
-                              <Text fw={900} fz="xl" c="var(--app-text)">{item.score}%</Text>
+                              <Text fw={900} fz="xl" c="var(--app-text)">{clampScore(item.score)}%</Text>
                               <Text fz="xs" c="dimmed">Individual fit</Text>
                             </Card>
                             <Card withBorder radius="lg" p="sm" bg="rgba(255,255,255,0.48)">
@@ -491,7 +495,7 @@ export default function ClientDashboardPage() {
                             </Group>
                             <Group gap="xs">
                               <Badge color="teal" variant="filled">
-                                Final {team.finalScore}
+                                {clampScore(team.coverageScore)}% team match
                               </Badge>
                               <Badge color="cyan" variant="light">
                                 {team.coverageScore}% coverage
@@ -499,6 +503,25 @@ export default function ClientDashboardPage() {
                             </Group>
                           </Group>
                           <Progress value={team.coverageScore} color="teal" radius="xl" />
+                          <SimpleGrid cols={{ base: 2, md: 4 }} spacing="xs">
+                            <Card withBorder radius="lg" p="xs" bg="rgba(255,255,255,0.48)">
+                              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Final %</Text>
+                              <Text fw={900} fz="lg" c="var(--app-text)">{team.finalScore}</Text>
+                            </Card>
+                            <Card withBorder radius="lg" p="xs" bg="rgba(255,255,255,0.48)">
+                              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Tech Role</Text>
+                              <Text fw={900} fz="lg" c="var(--app-text)">{team.technicalScore}</Text>
+                            </Card>
+                            <Card withBorder radius="lg" p="xs" bg="rgba(255,255,255,0.48)">
+                              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Knowledge</Text>
+                              <Text fw={900} fz="lg" c="var(--app-text)">{team.knowledgeScore ?? 0}</Text>
+                            </Card>
+                            <Card withBorder radius="lg" p="xs" bg="rgba(255,255,255,0.48)">
+                              <Text fz={10} c="dimmed" tt="uppercase" fw={800}>Synergy</Text>
+                              <Text fw={900} fz="lg" c="var(--app-text)">{team.synergyScore}</Text>
+                            </Card>
+                          </SimpleGrid>
+                          <Text fz="xs" c="dimmed">{team.reason}</Text>
                           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="sm">
                             {team.members.map((member) => (
                               <Card key={member.userId} withBorder radius="lg" p="sm" bg="var(--app-surface)">

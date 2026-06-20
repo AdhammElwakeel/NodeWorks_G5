@@ -56,6 +56,10 @@ type FreelancerRecommendation = Awaited<
 >["recommendations"][number];
 type TeamRecommendation = Awaited<ReturnType<typeof recApi.team>>["recommendations"][number];
 
+function clampScore(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
 type EditProjectForm = {
   title: string;
   description: string;
@@ -571,7 +575,7 @@ export default function ProjectDetailPage() {
                         <Stack gap={4} style={{ minWidth: 0 }}>
                           <Group gap="xs" wrap="wrap">
                             <Badge color="violet" variant="filled" radius="md">
-                              {item.score}% individual match
+                              {clampScore(item.score)}% individual match
                             </Badge>
                             {item.freelancer.hourlyRate !== undefined && (
                               <Badge color="green" variant="light" radius="md">
@@ -588,11 +592,11 @@ export default function ProjectDetailPage() {
                         </Stack>
                       </Group>
                     </Group>
-                    <Progress value={item.score} color={item.score >= 80 ? "green" : "violet"} radius="xl" />
+                    <Progress value={clampScore(item.score)} color={item.score >= 80 ? "green" : "violet"} radius="xl" />
                     <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xs">
                       <Card withBorder radius="lg" p="sm" bg="rgba(255,255,255,0.48)">
                         <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Match</Text>
-                        <Text fw={900} fz="xl" c="var(--app-text)">{item.score}%</Text>
+                        <Text fw={900} fz="xl" c="var(--app-text)">{clampScore(item.score)}%</Text>
                         <Text fz="xs" c="dimmed">Individual fit</Text>
                       </Card>
                       <Card withBorder radius="lg" p="sm" bg="rgba(255,255,255,0.48)">
@@ -731,7 +735,7 @@ export default function ProjectDetailPage() {
 
                         <Group gap="xs" justify="flex-end">
                           <Badge color="teal" variant="filled" size="lg">
-                            Final {team.finalScore}
+                            {clampScore(team.coverageScore)}% team match
                           </Badge>
                           <Badge color="cyan" variant="light" size="lg">
                             {team.coverageScore}% coverage
@@ -744,21 +748,26 @@ export default function ProjectDetailPage() {
                         </Group>
                       </Group>
 
-                      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="sm">
+                      <SimpleGrid cols={{ base: 1, md: 4 }} spacing="sm">
                         <Card withBorder radius="lg" p="md" bg="rgba(255,255,255,0.45)">
                           <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Skill Coverage</Text>
                           <Text fw={900} fz="xl" c="var(--app-text)">{team.coverageScore}%</Text>
                           <Progress value={team.coverageScore} color="teal" radius="xl" mt="xs" />
                         </Card>
                         <Card withBorder radius="lg" p="md" bg="rgba(255,255,255,0.45)">
-                          <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Technical Fit</Text>
+                          <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Tech Role Score</Text>
                           <Text fw={900} fz="xl" c="var(--app-text)">{team.technicalScore}</Text>
-                          <Text fz="xs" c="dimmed">Skill coverage plus role confidence</Text>
+                          <Text fz="xs" c="dimmed">RecSys tech score</Text>
                         </Card>
                         <Card withBorder radius="lg" p="md" bg="rgba(255,255,255,0.45)">
-                          <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Graph Synergy</Text>
+                          <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Knowledge Score</Text>
+                          <Text fw={900} fz="xl" c="var(--app-text)">{team.knowledgeScore ?? 0}</Text>
+                          <Text fz="xs" c="dimmed">Skill/domain keyword hits</Text>
+                        </Card>
+                        <Card withBorder radius="lg" p="md" bg="rgba(255,255,255,0.45)">
+                          <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Skill Synergy</Text>
                           <Text fw={900} fz="xl" c="var(--app-text)">{team.synergyScore}</Text>
-                          <Text fz="xs" c="dimmed">Shared KBS entities between members</Text>
+                          <Text fz="xs" c="dimmed">Shared skills between members</Text>
                         </Card>
                       </SimpleGrid>
 
@@ -767,6 +776,13 @@ export default function ProjectDetailPage() {
                         reason={team.reason}
                         matchedSkills={team.coveredSkills}
                         missingSkills={team.missingSkills}
+                        scoreBreakdown={{
+                          techScore: team.technicalScore,
+                          synergyScore: team.synergyScore,
+                          knowledgeScore: team.knowledgeScore,
+                          rawFinalScore: team.rawFinalScore,
+                          finalScore: team.finalScore,
+                        }}
                         graphPath="Project skills are covered by multiple Freelancer - HAS_SKILL relationships"
                         color="teal"
                       />

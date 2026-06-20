@@ -9,9 +9,6 @@ import os
 import asyncio
 from pathlib import Path
 
-# Make the sibling cv_analysis_module importable
-sys.path.insert(0, str(Path(__file__).parent.parent / "MergedCVAnalyzer-with-KBS"))
-
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -22,6 +19,11 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(dotenv_path=ROOT_DIR / ".env")
 load_dotenv(dotenv_path=ROOT_DIR / "frontend" / ".env")
+
+KBS_DIR = ROOT_DIR / "MergedCVAnalyzer-with-KBS"
+CV_MODULE_DIR = KBS_DIR / "cv_analysis_module"
+sys.path.insert(0, str(CV_MODULE_DIR))
+sys.path.insert(0, str(KBS_DIR))
 
 from cv_analysis_module import process_cv  # noqa: E402  (import after sys.path patch)
 

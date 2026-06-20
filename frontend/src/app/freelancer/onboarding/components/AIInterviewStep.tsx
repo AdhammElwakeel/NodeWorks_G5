@@ -43,6 +43,7 @@ interface AIInterviewStepProps {
   profileData: ProfileData;
   report: InterviewReportData | null;
   onComplete: (report: InterviewReportData) => void;
+  allowSkip?: boolean;
 }
 
 type CameraStatus = "idle" | "starting" | "active" | "blocked" | "stopped";
@@ -203,6 +204,7 @@ export function AIInterviewStep({
   profileData,
   report,
   onComplete,
+  allowSkip = false,
 }: AIInterviewStepProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestionData | null>(null);
@@ -234,6 +236,36 @@ export function AIInterviewStep({
   const cvPayload = buildInterviewCvData(cvData, profileData);
   const availableSkills = cvPayload.skills.length;
   const progress = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+
+  const skipInterview = () => {
+    const skippedReport: InterviewReportData = {
+      session_id: `demo-skip-${Date.now()}`,
+      candidate_id: cvPayload.email || cvPayload.name || "demo-candidate",
+      overall_score: 0,
+      raw_score: 0,
+      is_verified: false,
+      skill_scores: [],
+      total_questions: 0,
+      cheating_detected: false,
+      violations: 0,
+      violation_types: ["demo_skip"],
+      violation_reasons: [
+        {
+          type: "demo_skip",
+          reason: "AI interview skipped for demo testing.",
+          occurred_at: new Date().toISOString(),
+        },
+      ],
+      english_score: 0,
+      penalty: 0,
+      strong_skills: [],
+      badge_tier: null,
+      completed_at: new Date().toISOString(),
+    };
+
+    setLocalReport(skippedReport);
+    onComplete(skippedReport);
+  };
 
   const reportProctorViolation = async (violationType: string) => {
     if (violationCooldownRef.current.has(violationType)) return;
@@ -823,9 +855,16 @@ export function AIInterviewStep({
                     Add at least one skill in your profile step before starting the interview.
                   </Alert>
                 )}
-                <Button onClick={startInterview} loading={loading} mt="sm" disabled={cvPayload.skills.length === 0}>
-                  Start AI interview
-                </Button>
+                <Group mt="sm">
+                  <Button onClick={startInterview} loading={loading} disabled={cvPayload.skills.length === 0}>
+                    Start AI interview
+                  </Button>
+                  {allowSkip && (
+                    <Button variant="subtle" color="gray" onClick={skipInterview} disabled={loading}>
+                      Skip for demo
+                    </Button>
+                  )}
+                </Group>
               </Stack>
             </Card>
 

@@ -31,6 +31,7 @@ export interface ICvAnalysis {
   headline?: string;
   yearsOfExperience?: string;
   allSkills?: string[];
+  domainKnowledge?: string[];
   experience?: ICvExperienceItem[];
   education?: ICvEducationItem[];
   projects?: ICvProjectItem[];
@@ -153,6 +154,7 @@ const CvAnalysisSchema = new mongoose.Schema<ICvAnalysis>(
     headline: { type: String, trim: true },
     yearsOfExperience: { type: String, trim: true },
     allSkills: [{ type: String, trim: true }],
+    domainKnowledge: [{ type: String, trim: true }],
     experience: [CvExperienceItemSchema],
     education: [CvEducationItemSchema],
     projects: [CvProjectItemSchema],
