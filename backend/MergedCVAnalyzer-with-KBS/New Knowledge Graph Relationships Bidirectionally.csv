@@ -1,7 +1,0 @@
-From Entity,Relationship,To Entity,Purpose
-Freelancer,[:STUDIED_AT],Institution,Track education history.
-Institution,[:ALUMNI_OF],Freelancer,Quick lookup of all graduates from a school.
-Freelancer,[:WORKED_AT],Company,Track employment history.
-Company,[:EMPLOYED],Freelancer,Identify talent pools from specific competitors.
-Project,[:USED_TECH],Skill,Map tech stack to projects.
-Skill,[:USED_IN],Project,Find real-world examples of a skill in action.
