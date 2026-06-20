@@ -1,5 +1,6 @@
 import sys
 import json
+import hashlib
 from pathlib import Path
 from cv_analysis_module import process_cv
 import os
@@ -30,91 +31,91 @@ class KnowledgeGraphBuilder:
 
             # 1. Freelancer node
             session.run("""
-                MERGE (f:Freelancer {email: $email})
-                SET f.name = $name, f.phone = $phone
-            """, email=cv_json['email'], name=cv_json['name'],
+                MERGE (f:Freelancer {kbs_id: $kbs_id})
+                SET f.name = $name, f.email = $email, f.phone = $phone
+            """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'), name=cv_json['name'],
                  phone=cv_json.get('phone'))
 
             # 2. Tech Skills  (bidirectional)
             for skill in cv_json.get('all_skills', []):
                 session.run("""
-                    MATCH (f:Freelancer {email: $email})
+                    MATCH (f:Freelancer {kbs_id: $kbs_id})
                     MERGE (s:Skill {name: $skill_name})
                     MERGE (f)-[:HAS_SKILL]->(s)
                     MERGE (s)-[:SKILL_OWNED_BY]->(f)
-                """, email=cv_json['email'], skill_name=skill)
+                """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'), skill_name=skill)
 
             # 3. Domain Knowledge  (bidirectional)
             #    Stored as a separate Domain node so the recommender can
             #    match client project keywords against domain expertise,
             #    not just tech skills.
             session.run("""
-                MATCH (f:Freelancer {email: $email})-[r:HAS_DOMAIN]->()
+                MATCH (f:Freelancer {kbs_id: $kbs_id})-[r:HAS_DOMAIN]->()
                 DELETE r
-            """, email=cv_json['email'])
+            """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'))
 
             for domain in cv_json.get('domain_knowledge', []):
                 if domain and domain.strip():
                     session.run("""
-                        MATCH (f:Freelancer {email: $email})
+                        MATCH (f:Freelancer {kbs_id: $kbs_id})
                         MERGE (d:Domain {name: $domain_name})
                         MERGE (f)-[:HAS_DOMAIN]->(d)
                         MERGE (d)-[:DOMAIN_OF]->(f)
-                    """, email=cv_json['email'], domain_name=domain.strip())
+                    """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'), domain_name=domain.strip())
 
             # 4. Experience  (bidirectional)
             for exp in cv_json.get('experience', []):
                 session.run("""
-                    MATCH (f:Freelancer {email: $email})
+                    MATCH (f:Freelancer {kbs_id: $kbs_id})
                     MERGE (c:Company {name: $company})
                     MERGE (f)-[:WORKED_AT {role: $role, duration: $years}]->(c)
                     MERGE (c)-[:EMPLOYED {as_role: $role, for_duration: $years}]->(f)
-                """, email=cv_json['email'], company=exp['company'],
+                """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'), company=exp['company'],
                      role=exp['role'], years=exp.get('years'))
 
             # 5. Education  (bidirectional)
             for edu in cv_json.get('education', []):
                 session.run("""
-                    MATCH (f:Freelancer {email: $email})
+                    MATCH (f:Freelancer {kbs_id: $kbs_id})
                     MERGE (i:Institution {name: $institution})
                     MERGE (f)-[:STUDIED_AT {degree: $degree}]->(i)
                     MERGE (i)-[:ALUMNI_OF {degree_awarded: $degree}]->(f)
-                """, email=cv_json['email'], institution=edu['institution'],
+                """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'), institution=edu['institution'],
                      degree=edu['degree'])
 
             # 6. Projects + tech stack  (bidirectional)
             for proj in cv_json.get('projects', []):
                 session.run("""
-                    MATCH (f:Freelancer {email: $email})
-                    MERGE (p:Project {name: $p_name})
+                    MATCH (f:Freelancer {kbs_id: $kbs_id})
+                    MERGE (p:Project {name: $p_name, owner_kbs_id: $kbs_id})
                     MERGE (f)-[:CREATED_PROJECT]->(p)
                     MERGE (p)-[:DEVELOPED_BY]->(f)
-                """, email=cv_json['email'], p_name=proj['name'])
+                """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'), p_name=proj['name'])
 
                 for tech in proj.get('technologies', []):
                     session.run("""
-                        MATCH (p:Project {name: $p_name})
+                        MATCH (p:Project {name: $p_name, owner_kbs_id: $kbs_id})
                         MERGE (s:Skill {name: $tech})
                         MERGE (p)-[:USED_TECH]->(s)
                         MERGE (s)-[:USED_IN]->(p)
-                    """, p_name=proj['name'], tech=tech)
+                    """, kbs_id=cv_json['kbs_id'], p_name=proj['name'], tech=tech)
 
             # 7. ALL role rankings (delete stale edges first)
             session.run("""
-                MATCH (f:Freelancer {email: $email})-[r:MATCHES_ROLE]->()
+                MATCH (f:Freelancer {kbs_id: $kbs_id})-[r:MATCHES_ROLE]->()
                 DELETE r
-            """, email=cv_json['email'])
+            """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'))
 
             for ranking in cv_json.get('role_rankings', []):
                 role_name = ranking.get('role')
                 score     = ranking.get('score', 0)
                 if role_name and score > 0:
                     session.run("""
-                        MATCH (f:Freelancer {email: $email})
+                        MATCH (f:Freelancer {kbs_id: $kbs_id})
                         MERGE (r:Role {name: $role})
                         MERGE (f)-[:MATCHES_ROLE {score: $score}]->(r)
                         MERGE (r)-[:SUITABLE_CANDIDATE {score: $score}]->(f)
-                    """, email=cv_json['email'], role=role_name, score=score)
+                    """, kbs_id=cv_json['kbs_id'], email=cv_json.get('email'), role=role_name, score=score)
 
             stored_roles   = len([r for r in cv_json.get('role_rankings', []) if r.get('score', 0) > 0])
             stored_domains = len(cv_json.get('domain_knowledge', []))
@@ -171,7 +172,16 @@ if __name__ == "__main__":
         for json_file in CVS_JSON_DIR.glob("*_result.json"):
             with open(json_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            kg.ingest_cv_data(data)
+            if not data.get("name"):
+                print(f"⚠️  Skipping {json_file.name} — name missing, CV parsing failed completely")
+                continue
+            # Stable unique ID: prefer email, fall back to hash of name+filename
+            seed = data.get("email") or f"{data.get('name')}_{json_file.stem}"
+            data["kbs_id"] = hashlib.md5(seed.encode()).hexdigest()[:16]
+            try:
+                kg.ingest_cv_data(data)
+            except Exception as e:
+                print(f"❌  Failed to ingest {json_file.name}: {e}")
         kg.close()
 
     else:
