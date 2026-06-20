@@ -47,6 +47,7 @@ export async function GET(
         cvAnalysis: profile.cvAnalysis
           ? {
               yearsOfExperience: profile.cvAnalysis.yearsOfExperience,
+              domainKnowledge: profile.cvAnalysis.domainKnowledge || [],
               experience: profile.cvAnalysis.experience || [],
               projects: profile.cvAnalysis.projects || [],
               bestRole: profile.cvAnalysis.bestRole,

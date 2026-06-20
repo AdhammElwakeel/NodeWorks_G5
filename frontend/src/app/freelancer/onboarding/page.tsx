@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OnboardingLayout } from "./components/OnboardingLayout";
 import { CVUploadStep, type CvData } from "./components/CVUploadStep";
 import { ProfileStep, type ProfileData } from "./components/ProfileStep";
 import { AIInterviewStep } from "./components/AIInterviewStep";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { profileApi, cvApi, type InterviewReportData } from "@/lib/api";
+import { profileApi, cvApi, skillApi, type InterviewReportData } from "@/lib/api";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "@/lib/auth-context";
 
@@ -29,6 +29,7 @@ function normalizeCvAnalysis(cvData: CvData, experience: ProfileData["experience
     headline: cvData.headline,
     yearsOfExperience: cvData["years of experience"],
     allSkills: cvData.all_skills ?? [],
+    domainKnowledge: cvData.domain_knowledge ?? [],
     experience: experience
       .map((item) => ({
         role: item.role.trim(),
@@ -74,7 +75,9 @@ export default function FreelancerOnboardingPage() {
   const [cvData, setCvData] = useState<CvData | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [skillOptions, setSkillOptions] = useState<string[]>([]);
   const [interviewReport, setInterviewReport] = useState<InterviewReportData | null>(null);
+  const [interviewSkipped, setInterviewSkipped] = useState(false);
 
   // --- Profile form state (lifted here so it survives step transitions) ---
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -88,6 +91,24 @@ export default function FreelancerOnboardingPage() {
     bio: "",
     experience: [],
   });
+
+  useEffect(() => {
+    let active = true;
+
+    skillApi
+      .list()
+      .then((result) => {
+        if (!active) return;
+        setSkillOptions(result.skills.map((skill) => skill.name));
+      })
+      .catch(() => {
+        if (active) setSkillOptions([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const router = useRouter();
 
@@ -107,6 +128,7 @@ export default function FreelancerOnboardingPage() {
     setAnalysisError(null);
     setCvFile(null);
     setInterviewReport(null);
+    setInterviewSkipped(false);
 
     if (!file) return;
 
@@ -160,10 +182,10 @@ export default function FreelancerOnboardingPage() {
   };
 
   const handleFinish = async () => {
-    if (!interviewReport) {
+    if (!interviewReport && !interviewSkipped) {
       notifications.show({
         title: "Complete the AI interview",
-        message: "Finish the interview before entering your freelancer dashboard.",
+        message: "Finish the interview or skip it for demo testing before entering your dashboard.",
         color: "orange",
       });
       setStep(2);
@@ -205,7 +227,7 @@ export default function FreelancerOnboardingPage() {
           portfolioLinks: profileData.portfolioLinks,
           about: profileData.bio.trim() || undefined,
           cvAnalysis: cvData ? normalizeCvAnalysis(cvData, profileData.experience) : undefined,
-          aiInterviewReport: interviewReport,
+          aiInterviewReport: interviewSkipped ? undefined : interviewReport,
         },
       });
       await refreshUser();
@@ -228,7 +250,7 @@ export default function FreelancerOnboardingPage() {
   };
 
   const canContinue =
-    step === 0 ? !isAnalyzing : step === 2 ? Boolean(interviewReport) : true;
+    step === 0 ? !isAnalyzing : step === 2 ? Boolean(interviewReport || interviewSkipped) : true;
 
   return (
     <ProtectedRoute requiredRole="freelancer">
@@ -256,6 +278,7 @@ export default function FreelancerOnboardingPage() {
           <ProfileStep
             cvData={cvData}
             profileData={profileData}
+            skillOptions={skillOptions}
             onProfileChange={setProfileData}
           />
         )}
@@ -264,7 +287,12 @@ export default function FreelancerOnboardingPage() {
             cvData={cvData}
             profileData={profileData}
             report={interviewReport}
-            onComplete={setInterviewReport}
+            skipped={interviewSkipped}
+            onSkip={() => setInterviewSkipped(true)}
+            onComplete={(report) => {
+              setInterviewSkipped(false);
+              setInterviewReport(report);
+            }}
           />
         )}
       </OnboardingLayout>

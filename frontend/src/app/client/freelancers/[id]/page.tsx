@@ -71,6 +71,7 @@ export default function ClientFreelancerProfilePage() {
 
   const cvProjects = freelancer.cvAnalysis?.projects || [];
   const experience = freelancer.cvAnalysis?.experience || [];
+  const domains = freelancer.cvAnalysis?.domainKnowledge || [];
 
   return (
     <Stack gap="xl">
@@ -140,6 +141,18 @@ export default function ClientFreelancerProfilePage() {
                 </Badge>
               ))}
             </Group>
+            {domains.length > 0 && (
+              <Box>
+                <Text fz="xs" c="dimmed" tt="uppercase" fw={700} mb={6}>Domain Knowledge</Text>
+                <Group gap="xs" wrap="wrap">
+                  {domains.slice(0, 10).map((domain) => (
+                    <Badge key={domain} color="grape" variant="light" size="md">
+                      {domain}
+                    </Badge>
+                  ))}
+                </Group>
+              </Box>
+            )}
           </Stack>
         </Card>
 

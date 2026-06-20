@@ -37,6 +37,8 @@ export async function GET(
         description: project.description,
         budget: project.budget,
         skills: project.skills || [],
+        domainKeywords: project.domainKeywords || [],
+        requiredRoles: project.requiredRoles || [],
         hiringMode: project.hiringMode || "individual",
         status: project.status,
         timeline: project.timeline,
@@ -98,6 +100,14 @@ export async function PATCH(
       project.skills = body.skills;
       recommendationDataChanged = true;
     }
+    if (body.domainKeywords !== undefined) {
+      project.domainKeywords = Array.isArray(body.domainKeywords) ? body.domainKeywords : [];
+      recommendationDataChanged = true;
+    }
+    if (body.requiredRoles !== undefined) {
+      project.requiredRoles = Array.isArray(body.requiredRoles) ? body.requiredRoles : [];
+      recommendationDataChanged = true;
+    }
     if (body.hiringMode !== undefined) {
       if (!["individual", "team"].includes(body.hiringMode)) {
         return NextResponse.json({ error: "Invalid hiring mode" }, { status: 400 });
@@ -140,6 +150,8 @@ export async function PATCH(
         description: updatedProject?.description || project.description,
         budget: updatedProject?.budget || project.budget,
         skills: updatedProject?.skills || project.skills || [],
+        domainKeywords: updatedProject?.domainKeywords || project.domainKeywords || [],
+        requiredRoles: updatedProject?.requiredRoles || project.requiredRoles || [],
         hiringMode: updatedProject?.hiringMode || project.hiringMode || "individual",
         status: updatedProject?.status || project.status,
         timeline: updatedProject?.timeline || project.timeline,

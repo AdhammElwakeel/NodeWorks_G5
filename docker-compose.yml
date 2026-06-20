@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      MONGODB_URI: ${DOCKER_MONGODB_URI:-mongodb://mongo:27017/nodeworks}
+      MONGODB_URI: mongodb://mongo:27017/nodeworks
       JWT_SECRET: ${JWT_SECRET:-change-this-to-a-long-random-secret}
       AI_API_BASE_URL: http://backend:8010
       CV_ANALYSIS_API_URL: http://backend:8010/api/analyze-cv

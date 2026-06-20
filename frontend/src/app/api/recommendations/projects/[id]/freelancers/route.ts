@@ -88,12 +88,17 @@ export async function GET(
 
         return {
           score: item.score,
+          technicalScore: item.technicalScore,
+          knowledgeScore: item.knowledgeScore,
           reason: item.reason,
           matchedSkills: item.matchedSkills || [],
           missingSkills: item.missingSkills || [],
           requiredSkills: item.requiredSkills || [],
+          requiredDomains: item.requiredDomains || [],
           bestRole: item.bestRole,
           bestRoleScore: item.bestRoleScore,
+          roleMatch: item.roleMatch,
+          roleMatches: item.roleMatches || [],
           scoreBreakdown: item.scoreBreakdown,
           evidence: item.evidence,
           experienceDetails: item.experienceDetails || [],

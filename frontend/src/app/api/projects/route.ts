@@ -59,6 +59,8 @@ export async function GET(req: NextRequest) {
           description: obj.description,
           budget: obj.budget,
           skills: obj.skills || [],
+          domainKeywords: obj.domainKeywords || [],
+          requiredRoles: obj.requiredRoles || [],
           hiringMode: obj.hiringMode || "individual",
           status: obj.status,
           timeline: obj.timeline,
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, description, budget, skills, hiringMode, timeline } = body;
+    const { title, description, budget, skills, domainKeywords, requiredRoles, hiringMode, timeline } = body;
 
     if (!title || !description || !budget) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -105,6 +107,8 @@ export async function POST(req: NextRequest) {
       description,
       budget,
       skills: skills || [],
+      domainKeywords: Array.isArray(domainKeywords) ? domainKeywords : [],
+      requiredRoles: Array.isArray(requiredRoles) ? requiredRoles : [],
       hiringMode: hiringMode === "team" ? "team" : "individual",
       timeline: timeline || undefined,
       status: "open",
@@ -130,6 +134,8 @@ export async function POST(req: NextRequest) {
           description: project.description,
           budget: project.budget,
           skills: project.skills || [],
+          domainKeywords: project.domainKeywords || [],
+          requiredRoles: project.requiredRoles || [],
           hiringMode: project.hiringMode || "individual",
           status: project.status,
           timeline: project.timeline,

@@ -87,12 +87,16 @@ export async function GET(
       score: team.score,
       finalScore: team.finalScore,
       technicalScore: team.technicalScore,
+      knowledgeScore: team.knowledgeScore,
       synergyScore: team.synergyScore,
       coverageScore: team.coverageScore,
       reason: team.reason,
       coveredSkills: team.coveredSkills || [],
       missingSkills: team.missingSkills || [],
       sharedEntities: team.sharedEntities || [],
+      knowledgeKeywords: team.knowledgeKeywords || [],
+      matchedKnowledgeSkills: team.matchedKnowledgeSkills || [],
+      matchedKnowledgeDomains: team.matchedKnowledgeDomains || [],
       members: team.members
         .map((member: any) => {
           const user = userById.get(member.userId);
@@ -105,9 +109,15 @@ export async function GET(
             experienceLevel: profile.experienceLevel,
             hourlyRate: profile.hourlyRate,
             skills: profile.skills || [],
+            requestedRole: member.requestedRole,
             coveredSkills: member.coveredSkills || [],
             bestRole: member.bestRole,
             bestRoleScore: member.bestRoleScore,
+            roleScore: member.roleScore,
+            roleMatch: member.roleMatch,
+            matchedRole: member.matchedRole,
+            roleGroup: member.roleGroup,
+            domainKnowledge: member.domainKnowledge || profile.cvAnalysis?.domainKnowledge || [],
           };
         })
         .filter(Boolean),
@@ -115,6 +125,7 @@ export async function GET(
 
     return NextResponse.json({
       requiredSkills: result.requiredSkills || [],
+      requiredDomains: result.requiredDomains || [],
       requiredRoles: result.requiredRoles || [],
       recommendations: enriched,
     });

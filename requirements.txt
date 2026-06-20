@@ -9,3 +9,7 @@ pytz==2025.2
 python-multipart
 zhipuai
 openai
+numpy
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1
+sentence-transformers==3.3.1

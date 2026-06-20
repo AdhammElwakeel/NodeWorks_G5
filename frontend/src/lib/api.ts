@@ -88,6 +88,7 @@ export interface PublicFreelancerData {
   portfolioLinks?: string[];
   cvAnalysis?: {
     yearsOfExperience?: string;
+    domainKnowledge?: string[];
     experience?: { role?: string; company?: string; years?: string }[];
     projects?: { name?: string; technologies?: string[] }[];
     bestRole?: string;
@@ -109,6 +110,8 @@ export interface ProjectData {
   description: string;
   budget: number;
   skills: string[];
+  domainKeywords?: string[];
+  requiredRoles?: string[];
   hiringMode?: "individual" | "team";
   status: "open" | "closed" | "in-progress";
   timeline?: string;
@@ -146,6 +149,8 @@ export const projectApi = {
     description: string;
     budget: number;
     skills: string[];
+    domainKeywords?: string[];
+    requiredRoles?: string[];
     hiringMode?: "individual" | "team";
     timeline?: string;
   }): Promise<{ project: ProjectData }> =>
@@ -155,7 +160,7 @@ export const projectApi = {
     title: string;
     description: string;
     skills: string[];
-  }): Promise<{ skills: string[] }> =>
+  }): Promise<{ skills: string[]; domainKeywords: string[]; requiredRoles: string[]; projectKeywords: string[] }> =>
     fetchApi("/projects/suggest-skills", {
       method: "POST",
       body: JSON.stringify(body),
@@ -357,6 +362,14 @@ export const messageApi = {
 
 export type KbsScoreBreakdown = Record<string, number | undefined>;
 export type KbsEvidence = Record<string, string[] | undefined>;
+export type KbsRoleMatch = {
+  score?: number;
+  requestedRole?: string;
+  matchedRole?: string | null;
+  roleGroup?: string | null;
+  compatibleRoles?: string[];
+  roleScoresConsidered?: { role: string | null; score: number }[];
+};
 export type KbsExperienceDetail = {
   company?: string;
   role?: string;
@@ -371,12 +384,17 @@ export const recApi = {
   jobs: (params?: { limit?: number }): Promise<{
     recommendations: {
       score: number;
+      technicalScore?: number;
+      knowledgeScore?: number;
       reason: string;
       matchedSkills: string[];
       missingSkills: string[];
       requiredSkills: string[];
+      requiredDomains?: string[];
       bestRole?: string;
       bestRoleScore?: number;
+      roleMatch?: KbsRoleMatch;
+      roleMatches?: KbsRoleMatch[];
       scoreBreakdown?: KbsScoreBreakdown;
       evidence?: KbsEvidence;
       experienceDetails?: KbsExperienceDetail[];
@@ -394,12 +412,17 @@ export const recApi = {
   ): Promise<{
     recommendations: {
       score: number;
+      technicalScore?: number;
+      knowledgeScore?: number;
       reason: string;
       matchedSkills: string[];
       missingSkills: string[];
       requiredSkills: string[];
+      requiredDomains?: string[];
       bestRole?: string;
       bestRoleScore?: number;
+      roleMatch?: KbsRoleMatch;
+      roleMatches?: KbsRoleMatch[];
       scoreBreakdown?: KbsScoreBreakdown;
       evidence?: KbsEvidence;
       experienceDetails?: KbsExperienceDetail[];
@@ -428,17 +451,22 @@ export const recApi = {
     params?: { limit?: number; maxTeamSize?: number }
   ): Promise<{
     requiredSkills: string[];
+    requiredDomains?: string[];
     requiredRoles: { name: string; count: number }[];
     recommendations: {
       score: number;
       finalScore: number;
       technicalScore: number;
+      knowledgeScore?: number;
       synergyScore: number;
       coverageScore: number;
       reason: string;
       coveredSkills: string[];
       missingSkills: string[];
       sharedEntities: string[];
+      knowledgeKeywords?: string[];
+      matchedKnowledgeSkills?: string[];
+      matchedKnowledgeDomains?: string[];
       members: {
         userId: string;
         name: string;
@@ -446,9 +474,15 @@ export const recApi = {
         experienceLevel?: string;
         hourlyRate?: number;
         skills: string[];
+        requestedRole?: string;
         coveredSkills: string[];
         bestRole?: string;
         bestRoleScore?: number;
+        roleScore?: number;
+        roleMatch?: KbsRoleMatch;
+        matchedRole?: string | null;
+        roleGroup?: string | null;
+        domainKnowledge?: string[];
       }[];
     }[];
   }> => {

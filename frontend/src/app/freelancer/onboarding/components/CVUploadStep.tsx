@@ -28,6 +28,7 @@ export interface CvData {
   headline?: string;
   "years of experience"?: string;
   all_skills?: string[];
+  domain_knowledge?: string[];
   experience?: { role: string; company: string; years: string }[];
   education?: {
     degree: string;
@@ -202,6 +203,12 @@ export function CVUploadStep({
                   </Badge>
                 )}
 
+                {cvData.domain_knowledge && cvData.domain_knowledge.length > 0 && (
+                  <Badge color="grape" variant="light" size="md">
+                    {cvData.domain_knowledge.length} domains extracted
+                  </Badge>
+                )}
+
                 {/* Experience */}
                 {cvData["years of experience"] && (
                   <Badge color="blue" variant="light" size="md">
@@ -221,6 +228,23 @@ export function CVUploadStep({
                         - {formatExperienceItem(item)}
                       </Text>
                     ))}
+                  </Stack>
+                </Card>
+              )}
+
+              {cvData.domain_knowledge && cvData.domain_knowledge.length > 0 && (
+                <Card withBorder radius="md" p="sm" bg="var(--app-surface)">
+                  <Stack gap={6}>
+                    <Text fw={700} fz="sm" c="var(--app-text)">
+                      Domain knowledge detected
+                    </Text>
+                    <Group gap={6} wrap="wrap">
+                      {cvData.domain_knowledge.slice(0, 8).map((domain) => (
+                        <Badge key={domain} size="xs" color="grape" variant="light">
+                          {domain}
+                        </Badge>
+                      ))}
+                    </Group>
                   </Stack>
                 </Card>
               )}

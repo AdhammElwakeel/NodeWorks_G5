@@ -47,7 +47,7 @@ import { PageHeader } from "@/components/client/PageHeader";
 import { StatusBadge } from "@/components/client/StatusBadge";
 import { SkillsTags } from "@/components/client/SkillsTags";
 import { ConfirmModal } from "@/components/client/ConfirmModal";
-import { projectApi, proposalApi, recApi, type ProjectData, type ProposalData } from "@/lib/api";
+import { projectApi, proposalApi, recApi, skillApi, type ProjectData, type ProposalData } from "@/lib/api";
 import { KbsExplanationPanel } from "@/components/kbs/KbsExplanationPanel";
 import { notifications } from "@mantine/notifications";
 
@@ -64,28 +64,9 @@ type EditProjectForm = {
   skills: string[];
 };
 
-const SKILL_OPTIONS = [
-  "React",
-  "Next.js",
-  "Node.js",
-  "TypeScript",
-  "UI Design",
-  "Figma",
-  "Python",
-  "Data Analysis",
-  "Content Writing",
-  "Mobile Design",
-  "Stripe",
-  "MongoDB",
-  "PostgreSQL",
-  "AWS",
-  "DevOps",
-  "Machine Learning",
-  "D3.js",
-  "Tailwind",
-  "REST API",
-  "Webhooks",
-];
+function skillKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9+#]/g, "");
+}
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -96,6 +77,7 @@ export default function ProjectDetailPage() {
   const [closing, setClosing] = useState(false);
   const [editOpened, setEditOpened] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [skillOptions, setSkillOptions] = useState<string[]>([]);
   const [recommendationVersion, setRecommendationVersion] = useState(0);
   const [editForm, setEditForm] = useState<EditProjectForm>({
     title: "",
@@ -139,6 +121,23 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     queueMicrotask(fetchData);
   }, [fetchData]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    skillApi
+      .list()
+      .then((result) => {
+        if (!cancelled) setSkillOptions(result.skills.map((skill) => skill.name));
+      })
+      .catch(() => {
+        if (!cancelled) setSkillOptions([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const projectId = project?.id;
 
@@ -366,7 +365,14 @@ export default function ProjectDetailPage() {
   const pendingProposals = proposals.filter((p) => p.status === "pending");
   const acceptedProposals = proposals.filter((p) => p.status === "accepted");
   const rejectedProposals = proposals.filter((p) => p.status === "rejected");
-  const editSkillOptions = Array.from(new Set([...SKILL_OPTIONS, ...editForm.skills]));
+  const editSkillOptions = Array.from(new Set([...skillOptions, ...editForm.skills]));
+  const editSkillByKey = new Map(editSkillOptions.map((skill) => [skillKey(skill), skill]));
+  const handleEditSkillsChange = (values: string[]) => {
+    const skills = values
+      .map((value) => editSkillByKey.get(skillKey(value)))
+      .filter((value): value is string => Boolean(value));
+    setEditForm((current) => ({ ...current, skills: Array.from(new Set(skills)) }));
+  };
 
   return (
     <Box>
@@ -744,7 +750,7 @@ export default function ProjectDetailPage() {
                         </Group>
                       </Group>
 
-                      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="sm">
+                      <SimpleGrid cols={{ base: 1, md: 4 }} spacing="sm">
                         <Card withBorder radius="lg" p="md" bg="rgba(255,255,255,0.45)">
                           <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Skill Coverage</Text>
                           <Text fw={900} fz="xl" c="var(--app-text)">{team.coverageScore}%</Text>
@@ -759,6 +765,11 @@ export default function ProjectDetailPage() {
                           <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Graph Synergy</Text>
                           <Text fw={900} fz="xl" c="var(--app-text)">{team.synergyScore}</Text>
                           <Text fz="xs" c="dimmed">Shared KBS entities between members</Text>
+                        </Card>
+                        <Card withBorder radius="lg" p="md" bg="rgba(255,255,255,0.45)">
+                          <Text fz="xs" c="dimmed" tt="uppercase" fw={800}>Knowledge Match</Text>
+                          <Text fw={900} fz="xl" c="var(--app-text)">{team.knowledgeScore ?? 0}</Text>
+                          <Text fz="xs" c="dimmed">Skill and domain keyword fit</Text>
                         </Card>
                       </SimpleGrid>
 
@@ -806,6 +817,11 @@ export default function ProjectDetailPage() {
                                       {member.headline || member.bestRole || "Freelance specialist"}
                                     </Text>
                                     <Group gap={6} wrap="wrap">
+                                      {member.requestedRole && (
+                                        <Badge size="xs" color="blue" variant="light">
+                                          Asked: {member.requestedRole}
+                                        </Badge>
+                                      )}
                                       {member.bestRole && (
                                         <Badge size="xs" color="violet" variant="light">
                                           {member.bestRole}
@@ -842,6 +858,21 @@ export default function ProjectDetailPage() {
                                   )}
                                 </Group>
                               </Box>
+
+                              {member.domainKnowledge && member.domainKnowledge.length > 0 && (
+                                <Box>
+                                  <Text fz="xs" c="dimmed" tt="uppercase" fw={800} mb={6}>
+                                    Domain knowledge
+                                  </Text>
+                                  <Group gap={6} wrap="wrap">
+                                    {member.domainKnowledge.slice(0, 4).map((domain) => (
+                                      <Badge key={domain} size="sm" color="grape" variant="light">
+                                        {domain}
+                                      </Badge>
+                                    ))}
+                                  </Group>
+                                </Box>
+                              )}
 
                               <Group grow gap="xs">
                                 <Button
@@ -1010,7 +1041,7 @@ export default function ProjectDetailPage() {
               clearable
               data={editSkillOptions}
               value={editForm.skills}
-              onChange={(skills) => setEditForm((current) => ({ ...current, skills }))}
+              onChange={handleEditSkillsChange}
             />
             <Group justify="flex-end" mt="sm">
               <Button variant="default" onClick={() => setEditOpened(false)} disabled={savingEdit}>

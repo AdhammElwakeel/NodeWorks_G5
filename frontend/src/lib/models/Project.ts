@@ -13,6 +13,8 @@ export interface IProject {
   description: string;
   budget: number;
   skills: string[];
+  domainKeywords: string[];
+  requiredRoles: string[];
   hiringMode: "individual" | "team";
   status: "open" | "closed" | "in-progress";
   timeline?: string;
@@ -57,6 +59,8 @@ const ProjectSchema = new mongoose.Schema<IProject>(
       min: 1,
     },
     skills: [{ type: String, trim: true }],
+    domainKeywords: [{ type: String, trim: true }],
+    requiredRoles: [{ type: String, trim: true }],
     hiringMode: {
       type: String,
       enum: ["individual", "team"],

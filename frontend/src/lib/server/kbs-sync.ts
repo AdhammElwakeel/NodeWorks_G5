@@ -93,6 +93,8 @@ export async function syncProjectToKbs(projectId: string) {
     description: project.description,
     budget: project.budget,
     skills: project.skills || [],
+    domainKeywords: project.domainKeywords || [],
+    requiredRoles: project.requiredRoles || [],
     status: project.status,
     timeline: project.timeline,
     createdAt: project.createdAt?.toISOString(),

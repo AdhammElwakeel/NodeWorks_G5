@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
+import { connectDB } from "@/lib/db";
+import { Skill, seedSkills } from "@/lib/models";
 
 export const runtime = "nodejs";
 
@@ -14,6 +16,51 @@ async function parseApiResponse(response: Response) {
   } catch {
     return { detail: text };
   }
+}
+
+function skillKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9+#]/g, "");
+}
+
+function canonicalizeSuggestedSkills(
+  suggestions: string[],
+  existingProjectSkills: string[],
+  catalogSkills: string[]
+) {
+  const catalogByKey = new Map(catalogSkills.map((skill) => [skillKey(skill), skill]));
+  const aliases: Record<string, string> = {
+    reactjs: "React",
+    nextjs: "Next.js",
+    nodejs: "Node.js",
+    vuejs: "Vue.js",
+    angularjs: "Angular",
+    tailwindcss: "Tailwind CSS",
+    htmlcss: "HTML/CSS",
+    postgres: "PostgreSQL",
+    postgresql: "PostgreSQL",
+    mongodb: "MongoDB",
+    restapi: "REST API",
+    llms: "LLM",
+    largelanguagemodels: "LLM",
+    uiux: "UI/UX",
+  };
+  const existing = new Set(existingProjectSkills.map((skill) => skillKey(skill)));
+  const seen = new Set<string>();
+
+  return suggestions
+    .map((skill) => {
+      const trimmed = typeof skill === "string" ? skill.trim() : "";
+      if (!trimmed) return "";
+      const key = skillKey(trimmed);
+      const alias = aliases[key];
+      return (alias && catalogByKey.get(skillKey(alias))) || catalogByKey.get(key) || "";
+    })
+    .filter((skill) => {
+      const key = skillKey(skill);
+      if (!key || existing.has(key) || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 export async function POST(req: NextRequest) {
@@ -40,6 +87,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    await connectDB();
+    await seedSkills();
+    const catalog = await Skill.find({}).select("name").lean();
+    const catalogSkills = catalog.map((skill: any) => skill.name).filter(Boolean);
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 75_000);
 
@@ -64,7 +116,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ skills: Array.isArray(data.skills) ? data.skills : [] });
+    const normalizedSkills = canonicalizeSuggestedSkills(
+      Array.isArray(data.skills) ? data.skills : [],
+      skills,
+      catalogSkills
+    );
+
+    const domainKeywords = Array.isArray(data.domainKeywords) ? data.domainKeywords : [];
+
+    return NextResponse.json({
+      skills: normalizedSkills,
+      domainKeywords,
+      requiredRoles: Array.isArray(data.requiredRoles) ? data.requiredRoles : [],
+      projectKeywords: [...normalizedSkills, ...domainKeywords],
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(

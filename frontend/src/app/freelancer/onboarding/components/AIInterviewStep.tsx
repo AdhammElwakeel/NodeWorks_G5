@@ -42,6 +42,8 @@ interface AIInterviewStepProps {
   cvData: CvData | null;
   profileData: ProfileData;
   report: InterviewReportData | null;
+  skipped?: boolean;
+  onSkip?: () => void;
   onComplete: (report: InterviewReportData) => void;
 }
 
@@ -202,6 +204,8 @@ export function AIInterviewStep({
   cvData,
   profileData,
   report,
+  skipped = false,
+  onSkip,
   onComplete,
 }: AIInterviewStepProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -599,12 +603,22 @@ export function AIInterviewStep({
               </Text>
             </Stack>
           </Group>
-          {completedReport && (
+          {skipped ? (
+            <Badge color="gray" variant="light" size="lg">
+              Skipped for demo
+            </Badge>
+          ) : completedReport ? (
             <Badge color={completedReport.is_verified ? "teal" : "orange"} variant="light" size="lg">
               {completedReport.is_verified ? "Verified" : "Completed"}
             </Badge>
-          )}
+          ) : null}
         </Group>
+
+        {skipped && !completedReport && (
+          <Alert color="gray" icon={<AlertCircle size={16} />} radius="md" title="AI interview skipped">
+            Demo mode is enabled for this onboarding session. Your profile can be saved without an interview score.
+          </Alert>
+        )}
 
         {error && (
           <Alert icon={<AlertCircle size={16} />} color="red" title="Interview error" radius="md">
@@ -612,7 +626,7 @@ export function AIInterviewStep({
           </Alert>
         )}
 
-        {!completedReport && (
+        {!completedReport && !skipped && (
           <Card withBorder radius="md" p="md" bg="var(--app-active-bg)">
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
               <Stack gap="sm">
@@ -740,6 +754,20 @@ export function AIInterviewStep({
               </Stack>
             </Card>
           </SimpleGrid>
+        ) : skipped ? (
+          <Card withBorder radius="md" p="md" bg="var(--app-active-bg)">
+            <Stack gap="sm">
+              <Group gap="xs">
+                <CheckCircle size={18} color="var(--mantine-color-teal-6)" />
+                <Text fw={700} c="var(--app-text)">
+                  Ready to finish onboarding
+                </Text>
+              </Group>
+              <Text fz="sm" c="var(--app-text)">
+                The AI interview was skipped for demo testing. You can still retake it later from profile settings.
+              </Text>
+            </Stack>
+          </Card>
         ) : currentQuestion ? (
           <Stack gap="md">
             <Card withBorder radius="md" p="md" bg="var(--app-active-bg)">
@@ -823,9 +851,16 @@ export function AIInterviewStep({
                     Add at least one skill in your profile step before starting the interview.
                   </Alert>
                 )}
-                <Button onClick={startInterview} loading={loading} mt="sm" disabled={cvPayload.skills.length === 0}>
-                  Start AI interview
-                </Button>
+                <Group mt="sm">
+                  <Button onClick={startInterview} loading={loading} disabled={cvPayload.skills.length === 0}>
+                    Start AI interview
+                  </Button>
+                  {onSkip && (
+                    <Button variant="light" color="gray" onClick={onSkip} disabled={loading}>
+                      Skip for demo
+                    </Button>
+                  )}
+                </Group>
               </Stack>
             </Card>
 

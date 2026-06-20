@@ -15,8 +15,7 @@ graduation_project/
 |   `-- .env.example
 |-- backend/
 |   |-- ai_api/                 # FastAPI service for CV analysis, KBS, recommendations
-|   |-- cv_api/                 # Standalone CV analysis API
-|   `-- MergedCVAnalyzer-with-KBS/
+|   `-- interview_api/          # AI interview code kept for reference/service work
 |-- MergedCVAnalyzer-with-KBS/   # CV analysis module/research code
 |-- Recommender-System/         # Recommendation-system research prototype
 |-- docs/                       # Report and presentation files
@@ -89,7 +88,7 @@ npm run docker:dev
 This starts:
 
 - Next.js frontend: `http://localhost:3000`
-- FastAPI backend for CV analysis, KBS, and recommendations: `http://localhost:8010`
+- FastAPI backend for CV analysis, KBS sync, domain-aware recommendations, and interviews: `http://localhost:8010`
 - Neo4j browser: `http://localhost:7474`
 - MongoDB: `localhost:27017`
 
@@ -120,6 +119,8 @@ python3 -m uvicorn main:app --reload --port 8010
 ```
 
 The backend runs on `http://localhost:8010`.
+
+The backend imports the active CV extraction module from `MergedCVAnalyzer-with-KBS/` and the role matcher/recommender code from `Recommender-System/`. Do not add duplicate copies under `backend/`.
 
 ### 4. Start the frontend
 

@@ -99,12 +99,14 @@ export interface ProfileData {
 interface ProfileStepProps {
   cvData: CvData | null;
   profileData: ProfileData;
+  skillOptions: string[];
   onProfileChange: (data: ProfileData) => void;
 }
 
 export function ProfileStep({
   cvData,
   profileData,
+  skillOptions,
   onProfileChange,
 }: ProfileStepProps) {
   const [headline, setHeadline] = useState(profileData.headline);
@@ -212,6 +214,9 @@ export function ProfileStep({
   };
 
   const hasCvHeadline = Boolean(cvData?.headline?.trim());
+  const availableSkills = Array.from(
+    new Set([...skillOptions, ...skills, ...(cvData?.all_skills ?? [])])
+  );
 
   return (
     <Paper withBorder radius="md" p="lg" bg="var(--app-surface)">
@@ -315,6 +320,7 @@ export function ProfileStep({
           placeholder="Add and press Enter"
           value={skills}
           onChange={setSkills}
+          data={availableSkills}
           clearable
           required
           styles={{

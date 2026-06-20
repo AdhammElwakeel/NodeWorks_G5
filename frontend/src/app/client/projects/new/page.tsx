@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -14,35 +14,17 @@ import {
   Title,
   Loader,
   Text,
+  Badge,
 } from "@mantine/core";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
-import { projectApi } from "@/lib/api";
+import { projectApi, skillApi } from "@/lib/api";
 
-const SKILL_OPTIONS = [
-  "React",
-  "Next.js",
-  "Node.js",
-  "TypeScript",
-  "UI Design",
-  "Figma",
-  "Python",
-  "Data Analysis",
-  "Content Writing",
-  "Mobile Design",
-  "Stripe",
-  "MongoDB",
-  "PostgreSQL",
-  "AWS",
-  "DevOps",
-  "Machine Learning",
-  "D3.js",
-  "Tailwind",
-  "REST API",
-  "Webhooks",
-];
+function skillKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9+#]/g, "");
+}
 
 function MagicWindIcon({ size = 16 }: { size?: number }) {
   return (
@@ -74,12 +56,39 @@ export default function CreateProjectPage() {
   const [suggesting, setSuggesting] = useState(false);
   const [suggestionsGenerated, setSuggestionsGenerated] = useState(false);
   const [suggestedSkills, setSuggestedSkills] = useState<string[]>([]);
+  const [catalogSkills, setCatalogSkills] = useState<string[]>([]);
+  const [domainKeywords, setDomainKeywords] = useState<string[]>([]);
+  const [requiredRoles, setRequiredRoles] = useState<string[]>([]);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const skillOptions = Array.from(
-    new Set([...SKILL_OPTIONS, ...skills, ...suggestedSkills])
-  );
+  useEffect(() => {
+    let active = true;
+
+    skillApi
+      .list()
+      .then((result) => {
+        if (!active) return;
+        setCatalogSkills(result.skills.map((skill) => skill.name));
+      })
+      .catch(() => {
+        if (active) setCatalogSkills([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const skillOptions = Array.from(new Set([...catalogSkills, ...suggestedSkills]));
+  const catalogSkillByKey = new Map(catalogSkills.map((skill) => [skillKey(skill), skill]));
+
+  const handleSkillsChange = (values: string[]) => {
+    const normalized = values
+      .map((value) => catalogSkillByKey.get(skillKey(value)))
+      .filter((value): value is string => Boolean(value));
+    setSkills(Array.from(new Set(normalized)));
+  };
 
   const addSkill = (skill: string) => {
     const normalized = skill.trim();
@@ -120,6 +129,8 @@ export default function CreateProjectPage() {
         (skill) => !existing.has(skill.toLowerCase())
       );
       setSuggestedSkills(suggestions);
+      setDomainKeywords(result.domainKeywords || []);
+      setRequiredRoles(result.requiredRoles || []);
       setSuggestionsGenerated(true);
 
       notifications.show({
@@ -152,6 +163,8 @@ export default function CreateProjectPage() {
         description,
         budget: Number(budget),
         skills,
+        domainKeywords,
+        requiredRoles,
         timeline: timeline || undefined,
       });
       notifications.show({
@@ -286,6 +299,39 @@ export default function CreateProjectPage() {
                   </Group>
                 </Box>
               )}
+
+              {(domainKeywords.length > 0 || requiredRoles.length > 0) && (
+                <Stack gap="xs" mt="md">
+                  {requiredRoles.length > 0 && (
+                    <Box>
+                      <Text fz="sm" fw={600} c="var(--app-text)" mb="xs">
+                        Detected roles
+                      </Text>
+                      <Group gap="xs">
+                        {requiredRoles.map((role) => (
+                          <Badge key={role} color="violet" variant="light">
+                            {role}
+                          </Badge>
+                        ))}
+                      </Group>
+                    </Box>
+                  )}
+                  {domainKeywords.length > 0 && (
+                    <Box>
+                      <Text fz="sm" fw={600} c="var(--app-text)" mb="xs">
+                        Detected project domains
+                      </Text>
+                      <Group gap="xs">
+                        {domainKeywords.map((domain) => (
+                          <Badge key={domain} color="blue" variant="light">
+                            {domain}
+                          </Badge>
+                        ))}
+                      </Group>
+                    </Box>
+                  )}
+                </Stack>
+              )}
             </Card>
 
             <Group grow>
@@ -323,7 +369,7 @@ export default function CreateProjectPage() {
               placeholder="Type a skill and press Enter"
               data={skillOptions}
               value={skills}
-              onChange={setSkills}
+              onChange={handleSkillsChange}
               clearable
               required
               styles={{

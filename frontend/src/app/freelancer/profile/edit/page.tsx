@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/auth-context";
-import { cvApi, profileApi, type InterviewReportData } from "@/lib/api";
+import { cvApi, profileApi, skillApi, type InterviewReportData } from "@/lib/api";
 import { notifications } from "@mantine/notifications";
 import Link from "next/link";
 import { AIInterviewStep } from "../../onboarding/components/AIInterviewStep";
@@ -43,20 +43,6 @@ const EXPERIENCE_LEVELS = ["Junior", "Mid-level", "Senior", "Lead"];
 const AVAILABILITY_OPTIONS = ["Full-time", "Part-time", "As needed", "Not available"];
 const CV_ANALYSIS_URL = "/api/cv/analyze";
 
-const SKILL_OPTIONS = [
-  "React", "Next.js", "Node.js", "TypeScript", "JavaScript",
-  "Python", "Django", "Flask", "FastAPI",
-  "Vue.js", "Angular", "Svelte",
-  "React Native", "Flutter", "Swift", "Kotlin",
-  "PostgreSQL", "MongoDB", "MySQL", "Redis",
-  "AWS", "Docker", "Kubernetes", "CI/CD",
-  "UI Design", "UX Design", "Figma",
-  "Project Management", "Agile", "Scrum",
-  "Data Analysis", "Machine Learning", "AI",
-  "Content Writing", "SEO", "Marketing",
-  "DevOps", "Linux", "Shell Scripting",
-];
-
 function normalizeCvAnalysis(cvData: CvData) {
   return {
     name: cvData.name,
@@ -65,6 +51,7 @@ function normalizeCvAnalysis(cvData: CvData) {
     headline: cvData.headline,
     yearsOfExperience: cvData["years of experience"],
     allSkills: cvData.all_skills ?? [],
+    domainKnowledge: cvData.domain_knowledge ?? [],
     experience: cvData.experience ?? [],
     education: cvData.education ?? [],
     projects: cvData.projects ?? [],
@@ -94,6 +81,7 @@ function cvAnalysisToCvData(value: Record<string, unknown> | null | undefined): 
     headline: typeof value.headline === "string" ? value.headline : undefined,
     "years of experience": typeof value.yearsOfExperience === "string" ? value.yearsOfExperience : undefined,
     all_skills: Array.isArray(value.allSkills) ? value.allSkills.filter((item): item is string => typeof item === "string") : [],
+    domain_knowledge: Array.isArray(value.domainKnowledge) ? value.domainKnowledge.filter((item): item is string => typeof item === "string") : [],
     experience: Array.isArray(value.experience) ? (value.experience as CvData["experience"]) : [],
     education: Array.isArray(value.education) ? (value.education as CvData["education"]) : [],
     projects: Array.isArray(value.projects) ? (value.projects as CvData["projects"]) : [],
@@ -109,6 +97,7 @@ export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [cvUpdating, setCvUpdating] = useState(false);
+  const [skillOptions, setSkillOptions] = useState<string[]>([]);
   const [retakeOpen, setRetakeOpen] = useState(false);
   const [cvData, setCvData] = useState<CvData | null>(null);
   const [interviewReport, setInterviewReport] = useState<InterviewReportData | null>(null);
@@ -124,6 +113,24 @@ export default function EditProfilePage() {
     skills: [] as string[],
     portfolioLinks: [] as string[],
   });
+
+  useEffect(() => {
+    let active = true;
+
+    skillApi
+      .list()
+      .then((result) => {
+        if (!active) return;
+        setSkillOptions(result.skills.map((skill) => skill.name));
+      })
+      .catch(() => {
+        if (active) setSkillOptions([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -270,6 +277,9 @@ export default function EditProfilePage() {
     bio: form.about,
     experience: cvData?.experience ?? [],
   };
+  const availableSkills = Array.from(
+    new Set([...skillOptions, ...form.skills, ...(cvData?.all_skills ?? [])])
+  );
 
   const handleRetakeComplete = async (report: InterviewReportData) => {
     setInterviewReport(report);
@@ -419,7 +429,7 @@ export default function EditProfilePage() {
             <TagsInput
               label="Your Skills"
               placeholder="Type a skill and press Enter"
-              data={SKILL_OPTIONS}
+              data={availableSkills}
               required
               value={form.skills}
               onChange={(v) => update("skills", v)}
@@ -458,6 +468,11 @@ export default function EditProfilePage() {
               {cvData?.all_skills && cvData.all_skills.length > 0 && (
                 <Alert color="cyan" radius="md">
                   Latest extracted skills: {cvData.all_skills.slice(0, 8).join(", ")}
+                </Alert>
+              )}
+              {cvData?.domain_knowledge && cvData.domain_knowledge.length > 0 && (
+                <Alert color="grape" radius="md">
+                  Latest extracted domains: {cvData.domain_knowledge.slice(0, 8).join(", ")}
                 </Alert>
               )}
             </Stack>

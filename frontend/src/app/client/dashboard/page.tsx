@@ -496,6 +496,11 @@ export default function ClientDashboardPage() {
                               <Badge color="cyan" variant="light">
                                 {team.coverageScore}% coverage
                               </Badge>
+                              {team.knowledgeScore !== undefined && (
+                                <Badge color="grape" variant="light">
+                                  Knowledge {team.knowledgeScore}
+                                </Badge>
+                              )}
                             </Group>
                           </Group>
                           <Progress value={team.coverageScore} color="teal" radius="xl" />
@@ -520,6 +525,9 @@ export default function ClientDashboardPage() {
                                     )}
                                   </Group>
                                   <Group gap={6} wrap="wrap">
+                                    {member.requestedRole && (
+                                      <Badge size="xs" color="blue" variant="light">{member.requestedRole}</Badge>
+                                    )}
                                     {member.coveredSkills.slice(0, 3).map((skill) => (
                                       <Badge key={skill} size="xs" color="teal" variant="light">{skill}</Badge>
                                     ))}
