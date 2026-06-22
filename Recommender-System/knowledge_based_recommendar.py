@@ -444,8 +444,8 @@ if __name__ == "__main__":
               f"domains: {len(f['domain_knowledge']):<4}  "
               f"roles with score > 0: {non_zero}")
 
-    roles_3    = ["AI Engineer", "UI/UX Designer", "Full-Stack Developer"]
-    keywords_3 = ["medical imaging", "Medical field", "Radiology"]
+    roles_3    = ["Machine Learning Engineer", "UI/UX Designer", "Full-Stack Developer", "Cybersecurity Engineer"]
+    keywords_3 = ["Exoplanet", "Astronomy", "Astrophysics", "Space Science"]
     print("\n" + "=" * 70)
     print("EXAMPLE 1 – Three-person team (with domain keyword)")
     print(f"Roles   : {roles_3}")
